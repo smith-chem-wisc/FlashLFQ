@@ -20,8 +20,9 @@ namespace FlashLFQ
             isotopeClusters = new List<IsotopeCluster>();
         }
 
-        public void CalculateIntensityForThisFeature(int fileIndex, bool integrate)
+        public void CalculateIntensityForThisFeature(string fileName, bool integrate)
         {
+            this.fileName = fileName;
             if (isotopeClusters.Any())
             {
                 double featureApexIntensity = isotopeClusters.Select(p => p.peakWithScan.backgroundSubtractedIntensity).Max();
@@ -41,14 +42,13 @@ namespace FlashLFQ
 
                     foreach (var chargeState in peaksGroupedByChargeState)
                     {
-                        var peaksList = chargeState.OrderBy(p => p.peakWithScan.scan.RetentionTime).ToList();
+                        var peaksList = chargeState.OrderBy(p => p.peakWithScan.retentionTime).ToList();
                         for(int i = 1; i < peaksList.Count; i++)
                         {
-                            intensity += ((peaksList[i].peakWithScan.backgroundSubtractedIntensity + peaksList[i - 1].peakWithScan.backgroundSubtractedIntensity) / 2.0) * (peaksList[i].peakWithScan.scan.RetentionTime - peaksList[i - 1].peakWithScan.scan.RetentionTime);
+                            intensity += ((peaksList[i].peakWithScan.backgroundSubtractedIntensity + peaksList[i - 1].peakWithScan.backgroundSubtractedIntensity) / 2.0) * (peaksList[i].peakWithScan.retentionTime - peaksList[i - 1].peakWithScan.retentionTime);
                         }
                     }
-
-
+                    
                     /*
                     // calculate area of peak with triangle approximation and LHM/RHM
                     var peaksGroupedByChargeState = isotopeClusters.GroupBy(p => p.chargeState);
@@ -132,7 +132,7 @@ namespace FlashLFQ
 
             if (apexPeak != null)
             {
-                sb.Append("" + apexPeak.peakWithScan.scan.RetentionTime + "\t");
+                sb.Append("" + apexPeak.peakWithScan.retentionTime + "\t");
                 sb.Append("" + apexPeak.peakWithScan.mainPeak.Mz + "\t");
                 sb.Append("" + apexPeak.chargeState + "\t");
                 sb.Append("" + (apexPeak.peakWithScan.backgroundSubtractedIntensity) + "\t");
