@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FlashLFQ
+﻿namespace FlashLFQ
 {
     class Identification
     {
@@ -24,6 +18,11 @@ namespace FlashLFQ
             monoisotopicMass = double.Parse(input[3]);
             ms2RetentionTime = double.Parse(input[4]);
             initialChargeState = int.Parse(input[5]);
+        }
+
+        override public string ToString()
+        {
+            return FullSequence;
         }
     }
 }

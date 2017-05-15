@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Chemistry;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,13 +10,17 @@ namespace FlashLFQ
     {
         public double intensity;
         public IsotopeCluster apexPeak;
-        public string featureType;
+        public bool isMbrFeature;
         public string fileName = "";
         public List<Identification> identifyingScans;
         public List<IsotopeCluster> isotopeClusters;
+        public int numIdentificationsByBaseSeq { get; private set; }
+        public int numIdentificationsByFullSeq { get; private set; }
 
         public Feature()
         {
+            numIdentificationsByBaseSeq = 1;
+            numIdentificationsByFullSeq = 1;
             identifyingScans = new List<Identification>();
             isotopeClusters = new List<IsotopeCluster>();
         }
@@ -31,7 +36,6 @@ namespace FlashLFQ
                 // apex intensity
                 if (!integrate)
                     intensity = featureApexIntensity;
-
                 
                 // integrate, calculate half max
                 if (integrate)
@@ -48,61 +52,6 @@ namespace FlashLFQ
                             intensity += ((peaksList[i].peakWithScan.backgroundSubtractedIntensity + peaksList[i - 1].peakWithScan.backgroundSubtractedIntensity) / 2.0) * (peaksList[i].peakWithScan.retentionTime - peaksList[i - 1].peakWithScan.retentionTime);
                         }
                     }
-                    
-                    /*
-                    // calculate area of peak with triangle approximation and LHM/RHM
-                    var peaksGroupedByChargeState = isotopeClusters.GroupBy(p => p.chargeState);
-
-                    foreach (var chargeState in peaksGroupedByChargeState)
-                    {
-                        var peaksList = chargeState.OrderBy(p => p.peakWithScan.scan.RetentionTime).ToList();
-                        double apexIntensityForThisChargeState = peaksList.Max(p => p.peakWithScan.backgroundSubtractedIntensity);
-                        var apexPeakForThisChargeState = peaksList.Where(p => p.peakWithScan.backgroundSubtractedIntensity == apexIntensityForThisChargeState).First();
-
-                        IsotopeCluster leftHalfMaxPeak = null;
-                        IsotopeCluster rightHalfMaxPeak = null;
-
-                        int indexOfApexPeak = peaksList.IndexOf(apexPeakForThisChargeState);
-
-                        for (int i = indexOfApexPeak; i >= 0; i--)
-                            if ((peaksList[i].peakWithScan.backgroundSubtractedIntensity) <= 0.5 * apexIntensityForThisChargeState)
-                            {
-                                leftHalfMaxPeak = peaksList[i];
-                                break;
-                            }
-
-                        for (int i = indexOfApexPeak; i < peaksList.Count; i++)
-                            if ((peaksList[i].peakWithScan.backgroundSubtractedIntensity) <= 0.5 * apexIntensityForThisChargeState)
-                            {
-                                rightHalfMaxPeak = peaksList[i];
-                                break;
-                            }
-
-                        // if half max's are not findable, use the peak at the end
-                        if (leftHalfMaxPeak == null)
-                            leftHalfMaxPeak = peaksList.First();
-                        if (rightHalfMaxPeak == null)
-                            rightHalfMaxPeak = peaksList.Last();
-
-                        double leftSlope = (apexIntensityForThisChargeState - leftHalfMaxPeak.peakWithScan.backgroundSubtractedIntensity) / (apexPeakForThisChargeState.peakWithScan.scan.RetentionTime - leftHalfMaxPeak.peakWithScan.scan.RetentionTime);
-                        double rightSlope = (apexIntensityForThisChargeState - rightHalfMaxPeak.peakWithScan.backgroundSubtractedIntensity) / (apexPeakForThisChargeState.peakWithScan.scan.RetentionTime - rightHalfMaxPeak.peakWithScan.scan.RetentionTime);
-
-                        double leftApproxYIntercept = ((0 - leftHalfMaxPeak.peakWithScan.backgroundSubtractedIntensity) / leftSlope) + leftHalfMaxPeak.peakWithScan.scan.RetentionTime;
-                        double rightApproxYIntercept = ((0 - rightHalfMaxPeak.peakWithScan.backgroundSubtractedIntensity) / rightSlope) + rightHalfMaxPeak.peakWithScan.scan.RetentionTime;
-
-                        if (double.IsNaN(rightApproxYIntercept))
-                            rightApproxYIntercept = rightHalfMaxPeak.peakWithScan.scan.RetentionTime;
-                        if (double.IsNaN(leftApproxYIntercept))
-                            leftApproxYIntercept = leftHalfMaxPeak.peakWithScan.scan.RetentionTime;
-
-                        double baseOfTriangle = rightApproxYIntercept - leftApproxYIntercept;
-
-                        if (baseOfTriangle != 0)
-                            intensity += 0.5 * baseOfTriangle * apexIntensityForThisChargeState;
-                        else
-                            intensity += apexIntensityForThisChargeState;
-                    }
-                    */
                 }
             }
         }
@@ -113,12 +62,14 @@ namespace FlashLFQ
             {
                 if (feature != this)
                 {
-                    this.identifyingScans = this.identifyingScans.Union(feature.identifyingScans).ToList();
+                    this.identifyingScans = this.identifyingScans.Union(feature.identifyingScans).Distinct().ToList();
+                    this.numIdentificationsByBaseSeq = identifyingScans.Select(v => v.BaseSequence).Distinct().Count();
+                    this.numIdentificationsByFullSeq = identifyingScans.Select(v => v.FullSequence).Distinct().Count();
                     feature.intensity = -1;
                 }
             }
         }
-
+        
         override public string ToString()
         {
             StringBuilder sb = new StringBuilder();
@@ -128,6 +79,7 @@ namespace FlashLFQ
             sb.Append("" + identifyingScans.First().monoisotopicMass + '\t');
             sb.Append("" + identifyingScans.First().ms2RetentionTime + '\t');
             sb.Append("" + identifyingScans.First().initialChargeState + '\t');
+            sb.Append("" + ClassExtensions.ToMz(identifyingScans.First().monoisotopicMass, identifyingScans.First().initialChargeState) + '\t');
             sb.Append("" + intensity + "\t");
 
             if (apexPeak != null)
@@ -136,18 +88,24 @@ namespace FlashLFQ
                 sb.Append("" + apexPeak.peakWithScan.mainPeak.Mz + "\t");
                 sb.Append("" + apexPeak.chargeState + "\t");
                 sb.Append("" + (apexPeak.peakWithScan.backgroundSubtractedIntensity) + "\t");
+                sb.Append("" + (apexPeak.peakWithScan.signalToBackgroundRatio) + "\t");
             }
             else
             {
-                sb.Append("" + 0 + "\t");
-                sb.Append("" + 0 + "\t");
+                sb.Append("" + "-" + "\t");
+                sb.Append("" + "-" + "\t");
+                sb.Append("" + "-" + "\t");
                 sb.Append("" + 0 + "\t");
                 sb.Append("" + 0 + "\t");
             }
 
+            string featureType = "MSMS";
+            if (isMbrFeature)
+                featureType = "MBR";
+            
             sb.Append("" + featureType + "\t");
             sb.Append("" + identifyingScans.Count + "\t");
-            sb.Append("" + identifyingScans.Select(p => p.FullSequence).Distinct().Count() + "\t");
+            sb.Append("" + numIdentificationsByBaseSeq + "\t");
             
 
             return sb.ToString();

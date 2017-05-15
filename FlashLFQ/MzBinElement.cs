@@ -29,5 +29,13 @@ namespace FlashLFQ
         {
             scan = null;
         }
+
+        public override string ToString()
+        {
+            if (mainPeak != null)
+                return System.Math.Round(mainPeak.Mz, 5) + "; " + System.Math.Round(retentionTime, 2) + "; " + oneBasedScanNumber;
+            else
+                return "--";
+        }
     }
 }
