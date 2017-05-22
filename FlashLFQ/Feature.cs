@@ -74,8 +74,8 @@ namespace FlashLFQ
         {
             StringBuilder sb = new StringBuilder();
             sb.Append(fileName + "\t");
-            sb.Append("" + identifyingScans.First().BaseSequence + '\t');
-            sb.Append("" + identifyingScans.First().FullSequence + '\t');
+            sb.Append(string.Join("|", identifyingScans.Select(p => p.BaseSequence).Distinct()) + '\t');
+            sb.Append(string.Join("|", identifyingScans.Select(p => p.FullSequence).Distinct()) + '\t');
             sb.Append("" + identifyingScans.First().monoisotopicMass + '\t');
             sb.Append("" + identifyingScans.First().ms2RetentionTime + '\t');
             sb.Append("" + identifyingScans.First().initialChargeState + '\t');
@@ -87,7 +87,6 @@ namespace FlashLFQ
                 sb.Append("" + apexPeak.peakWithScan.retentionTime + "\t");
                 sb.Append("" + apexPeak.peakWithScan.mainPeak.Mz + "\t");
                 sb.Append("" + apexPeak.chargeState + "\t");
-                sb.Append("" + (apexPeak.peakWithScan.backgroundSubtractedIntensity) + "\t");
                 sb.Append("" + (apexPeak.peakWithScan.signalToBackgroundRatio) + "\t");
             }
             else
@@ -95,7 +94,6 @@ namespace FlashLFQ
                 sb.Append("" + "-" + "\t");
                 sb.Append("" + "-" + "\t");
                 sb.Append("" + "-" + "\t");
-                sb.Append("" + 0 + "\t");
                 sb.Append("" + 0 + "\t");
             }
 

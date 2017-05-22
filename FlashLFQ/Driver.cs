@@ -18,23 +18,35 @@ namespace FlashLFQ
 
             if (!engine.ReadIdentificationsFromTSV())
                 return;
+
+            engine.ConstructBinsFromIdentifications();
+            
             
             Parallel.For(0, engine.filePaths.Length, 
-                new ParallelOptions { MaxDegreeOfParallelism = engine.maxDegreesOfParallelism }, 
+                new ParallelOptions { MaxDegreeOfParallelism = engine.maxParallelFiles }, 
                 fileNumber =>
                 {
                     engine.Quantify(fileNumber);
                     GC.Collect();
                 }
             );
+            
+            
+            /*
+            for (int i = 0; i < engine.filePaths.Length; i++)
+            {
+                engine.Quantify(i);
+                GC.Collect();
+            }
+            */
 
             if (!engine.WriteResults())
                 return;
-            
-            if (!engine.silent)
-                Console.WriteLine("Done");
 
-            if(engine.pause)
+            if (!engine.silent)
+                Console.WriteLine("All done");
+
+            if (engine.pause)
                 Console.ReadKey();
         }
     }
