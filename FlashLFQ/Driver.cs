@@ -30,15 +30,9 @@ namespace FlashLFQ
                     GC.Collect();
                 }
             );
-            
-            
-            /*
-            for (int i = 0; i < engine.filePaths.Length; i++)
-            {
-                engine.Quantify(i);
-                GC.Collect();
-            }
-            */
+
+            if(engine.)
+            engine.RetentionTimeCalibrationAndErrorCheckMatchedFeatures();
 
             if (!engine.WriteResults())
                 return;

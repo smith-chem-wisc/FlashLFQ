@@ -99,12 +99,14 @@ namespace FlashLFQ
 
             string featureType = "MSMS";
             if (isMbrFeature)
+            {
                 featureType = "MBR";
+            }
             
             sb.Append("" + featureType + "\t");
             sb.Append("" + identifyingScans.Count + "\t");
             sb.Append("" + numIdentificationsByBaseSeq + "\t");
-            
+            sb.Append("" + numIdentificationsByFullSeq);
 
             return sb.ToString();
         }
