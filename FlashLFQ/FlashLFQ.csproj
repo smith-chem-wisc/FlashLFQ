@@ -87,6 +87,7 @@
     <Compile Include="IsotopeCluster.cs" />
     <Compile Include="MzBinElement.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ProteinGroup.cs" />
     <Compile Include="SummedFeatureGroup.cs" />
   </ItemGroup>
   <ItemGroup>

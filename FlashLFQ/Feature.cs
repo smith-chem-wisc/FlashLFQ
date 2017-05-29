@@ -84,7 +84,10 @@ namespace FlashLFQ
 
             if (apexPeak != null)
             {
+                sb.Append("" + isotopeClusters.Select(p => p.peakWithScan.retentionTime).Min() + "\t");
                 sb.Append("" + apexPeak.peakWithScan.retentionTime + "\t");
+                sb.Append("" + isotopeClusters.Select(p => p.peakWithScan.retentionTime).Max() + "\t");
+
                 sb.Append("" + apexPeak.peakWithScan.mainPeak.Mz + "\t");
                 sb.Append("" + apexPeak.chargeState + "\t");
                 sb.Append("" + (apexPeak.peakWithScan.signalToBackgroundRatio) + "\t");
@@ -96,14 +99,12 @@ namespace FlashLFQ
                 sb.Append("" + "-" + "\t");
                 sb.Append("" + 0 + "\t");
             }
-
-            string featureType = "MSMS";
-            if (isMbrFeature)
-            {
-                featureType = "MBR";
-            }
             
-            sb.Append("" + featureType + "\t");
+            if (isMbrFeature)
+                sb.Append("" + "MBR" + "\t");
+            else
+                sb.Append("" + "MSMS" + "\t");
+
             sb.Append("" + identifyingScans.Count + "\t");
             sb.Append("" + numIdentificationsByBaseSeq + "\t");
             sb.Append("" + numIdentificationsByFullSeq);

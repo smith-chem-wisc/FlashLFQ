@@ -7,6 +7,7 @@
         public readonly double ms2RetentionTime;
         public readonly double monoisotopicMass;
         public readonly int initialChargeState;
+        public ProteinGroup proteinGroup;
         public double massToLookFor;
         public string fileName = "";
 

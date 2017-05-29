@@ -31,8 +31,10 @@ namespace FlashLFQ
                 }
             );
 
-            if(engine.)
-            engine.RetentionTimeCalibrationAndErrorCheckMatchedFeatures();
+            if(engine.mbr)
+                engine.RetentionTimeCalibrationAndErrorCheckMatchedFeatures();
+
+            engine.QuantifyProteins();
 
             if (!engine.WriteResults())
                 return;
