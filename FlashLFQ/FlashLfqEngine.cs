@@ -395,7 +395,7 @@ namespace FlashLFQ
                 for(int i = 0; i < fileNames.Count; i++)
                 {
                     for (int j = 0; j < pepBaseSeqs.Count; j++)
-                        proteinFeatures.Key.intensitiesByFile[i] += temp[i,j].Select(p => p.intensity).Sum();
+                        proteinFeatures.Key.intensitiesByFile[i] += temp[i,j].Select(p => (p.intensity / p.numIdentificationsByFullSeq)).Sum();
                 }
             }
         }

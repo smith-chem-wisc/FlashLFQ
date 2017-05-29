@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>FlashLFQ</id>
+    <version>1.0.0</version>
+    <authors>rmillikin</authors>
+    <owners>rmillikin</owners>
+	<description>Ultrafast Label-free Protein/Peptide Quantification</description>
+    <copyright>Copyright 2017</copyright>
+    <dependencies>
+      <dependency id="mzLib" version="1.0.174"/>
+    </dependencies>
+  </metadata>
+    <files>
+    <file src="packages\mzLib.1.0.174\lib\Chemistry.dll" target="lib" /> 
+    <file src="packages\mzLib.1.0.174\lib\ManagedThermoHelperLayer.dll" target="lib" /> 
+    <file src="packages\mzLib.1.0.174\lib\MassSpectrometry.dll" target="lib" /> 
+    <file src="packages\mzLib.1.0.174\lib\mzIdentML.dll" target="lib" /> 
+    <file src="packages\mzLib.1.0.174\lib\MzLibUtil.dll" target="lib" /> 
+    <file src="packages\mzLib.1.0.174\lib\MzML.dll" target="lib" /> 
+    <file src="packages\mzLib.1.0.174\lib\Proteomics.dll" target="lib" /> 
+    <file src="packages\mzLib.1.0.174\lib\Spectra.dll" target="lib" /> 
+    <file src="packages\mzLib.1.0.174\lib\Thermo.dll" target="lib" /> 
+    <file src="packages\mzLib.1.0.174\lib\UsefulProteomicsDatabases.dll" target="lib" /> 
+  </files>
+</package>
