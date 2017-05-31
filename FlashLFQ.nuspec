@@ -2,11 +2,16 @@
 <package >
   <metadata>
     <id>FlashLFQ</id>
-    <version>1.0.0</version>
-    <authors>rmillikin</authors>
-    <owners>rmillikin</owners>
+    <version>0.1.0</version>
 	<description>Ultrafast Label-free Protein/Peptide Quantification</description>
     <copyright>Copyright 2017</copyright>
+    <title>FlashLFQ</title>
+    <authors>Robert M.</authors>
+    <owners>Robert M.</owners>
+    <licenseUrl>http://www.gnu.org/licenses/lgpl-3.0.txt</licenseUrl>
+    <projectUrl>https://github.com/smith-chem-wisc/FlashLFQ</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <tags>Mass Spectrometry Proteomics Quantification</tags>
     <dependencies>
       <dependency id="mzLib" version="1.0.174"/>
     </dependencies>
