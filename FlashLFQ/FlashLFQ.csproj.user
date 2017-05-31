@@ -3,4 +3,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <StartArguments>--rep "C:\Users\rmillikin\Documents\Data\Fractionated Ecoli\02-28-17_Ecoli_Tryp_Fractionated\MM" --idt "C:\Users\rmillikin\Documents\Data\Fractionated Ecoli\02-28-17_Ecoli_Tryp_Fractionated\MM\msms-cal.txt" --ppm 3</StartArguments>
   </PropertyGroup>
+  <PropertyGroup>
+    <PublishUrlHistory>publish\</PublishUrlHistory>
+    <InstallUrlHistory />
+    <SupportUrlHistory />
+    <UpdateUrlHistory />
+    <BootstrapperUrlHistory />
+    <ErrorReportUrlHistory />
+    <FallbackCulture>en-US</FallbackCulture>
+    <VerifyUploadedFiles>false</VerifyUploadedFiles>
+  </PropertyGroup>
 </Project>
