@@ -6,9 +6,9 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("FlashLFQ")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Ultrafast Label-free Protein/Peptide Quantification")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Robert M.")]
 [assembly: AssemblyProduct("FlashLFQ")]
 [assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
