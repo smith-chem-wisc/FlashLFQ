@@ -7,7 +7,7 @@ namespace FlashLFQ
     {
         static void Main(string[] args)
         {
-            FlashLfqEngine engine = new FlashLfqEngine();
+            FlashLFQEngine engine = new FlashLFQEngine();
 
             if (!engine.ReadPeriodicTable())
                 return;

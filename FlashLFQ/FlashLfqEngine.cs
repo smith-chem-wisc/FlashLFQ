@@ -13,16 +13,16 @@ using UsefulProteomicsDatabases;
 
 namespace FlashLFQ
 {
-    public class FlashLfqEngine
+    public class FlashLFQEngine
     {
         // file info stuff
         private string identificationsFilePath;
         public string[] filePaths { get; private set; }
 
         // structures used in the FlashLFQ program
-        private List<Identification> allIdentifications;
-        private List<Feature>[] allFeaturesByFile;
-        private Dictionary<double, List<MzBinElement>> mzBinsTemplate;
+        private List<FlashLFQIdentification> allIdentifications;
+        private List<FlashLFQFeature>[] allFeaturesByFile;
+        private Dictionary<double, List<FlashLFQMzBinElement>> mzBinsTemplate;
         private Dictionary<string, List<KeyValuePair<double, double>>> baseSequenceToIsotopicDistribution;
         private string[] featureOutputHeader;
 
@@ -47,9 +47,9 @@ namespace FlashLFQ
         public bool mbr { get; private set; }
         private double sbrFilter;
 
-        public FlashLfqEngine()
+        public FlashLFQEngine()
         {
-            allIdentifications = new List<Identification>();
+            allIdentifications = new List<FlashLFQIdentification>();
             baseSequenceToIsotopicDistribution = new Dictionary<string, List<KeyValuePair<double, double>>>();
 
             // default parameters
@@ -149,7 +149,7 @@ namespace FlashLFQ
                 return false;
             }
 
-            allFeaturesByFile = new List<Feature>[filePaths.Length];
+            allFeaturesByFile = new List<FlashLFQFeature>[filePaths.Length];
             return true;
         }
 
@@ -174,7 +174,7 @@ namespace FlashLFQ
 
         public bool ReadIdentificationsFromTSV()
         {
-            var pepToProteinGroupDictionary = new Dictionary<string, ProteinGroup>();
+            var pepToProteinGroupDictionary = new Dictionary<string, FlashLFQProteinGroup>();
 
             // read identification file
             if (!silent)
@@ -229,15 +229,15 @@ namespace FlashLFQ
                     try
                     {
                         var param = line.Split(delimiters);
-                        var ident = new Identification(param);
+                        var ident = new FlashLFQIdentification(param);
                         allIdentifications.Add(ident);
 
-                        ProteinGroup pg;
+                        FlashLFQProteinGroup pg;
                         if (pepToProteinGroupDictionary.TryGetValue(param[6], out pg))
                             ident.proteinGroup = pg;
                         else
                         {
-                            pg = new ProteinGroup(param[6]);
+                            pg = new FlashLFQProteinGroup(param[6]);
                             pepToProteinGroupDictionary.Add(param[6], pg);
                             ident.proteinGroup = pg;
                         }
@@ -378,10 +378,10 @@ namespace FlashLFQ
                 var pepBaseSeqs = proteinFeatures.Select(p => p.identifyingScans.First().BaseSequence).Distinct().ToList();
 
                 // construct empty peptide/file array for this protein
-                List<Feature>[,] temp = new List<Feature>[filePaths.Length, pepBaseSeqs.Count];
+                List<FlashLFQFeature>[,] temp = new List<FlashLFQFeature>[filePaths.Length, pepBaseSeqs.Count];
                 for(int i = 0; i < temp.GetLength(0); i++)
                     for(int j = 0; j < temp.GetLength(1); j++)
-                        temp[i,j] = new List<Feature>();
+                        temp[i,j] = new List<FlashLFQFeature>();
                 
                 // populate array
                 foreach(var file in featuresByFile)
@@ -456,7 +456,7 @@ namespace FlashLFQ
 
         public void ConstructBinsFromIdentifications()
         {
-            mzBinsTemplate = new Dictionary<double, List<MzBinElement>>();
+            mzBinsTemplate = new Dictionary<double, List<FlashLFQMzBinElement>>();
 
             var peptideGroups = allIdentifications.GroupBy(p => p.FullSequence).ToList();
             var peptideBaseSeqs = new HashSet<string>(allIdentifications.Select(p => p.BaseSequence));
@@ -526,19 +526,19 @@ namespace FlashLFQ
                     double ceilingMz = Math.Ceiling(t * 100) / 100;
 
                     if (!mzBinsTemplate.ContainsKey(floorMz))
-                        mzBinsTemplate.Add(floorMz, new List<MzBinElement>());
+                        mzBinsTemplate.Add(floorMz, new List<FlashLFQMzBinElement>());
                     if (!mzBinsTemplate.ContainsKey(ceilingMz))
-                        mzBinsTemplate.Add(ceilingMz, new List<MzBinElement>());
+                        mzBinsTemplate.Add(ceilingMz, new List<FlashLFQMzBinElement>());
                 }
             }
         }
 
-        private Dictionary<double, List<MzBinElement>> ConstructLocalBins()
+        private Dictionary<double, List<FlashLFQMzBinElement>> ConstructLocalBins()
         {
-            return mzBinsTemplate.ToDictionary(v => v.Key, v => new List<MzBinElement>());
+            return mzBinsTemplate.ToDictionary(v => v.Key, v => new List<FlashLFQMzBinElement>());
         }
 
-        private List<int> FillBinsWithPeaks(Dictionary<double, List<MzBinElement>> mzBins, IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file)
+        private List<int> FillBinsWithPeaks(Dictionary<double, List<FlashLFQMzBinElement>> mzBins, IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file)
         {
             var allMs1Scans = new List<IMsDataScan<IMzSpectrum<IMzPeak>>>();
 
@@ -616,21 +616,21 @@ namespace FlashLFQ
 
                     if (signalToBackgroundRatio > signalToBackgroundRequired)
                     {
-                        List<MzBinElement> mzBin;
-                        MzBinElement element = null;
+                        List<FlashLFQMzBinElement> mzBin;
+                        FlashLFQMzBinElement element = null;
                         double floorMz = Math.Floor(peak.Mz * 100) / 100;
                         double ceilingMz = Math.Ceiling(peak.Mz * 100) / 100;
 
                         if (mzBins.TryGetValue(floorMz, out mzBin))
                         {
-                            element = new MzBinElement(peak, scan, backgroundForThisScan, peakIndexInThisScan);
+                            element = new FlashLFQMzBinElement(peak, scan, backgroundForThisScan, peakIndexInThisScan);
                             mzBin.Add(element);
                         }
 
                         if (mzBins.TryGetValue(ceilingMz, out mzBin))
                         {
                             if (element == null)
-                                element = new MzBinElement(peak, scan, backgroundForThisScan, peakIndexInThisScan);
+                                element = new FlashLFQMzBinElement(peak, scan, backgroundForThisScan, peakIndexInThisScan);
                             mzBin.Add(element);
                         }
                     }
@@ -642,7 +642,7 @@ namespace FlashLFQ
             return ms1ScanNumbers;
         }
 
-        private List<Feature> MainFileSearch(string fileName, Dictionary<double, List<MzBinElement>> mzBins, List<int> ms1ScanNumbers)
+        private List<FlashLFQFeature> MainFileSearch(string fileName, Dictionary<double, List<FlashLFQMzBinElement>> mzBins, List<int> ms1ScanNumbers)
         {
             var groups = allIdentifications.GroupBy(p => p.fileName);
             var identificationsForThisFile = groups.Where(p => p.Key.Equals(fileName)).FirstOrDefault();
@@ -650,7 +650,7 @@ namespace FlashLFQ
                 return null;
 
             var identifications = identificationsForThisFile.ToList();
-            var concurrentBagOfFeatures = new ConcurrentBag<Feature>();
+            var concurrentBagOfFeatures = new ConcurrentBag<FlashLFQFeature>();
 
             Parallel.ForEach(Partitioner.Create(0, identifications.Count),
                 new ParallelOptions { MaxDegreeOfParallelism = maxDegreesOfParallelism },
@@ -659,7 +659,7 @@ namespace FlashLFQ
                     for (int i = range.Item1; i < range.Item2; i++)
                     {
                         var identification = identifications[i];
-                        Feature msmsFeature = new Feature();
+                        FlashLFQFeature msmsFeature = new FlashLFQFeature();
                         msmsFeature.identifyingScans.Add(identification);
                         msmsFeature.isMbrFeature = false;
 
@@ -671,8 +671,8 @@ namespace FlashLFQ
                             double floorMz = Math.Floor(theorMzHere * 100) / 100;
                             double ceilingMz = Math.Ceiling(theorMzHere * 100) / 100;
 
-                            IEnumerable<MzBinElement> binPeaks = new List<MzBinElement>();
-                            List<MzBinElement> t;
+                            IEnumerable<FlashLFQMzBinElement> binPeaks = new List<FlashLFQMzBinElement>();
+                            List<FlashLFQMzBinElement> t;
                             if (mzBins.TryGetValue(floorMz, out t))
                                 binPeaks = binPeaks.Concat(t);
                             if (mzBins.TryGetValue(ceilingMz, out t))
@@ -705,7 +705,7 @@ namespace FlashLFQ
                                     validPeaks = FilterPeaksByIsotopicDistribution(validPeaks, identification, chargeState);
 
                                     foreach (var validPeak in validPeaks)
-                                        msmsFeature.isotopeClusters.Add(new IsotopeCluster(validPeak, chargeState));
+                                        msmsFeature.isotopeClusters.Add(new FlashLFQIsotopeCluster(validPeak, chargeState));
                                 }
                             }
                         }
@@ -720,10 +720,10 @@ namespace FlashLFQ
             return concurrentBagOfFeatures.ToList();
         }
 
-        private void MatchBetweenRuns(string thisFileName, Dictionary<double, List<MzBinElement>> mzBins, List<Feature> features)
+        private void MatchBetweenRuns(string thisFileName, Dictionary<double, List<FlashLFQMzBinElement>> mzBins, List<FlashLFQFeature> features)
         {
-            var concurrentBagOfMatchedFeatures = new ConcurrentBag<Feature>();
-            var identificationsFromOtherRunsToLookFor = new List<Identification>();
+            var concurrentBagOfMatchedFeatures = new ConcurrentBag<FlashLFQFeature>();
+            var identificationsFromOtherRunsToLookFor = new List<FlashLFQIdentification>();
             var idsGroupedByFullSeq = allIdentifications.GroupBy(p => p.FullSequence);
 
             foreach (var fullSequenceGroup in idsGroupedByFullSeq)
@@ -743,7 +743,7 @@ namespace FlashLFQ
                     {
                         var identification = identificationsFromOtherRunsToLookFor[i];
 
-                        Feature mbrFeature = new Feature();
+                        FlashLFQFeature mbrFeature = new FlashLFQFeature();
                         mbrFeature.identifyingScans.Add(identification);
                         mbrFeature.isMbrFeature = true;
                         mbrFeature.fileName = thisFileName;
@@ -756,8 +756,8 @@ namespace FlashLFQ
                             double floorMz = Math.Floor(theorMzHere * 100) / 100;
                             double ceilingMz = Math.Ceiling(theorMzHere * 100) / 100;
 
-                            IEnumerable<MzBinElement> binPeaks = new List<MzBinElement>();
-                            List<MzBinElement> t;
+                            IEnumerable<FlashLFQMzBinElement> binPeaks = new List<FlashLFQMzBinElement>();
+                            List<FlashLFQMzBinElement> t;
                             if (mzBins.TryGetValue(floorMz, out t))
                                 binPeaks = binPeaks.Concat(t);
                             if (mzBins.TryGetValue(ceilingMz, out t))
@@ -777,7 +777,7 @@ namespace FlashLFQ
                                 double apexIntensity = binPeaksHere.Select(p => p.backgroundSubtractedIntensity).Max();
                                 var mbrApexPeak = binPeaksHere.Where(p => p.backgroundSubtractedIntensity == apexIntensity).First();
                                 
-                                mbrFeature.isotopeClusters.Add(new IsotopeCluster(mbrApexPeak, chargeState));
+                                mbrFeature.isotopeClusters.Add(new FlashLFQIsotopeCluster(mbrApexPeak, chargeState));
                             }
                         }
 
@@ -793,7 +793,7 @@ namespace FlashLFQ
             features.AddRange(concurrentBagOfMatchedFeatures);
         }
 
-        private void RunErrorChecking(List<Feature> features)
+        private void RunErrorChecking(List<FlashLFQFeature> features)
         {
             var featuresWithSamePeak = features.Where(v => v.intensity != 0).GroupBy(p => p.apexPeak.peakWithScan);
             featuresWithSamePeak = featuresWithSamePeak.Where(p => p.Count() > 1);
@@ -837,22 +837,22 @@ namespace FlashLFQ
             }
         }
 
-        private IOrderedEnumerable<SummedFeatureGroup> SumFeatures(IEnumerable<Feature> features)
+        private IOrderedEnumerable<FlashLFQSummedFeatureGroup> SumFeatures(IEnumerable<FlashLFQFeature> features)
         {
-            List<SummedFeatureGroup> returnList = new List<SummedFeatureGroup>();
+            List<FlashLFQSummedFeatureGroup> returnList = new List<FlashLFQSummedFeatureGroup>();
 
-            var baseSeqToFeatureMatch = new Dictionary<string, List<Feature>>();
+            var baseSeqToFeatureMatch = new Dictionary<string, List<FlashLFQFeature>>();
             foreach (var feature in features)
             {
                 var baseSeqs = feature.identifyingScans.GroupBy(p => p.BaseSequence);
 
                 foreach (var seq in baseSeqs)
                 {
-                    List<Feature> featuresForThisBaseSeq;
+                    List<FlashLFQFeature> featuresForThisBaseSeq;
                     if (baseSeqToFeatureMatch.TryGetValue(seq.Key, out featuresForThisBaseSeq))
                         featuresForThisBaseSeq.Add(feature);
                     else
-                        baseSeqToFeatureMatch.Add(seq.Key, new List<Feature>() { feature });
+                        baseSeqToFeatureMatch.Add(seq.Key, new List<FlashLFQFeature>() { feature });
                 }
             }
 
@@ -885,15 +885,15 @@ namespace FlashLFQ
                         identificationType[i] = "";
                 }
 
-                returnList.Add(new SummedFeatureGroup(sequence.Key, intensitiesByFile, identificationType));
+                returnList.Add(new FlashLFQSummedFeatureGroup(sequence.Key, intensitiesByFile, identificationType));
             }
 
             return returnList.OrderBy(p => p.BaseSequence);
         }
 
-        private IEnumerable<MzBinElement> FilterPeaksByIsotopicDistribution(IEnumerable<MzBinElement> peaks, Identification identification, int chargeState)
+        private IEnumerable<FlashLFQMzBinElement> FilterPeaksByIsotopicDistribution(IEnumerable<FlashLFQMzBinElement> peaks, FlashLFQIdentification identification, int chargeState)
         {
-            var goodPeaks = new List<MzBinElement>();
+            var goodPeaks = new List<FlashLFQMzBinElement>();
 
             foreach (var thisPeakWithScan in peaks)
             {
@@ -988,9 +988,9 @@ namespace FlashLFQ
             return goodPeaks;
         }
 
-        private IEnumerable<MzBinElement> ScanCrawl(IOrderedEnumerable<MzBinElement> peaksWithScans, int missedScansAllowed, int startingMS1ScanNumber, List<int> ms1ScanNumbers)
+        private IEnumerable<FlashLFQMzBinElement> ScanCrawl(IOrderedEnumerable<FlashLFQMzBinElement> peaksWithScans, int missedScansAllowed, int startingMS1ScanNumber, List<int> ms1ScanNumbers)
         {
-            var validPeaksWithScans = new List<MzBinElement>();
+            var validPeaksWithScans = new List<FlashLFQMzBinElement>();
 
             int lastGoodIndex = ms1ScanNumbers.IndexOf(startingMS1ScanNumber);
             int ms1IndexHere = lastGoodIndex - 1;

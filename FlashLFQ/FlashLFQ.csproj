@@ -100,14 +100,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Feature.cs" />
-    <Compile Include="FlashLfqEngine.cs" />
-    <Compile Include="Identification.cs" />
-    <Compile Include="IsotopeCluster.cs" />
-    <Compile Include="MzBinElement.cs" />
+    <Compile Include="FlashLFQFeature.cs" />
+    <Compile Include="FlashLFQEngine.cs" />
+    <Compile Include="FlashLFQIdentification.cs" />
+    <Compile Include="FlashLFQIsotopeCluster.cs" />
+    <Compile Include="FlashLFQMzBinElement.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ProteinGroup.cs" />
-    <Compile Include="SummedFeatureGroup.cs" />
+    <Compile Include="FlashLFQProteinGroup.cs" />
+    <Compile Include="FlashLFQSummedFeatureGroup.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -2,7 +2,7 @@
 
 namespace FlashLFQ
 {
-    class MzBinElement
+    public class FlashLFQMzBinElement
     {
         public readonly IMzPeak mainPeak;
         public IMsDataScan<IMzSpectrum<IMzPeak>> scan { get; private set; }
@@ -13,7 +13,7 @@ namespace FlashLFQ
         public readonly double retentionTime;
         public readonly int oneBasedScanNumber;
 
-        public MzBinElement(IMzPeak peak, IMsDataScan<IMzSpectrum<IMzPeak>> scan, double backgroundIntensity, int index)
+        public FlashLFQMzBinElement(IMzPeak peak, IMsDataScan<IMzSpectrum<IMzPeak>> scan, double backgroundIntensity, int index)
         {
             mainPeak = peak;
             this.scan = scan;

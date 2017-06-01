@@ -1,11 +1,11 @@
 ﻿namespace FlashLFQ
 {
-    class IsotopeCluster
+    public class FlashLFQIsotopeCluster
     {
-        public readonly MzBinElement peakWithScan;
+        public readonly FlashLFQMzBinElement peakWithScan;
         public readonly int chargeState;
 
-        public IsotopeCluster(MzBinElement peakWithScan, int chargeState)
+        public FlashLFQIsotopeCluster(FlashLFQMzBinElement peakWithScan, int chargeState)
         {
             this.peakWithScan = peakWithScan;
             this.chargeState = chargeState;

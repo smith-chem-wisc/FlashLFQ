@@ -6,23 +6,23 @@ using System.Text;
 
 namespace FlashLFQ
 {
-    class Feature
+    public class FlashLFQFeature
     {
         public double intensity;
-        public IsotopeCluster apexPeak;
+        public FlashLFQIsotopeCluster apexPeak;
         public bool isMbrFeature;
         public string fileName = "";
-        public List<Identification> identifyingScans;
-        public List<IsotopeCluster> isotopeClusters;
+        public List<FlashLFQIdentification> identifyingScans;
+        public List<FlashLFQIsotopeCluster> isotopeClusters;
         public int numIdentificationsByBaseSeq { get; private set; }
         public int numIdentificationsByFullSeq { get; private set; }
 
-        public Feature()
+        public FlashLFQFeature()
         {
             numIdentificationsByBaseSeq = 1;
             numIdentificationsByFullSeq = 1;
-            identifyingScans = new List<Identification>();
-            isotopeClusters = new List<IsotopeCluster>();
+            identifyingScans = new List<FlashLFQIdentification>();
+            isotopeClusters = new List<FlashLFQIsotopeCluster>();
         }
 
         public void CalculateIntensityForThisFeature(string fileName, bool integrate)
@@ -56,7 +56,7 @@ namespace FlashLFQ
             }
         }
 
-        public void MergeFeatureWith(IEnumerable<Feature> otherFeatures)
+        public void MergeFeatureWith(IEnumerable<FlashLFQFeature> otherFeatures)
         {
             foreach (var feature in otherFeatures)
             {

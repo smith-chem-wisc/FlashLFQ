@@ -1,17 +1,17 @@
 ﻿namespace FlashLFQ
 {
-    class Identification
+    public class FlashLFQIdentification
     {
         public readonly string BaseSequence;
         public readonly string FullSequence;
         public readonly double ms2RetentionTime;
         public readonly double monoisotopicMass;
         public readonly int initialChargeState;
-        public ProteinGroup proteinGroup;
+        public FlashLFQProteinGroup proteinGroup;
         public double massToLookFor;
         public string fileName = "";
 
-        public Identification(string[] input)
+        public FlashLFQIdentification(string[] input)
         {
             fileName = input[0];
             BaseSequence = input[1];
