@@ -1,5 +1,3 @@
-C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\bin\Debug\FlashLFQ.exe.config
-C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\bin\Debug\FlashLFQ.exe
 C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\bin\Debug\FlashLFQ.pdb
 C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\bin\Debug\Chemistry.dll
 C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\bin\Debug\ManagedThermoHelperLayer.dll
@@ -15,6 +13,8 @@ C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\bin\Debug\UsefulProteomicsData
 C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\bin\Debug\Zlib.Portable.dll
 C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\bin\Debug\MathNet.Numerics.xml
 C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\bin\Debug\Zlib.Portable.xml
-C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\obj\Debug\FlashLFQ.exe
 C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\obj\Debug\FlashLFQ.pdb
 C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\obj\Debug\FlashLFQ.csprojResolveAssemblyReference.cache
+C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\bin\Debug\FlashLFQ.dll.config
+C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\bin\Debug\FlashLFQ.dll
+C:\Users\rmillikin\Source\Repos\FlashLFQ\FlashLFQ\obj\Debug\FlashLFQ.dll

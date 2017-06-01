@@ -13,7 +13,7 @@ using UsefulProteomicsDatabases;
 
 namespace FlashLFQ
 {
-    class FlashLfqEngine
+    public class FlashLfqEngine
     {
         // file info stuff
         private string identificationsFilePath;

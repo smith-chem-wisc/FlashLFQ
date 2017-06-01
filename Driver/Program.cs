@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using UsefulProteomicsDatabases;
 
 namespace FlashLFQ
 {
@@ -20,10 +19,9 @@ namespace FlashLFQ
                 return;
 
             engine.ConstructBinsFromIdentifications();
-            
-            
-            Parallel.For(0, engine.filePaths.Length, 
-                new ParallelOptions { MaxDegreeOfParallelism = engine.maxParallelFiles }, 
+
+            Parallel.For(0, engine.filePaths.Length,
+                new ParallelOptions { MaxDegreeOfParallelism = engine.maxParallelFiles },
                 fileNumber =>
                 {
                     engine.Quantify(fileNumber);
@@ -31,7 +29,7 @@ namespace FlashLFQ
                 }
             );
 
-            if(engine.mbr)
+            if (engine.mbr)
                 engine.RetentionTimeCalibrationAndErrorCheckMatchedFeatures();
 
             engine.QuantifyProteins();
