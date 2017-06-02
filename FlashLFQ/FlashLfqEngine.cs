@@ -24,6 +24,7 @@ namespace FlashLFQ
         private List<FlashLFQFeature>[] allFeaturesByFile;
         private Dictionary<double, List<FlashLFQMzBinElement>> mzBinsTemplate;
         private Dictionary<string, List<KeyValuePair<double, double>>> baseSequenceToIsotopicDistribution;
+        private Dictionary<string, FlashLFQProteinGroup> pepToProteinGroupDictionary;
         private string[] featureOutputHeader;
 
         // settings
@@ -51,6 +52,7 @@ namespace FlashLFQ
         {
             allIdentifications = new List<FlashLFQIdentification>();
             baseSequenceToIsotopicDistribution = new Dictionary<string, List<KeyValuePair<double, double>>>();
+            pepToProteinGroupDictionary = new Dictionary<string, FlashLFQProteinGroup>();
 
             // default parameters
             signalToBackgroundRequired = 5.0;
@@ -138,6 +140,7 @@ namespace FlashLFQ
                 }
             }
 
+            /*
             if (filePaths.Length == 0)
             {
                 if (!silent)
@@ -148,9 +151,15 @@ namespace FlashLFQ
                 }
                 return false;
             }
+            */
 
             allFeaturesByFile = new List<FlashLFQFeature>[filePaths.Length];
             return true;
+        }
+
+        public void PassFilePaths(string[] paths)
+        {
+            filePaths = paths.Distinct().ToArray();
         }
 
         public bool ReadPeriodicTable()
@@ -174,8 +183,6 @@ namespace FlashLFQ
 
         public bool ReadIdentificationsFromTSV()
         {
-            var pepToProteinGroupDictionary = new Dictionary<string, FlashLFQProteinGroup>();
-
             // read identification file
             if (!silent)
                 Console.WriteLine("Opening " + identificationsFilePath);
@@ -229,7 +236,15 @@ namespace FlashLFQ
                     try
                     {
                         var param = line.Split(delimiters);
-                        var ident = new FlashLFQIdentification(param);
+
+                        string fileName = param[0];
+                        string BaseSequence = param[1];
+                        string FullSequence = param[2];
+                        double monoisotopicMass = double.Parse(param[3]);
+                        double ms2RetentionTime = double.Parse(param[4]);
+                        int chargeState = int.Parse(param[5]);
+
+                        var ident = new FlashLFQIdentification(fileName, BaseSequence, FullSequence, monoisotopicMass, ms2RetentionTime, chargeState);
                         allIdentifications.Add(ident);
 
                         FlashLFQProteinGroup pg;
@@ -400,6 +415,21 @@ namespace FlashLFQ
             }
         }
 
+        public void AddIdentification(string fileName, string BaseSequence, string FullSequence, double monoisotopicMass, double ms2RetentionTime, int chargeState, string proteinGroupName)
+        {
+            var ident = new FlashLFQIdentification(fileName, BaseSequence, FullSequence, monoisotopicMass, ms2RetentionTime, chargeState);
+
+            FlashLFQProteinGroup pg;
+            if (pepToProteinGroupDictionary.TryGetValue(proteinGroupName, out pg))
+                ident.proteinGroup = pg;
+            else
+            {
+                pg = new FlashLFQProteinGroup(proteinGroupName);
+                pepToProteinGroupDictionary.Add(proteinGroupName, pg);
+                ident.proteinGroup = pg;
+            }
+        }
+
         private IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> ReadMSFile(int fileIndex)
         {
             var massSpecFileFormat = filePaths[fileIndex].Substring(filePaths[fileIndex].IndexOf('.')).ToUpper();
@@ -499,8 +529,8 @@ namespace FlashLFQ
                 baseSequenceToIsotopicDistribution.Add(baseSeq, isotopicMassesAndNormalizedAbundances);
             }
 
-            var minChargeState = allIdentifications.Select(p => p.initialChargeState).Min();
-            var maxChargeState = allIdentifications.Select(p => p.initialChargeState).Max();
+            var minChargeState = allIdentifications.Select(p => p.chargeState).Min();
+            var maxChargeState = allIdentifications.Select(p => p.chargeState).Max();
             chargeStates = Enumerable.Range(minChargeState, maxChargeState - 1);
 
             // build theoretical m/z bins
