@@ -78,8 +78,8 @@ namespace FlashLFQ
             sb.Append(string.Join("|", identifyingScans.Select(p => p.FullSequence).Distinct()) + '\t');
             sb.Append("" + identifyingScans.First().monoisotopicMass + '\t');
             sb.Append("" + identifyingScans.First().ms2RetentionTime + '\t');
-            sb.Append("" + identifyingScans.First().initialChargeState + '\t');
-            sb.Append("" + ClassExtensions.ToMz(identifyingScans.First().monoisotopicMass, identifyingScans.First().initialChargeState) + '\t');
+            sb.Append("" + identifyingScans.First().chargeState + '\t');
+            sb.Append("" + ClassExtensions.ToMz(identifyingScans.First().monoisotopicMass, identifyingScans.First().chargeState) + '\t');
             sb.Append("" + intensity + "\t");
 
             if (apexPeak != null)
