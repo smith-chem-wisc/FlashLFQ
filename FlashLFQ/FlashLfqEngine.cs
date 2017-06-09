@@ -21,7 +21,7 @@ namespace FlashLFQ
 
         // structures used in the FlashLFQ program
         private List<FlashLFQIdentification> allIdentifications;
-        private List<FlashLFQFeature>[] allFeaturesByFile;
+        public List<FlashLFQFeature>[] allFeaturesByFile { get; private set; }
         private Dictionary<double, List<FlashLFQMzBinElement>> mzBinsTemplate;
         private Dictionary<string, List<KeyValuePair<double, double>>> baseSequenceToIsotopicDistribution;
         private Dictionary<string, FlashLFQProteinGroup> pepToProteinGroupDictionary;
@@ -428,6 +428,8 @@ namespace FlashLFQ
                 pepToProteinGroupDictionary.Add(proteinGroupName, pg);
                 ident.proteinGroup = pg;
             }
+
+            allIdentifications.Add(ident);
         }
 
         private IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> ReadMSFile(int fileIndex)
