@@ -742,7 +742,7 @@ namespace FlashLFQ
 
             var identifications = identificationsForThisFile.ToList();
             var concurrentBagOfFeatures = new ConcurrentBag<FlashLFQFeature>();
-
+            
             
             Parallel.ForEach(Partitioner.Create(0, identifications.Count),
                 new ParallelOptions { MaxDegreeOfParallelism = maxDegreesOfParallelism },
@@ -1006,6 +1006,7 @@ namespace FlashLFQ
         private IEnumerable<FlashLFQIsotopeCluster> FilterPeaksByIsotopicDistribution(IEnumerable<FlashLFQMzBinElement> peaks, FlashLFQIdentification identification, int chargeState)
         {
             var isotopeClusters = new List<FlashLFQIsotopeCluster>();
+            //numIsotopesToLookFor = baseSequenceToIsotopicDistribution[identification.BaseSequence].Count;
 
             foreach (var thisPeakWithScan in peaks)
             {
@@ -1045,7 +1046,7 @@ namespace FlashLFQ
 
 
 
-                
+                /*
                 bool badPeak = false;
                 double tol = (isotopePpmTolerance / 1e6) * theorIsotopeMz;
                 double prevIsotopePeakMz = (mainpeakMz - (1.003322 / chargeState));
@@ -1062,11 +1063,11 @@ namespace FlashLFQ
                 
                 if (badPeak)
                     continue;
-
+                */
 
 
                 // isotopic distribution check
-                bool isotopeDistributionCheck = true;
+                bool isotopeDistributionCheck = false;
                 foreach (var possibleIsotopePeak in possibleIsotopePeaks)
                 {
                     if (Math.Abs(possibleIsotopePeak.Mz - theorIsotopeMz) < isotopeMzTol)
@@ -1095,8 +1096,8 @@ namespace FlashLFQ
                                     requiredIsotopeSeen[i] = false;
                             }
 
-                            if (requiredIsotopeSeen.Where(p => p.Equals(false)).Any())
-                                isotopeDistributionCheck = false;
+                            if (requiredIsotopeSeen.Where(p => p.Equals(true)).Count() == numIsotopesRequired)
+                                isotopeDistributionCheck = true;
                         }
                     }
                 }

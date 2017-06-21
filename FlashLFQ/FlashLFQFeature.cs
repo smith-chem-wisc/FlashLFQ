@@ -108,6 +108,9 @@ namespace FlashLFQ
                 sb.Append("" + "-" + "\t");
                 sb.Append("" + "-" + "\t");
                 sb.Append("" + "-" + "\t");
+
+                sb.Append("" + "-" + "\t");
+                sb.Append("" + "-" + "\t");
                 sb.Append("" + 0 + "\t");
             }
             
