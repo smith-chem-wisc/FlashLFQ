@@ -4,11 +4,13 @@
     {
         public readonly FlashLFQMzBinElement peakWithScan;
         public readonly int chargeState;
+        public double isotopeClusterIntensity;
 
-        public FlashLFQIsotopeCluster(FlashLFQMzBinElement peakWithScan, int chargeState)
+        public FlashLFQIsotopeCluster(FlashLFQMzBinElement monoisotopicPeak, int chargeState, double intensity)
         {
-            this.peakWithScan = peakWithScan;
+            this.peakWithScan = monoisotopicPeak;
             this.chargeState = chargeState;
+            this.isotopeClusterIntensity = intensity;
         }
     }
 }

@@ -30,18 +30,28 @@ namespace FlashLFQ
             this.fileName = fileName;
             if (isotopeClusters.Any())
             {
-                double featureApexIntensity = isotopeClusters.Select(p => p.peakWithScan.backgroundSubtractedIntensity).Max();
-                apexPeak = isotopeClusters.Where(p => p.peakWithScan.backgroundSubtractedIntensity == featureApexIntensity).FirstOrDefault();
+                double featureApexIntensity = isotopeClusters.Select(p => p.isotopeClusterIntensity).Max();
+                apexPeak = isotopeClusters.Where(p => p.isotopeClusterIntensity == featureApexIntensity).FirstOrDefault();
 
                 // apex intensity
                 if (!integrate)
+                {
+                    /*
+                    var peaksGroupedByChargeState = isotopeClusters.GroupBy(p => p.chargeState);
+
+                    foreach (var chargeState in peaksGroupedByChargeState)
+                        intensity += chargeState.Select(p => p.isotopeClusterIntensity).Max();
+                    */
+
                     intensity = featureApexIntensity;
+                }
                 
                 // integrate, calculate half max
                 if (integrate)
                 {
-                    //intensity = isotopeClusters.Select(p => p.peakWithScan.backgroundSubtractedIntensity).Sum();
+                    intensity = isotopeClusters.Select(p => p.isotopeClusterIntensity).Sum();
 
+                    /*
                     var peaksGroupedByChargeState = isotopeClusters.GroupBy(p => p.chargeState);
 
                     foreach (var chargeState in peaksGroupedByChargeState)
@@ -52,6 +62,7 @@ namespace FlashLFQ
                             intensity += ((peaksList[i].peakWithScan.backgroundSubtractedIntensity + peaksList[i - 1].peakWithScan.backgroundSubtractedIntensity) / 2.0) * (peaksList[i].peakWithScan.retentionTime - peaksList[i - 1].peakWithScan.retentionTime);
                         }
                     }
+                    */
                 }
             }
         }
