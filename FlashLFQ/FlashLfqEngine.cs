@@ -46,7 +46,6 @@ namespace FlashLFQ
         private double mbrSbrFilter;
         private double mbrppmTolerance;
         private bool errorCheckAmbiguousMatches;
-        private int numIsotopesToLookFor;
 
         public bool mbr { get; private set; }
         private double sbrFilter;
@@ -72,8 +71,7 @@ namespace FlashLFQ
             initialRTWindow = 0.4;
             missedScansAllowed = 1;
             numIsotopesRequired = 2;
-            numIsotopesToLookFor = 2;
-            rtTol = 10.0;
+            rtTol = 5.0;
             silent = false;
             pause = true;
             errorCheckAmbiguousMatches = true;
@@ -489,7 +487,7 @@ namespace FlashLFQ
                 {
                     file = ThermoDynamicData.InitiateDynamicConnection(filePaths[fileIndex]);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     if (!silent)
                     {
@@ -743,7 +741,6 @@ namespace FlashLFQ
             var identifications = identificationsForThisFile.ToList();
             var concurrentBagOfFeatures = new ConcurrentBag<FlashLFQFeature>();
             
-            
             Parallel.ForEach(Partitioner.Create(0, identifications.Count),
                 new ParallelOptions { MaxDegreeOfParallelism = maxDegreesOfParallelism },
                 (range, loopState) =>
@@ -768,11 +765,11 @@ namespace FlashLFQ
                             double ceilingMz = Math.Ceiling(theorMzHere * 100) / 100;
 
                             IEnumerable<FlashLFQMzBinElement> binPeaks = new List<FlashLFQMzBinElement>();
-                            List<FlashLFQMzBinElement> t;
-                            if (mzBins.TryGetValue(floorMz, out t))
-                                binPeaks = binPeaks.Concat(t);
-                            if (mzBins.TryGetValue(ceilingMz, out t))
-                                binPeaks = binPeaks.Concat(t);
+                            List<FlashLFQMzBinElement> list;
+                            if (mzBins.TryGetValue(floorMz, out list))
+                                binPeaks = binPeaks.Concat(list);
+                            if (mzBins.TryGetValue(ceilingMz, out list))
+                                binPeaks = binPeaks.Concat(list);
 
                             // filter by mz tolerance
                             var binPeaksHere = binPeaks.Where(p => Math.Abs(p.mainPeak.Mz - theorMzHere) < mzTolHere);
@@ -781,11 +778,11 @@ namespace FlashLFQ
 
                             if (binPeaksHere.Any())
                             {
-                                var temp = binPeaksHere.Where(p => p.retentionTime - identification.ms2RetentionTime < 0).Select(p => p.retentionTime - identification.ms2RetentionTime);
+                                var prevPeaks = binPeaksHere.Where(p => p.retentionTime - identification.ms2RetentionTime < 0).Select(p => p.retentionTime - identification.ms2RetentionTime);
                                 double bestRTDifference;
 
-                                if (temp.Any())
-                                    bestRTDifference = Math.Abs(temp.Max());
+                                if (prevPeaks.Any())
+                                    bestRTDifference = Math.Abs(prevPeaks.Max());
                                 else
                                     bestRTDifference = bestRTDifference = binPeaksHere.Select(p => Math.Abs(p.retentionTime - identification.ms2RetentionTime)).Min();
                                 
@@ -808,7 +805,7 @@ namespace FlashLFQ
                                     var validPeaks = crawledRightPeaks.Concat(crawledLeftPeaks);
 
                                     var validIsotopeClusters = FilterPeaksByIsotopicDistribution(validPeaks, identification, chargeState);
-
+                            
                                     foreach (var validCluster in validIsotopeClusters)
                                         msmsFeature.isotopeClusters.Add(validCluster);
                                 }
@@ -818,7 +815,7 @@ namespace FlashLFQ
                         msmsFeature.CalculateIntensityForThisFeature(fileName, integrate);
                         concurrentBagOfFeatures.Add(msmsFeature);
                     }
-               }
+                }
             );
             
             // merge results from all threads together
@@ -1006,28 +1003,22 @@ namespace FlashLFQ
         private IEnumerable<FlashLFQIsotopeCluster> FilterPeaksByIsotopicDistribution(IEnumerable<FlashLFQMzBinElement> peaks, FlashLFQIdentification identification, int chargeState)
         {
             var isotopeClusters = new List<FlashLFQIsotopeCluster>();
-            //numIsotopesToLookFor = baseSequenceToIsotopicDistribution[identification.BaseSequence].Count;
+            var isotopeMassShifts = baseSequenceToIsotopicDistribution[identification.BaseSequence];
 
             foreach (var thisPeakWithScan in peaks)
             {
-                var isotopeMassShifts = baseSequenceToIsotopicDistribution[identification.BaseSequence];
-                
-                var isotopeMzsToLookFor = new List<double>();
+                // calculate theoretical isotopes
+                var isotopeMzsToLookFor = new double[isotopeMassShifts.Count];
                 var mainpeakMz = thisPeakWithScan.mainPeak.Mz;
-                for (int i = 0; i < numIsotopesToLookFor; i++)
-                {
-                    if ((i + 1) > isotopeMassShifts.Count)
-                        break;
-                    isotopeMzsToLookFor.Add(mainpeakMz + (isotopeMassShifts[i].Key / chargeState));
-                }
-
-                IMzPeak[] isotopePeaks = new IMzPeak[numIsotopesToLookFor];
-
+                for (int i = 0; i < isotopeMassShifts.Count; i++)
+                    isotopeMzsToLookFor[i] = mainpeakMz + (isotopeMassShifts[i].Key / chargeState);
+                isotopeMzsToLookFor = isotopeMzsToLookFor.OrderBy(p => p).ToArray();
+                
                 var lowestMzIsotopePossible = isotopeMzsToLookFor.First();
                 lowestMzIsotopePossible -= (ppmTolerance / 1e6) * lowestMzIsotopePossible;
                 var highestMzIsotopePossible = isotopeMzsToLookFor.Last();
                 highestMzIsotopePossible += (ppmTolerance / 1e6) * highestMzIsotopePossible;
-
+                
                 // get possible isotope peaks from the peak's scan
                 List<IMzPeak> possibleIsotopePeaks = new List<IMzPeak>();
 
@@ -1037,15 +1028,11 @@ namespace FlashLFQ
                         break;
                     possibleIsotopePeaks.Add(thisPeakWithScan.scan.MassSpectrum[i]);
                 }
-
-                isotopeMzsToLookFor = isotopeMzsToLookFor.OrderBy(p => p).ToList();
-
+                
                 int isotopeIndex = 0;
                 double theorIsotopeMz = isotopeMzsToLookFor[0];
                 double isotopeMzTol = (isotopePpmTolerance / 1e6) * isotopeMzsToLookFor[0];
-
-
-
+                
                 /*
                 bool badPeak = false;
                 double tol = (isotopePpmTolerance / 1e6) * theorIsotopeMz;
@@ -1068,6 +1055,7 @@ namespace FlashLFQ
 
                 // isotopic distribution check
                 bool isotopeDistributionCheck = false;
+                IMzPeak[] isotopePeaks = new IMzPeak[isotopeMassShifts.Count];
                 foreach (var possibleIsotopePeak in possibleIsotopePeaks)
                 {
                     if (Math.Abs(possibleIsotopePeak.Mz - theorIsotopeMz) < isotopeMzTol)
@@ -1075,7 +1063,7 @@ namespace FlashLFQ
                         // store the good isotope peak
                         isotopePeaks[isotopeIndex] = possibleIsotopePeak;
 
-                        if (isotopeIndex < isotopeMzsToLookFor.Count - 1)
+                        if (isotopeIndex < isotopeMzsToLookFor.Length - 1)
                         {
                             // look for the next isotope
                             isotopeIndex++;
