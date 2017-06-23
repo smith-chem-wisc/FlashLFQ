@@ -25,7 +25,7 @@ namespace FlashLFQ
         private Dictionary<double, List<FlashLFQMzBinElement>> mzBinsTemplate;
         private Dictionary<string, List<KeyValuePair<double, double>>> baseSequenceToIsotopicDistribution;
         private Dictionary<string, FlashLFQProteinGroup> pepToProteinGroupDictionary;
-        private string[] featureOutputHeader;
+        private string[] header;
 
         // settings
         public bool silent { get; private set; }
@@ -188,6 +188,14 @@ namespace FlashLFQ
 
         public bool ReadIdentificationsFromTSV()
         {
+            int fileNameCol = -1;
+            int baseSequCol = -1;
+            int fullSequCol = -1;
+            int monoMassCol = -1;
+            int msmsRetnCol = -1;
+            int chargeStCol = -1;
+            int protNameCol = -1;
+
             // read identification file
             if (!silent)
                 Console.WriteLine("Opening " + identificationsFilePath);
@@ -235,38 +243,99 @@ namespace FlashLFQ
                 var delimiters = new char[] { '\t' };
 
                 if (lineCount == 1)
-                    featureOutputHeader = line.Split(delimiters);
+                {
+                    header = line.Split(delimiters);
+
+                    // MetaMorpheus MS/MS input
+                    if (header.Contains("File Name")
+                        && header.Contains("Base Sequence")
+                        && header.Contains("Full Sequence")
+                        && header.Contains("Peptide Monoisotopic Mass")
+                        && header.Contains("Scan Retention Time")
+                        && header.Contains("Precursor Charge")
+                        && header.Contains("Protein Accession"))
+                    {
+                        fileNameCol = Array.IndexOf(header, "File Name");
+                        baseSequCol = Array.IndexOf(header, "Base Sequence");
+                        fullSequCol = Array.IndexOf(header, "Full Sequence");
+                        monoMassCol = Array.IndexOf(header, "Peptide Monoisotopic Mass");
+                        msmsRetnCol = Array.IndexOf(header, "Scan Retention Time");
+                        chargeStCol = Array.IndexOf(header, "Precursor Charge");
+                        protNameCol = Array.IndexOf(header, "Protein Accession");
+                    }
+
+                    // Morpheus MS/MS input
+                    if (header.Contains("Filename")
+                        && header.Contains("Base Peptide Sequence")
+                        && header.Contains("Peptide Sequence")
+                        && header.Contains("Theoretical Mass (Da)")
+                        && header.Contains("Retention Time (minutes)")
+                        && header.Contains("Precursor Charge")
+                        && header.Contains("Protein Description"))
+                    {
+                        fileNameCol = Array.IndexOf(header, "Filename");
+                        baseSequCol = Array.IndexOf(header, "Base Peptide Sequence");
+                        fullSequCol = Array.IndexOf(header, "Peptide Sequence");
+                        monoMassCol = Array.IndexOf(header, "Theoretical Mass (Da)");
+                        msmsRetnCol = Array.IndexOf(header, "Retention Time (minutes)");
+                        chargeStCol = Array.IndexOf(header, "Precursor Charge");
+                        protNameCol = Array.IndexOf(header, "Protein Description");
+                    }
+
+                    // MaxQuant MS/MS input
+                    if (header.Contains("Raw file")
+                        && header.Contains("Sequence")
+                        && header.Contains("Modified sequence")
+                        && header.Contains("Mass")
+                        && header.Contains("Retention time")
+                        && header.Contains("Charge")
+                        && header.Contains("Proteins"))
+                    {
+                        fileNameCol = Array.IndexOf(header, "Raw file");
+                        baseSequCol = Array.IndexOf(header, "Sequence");
+                        fullSequCol = Array.IndexOf(header, "Modified sequence");
+                        monoMassCol = Array.IndexOf(header, "Mass");
+                        msmsRetnCol = Array.IndexOf(header, "Retention time");
+                        chargeStCol = Array.IndexOf(header, "Charge");
+                        protNameCol = Array.IndexOf(header, "Proteins");
+                    }
+
+                    // other search engines
+
+                    // can't parse file
+                    if (fileNameCol == -1)
+                    {
+                        if (!silent)
+                        {
+                            Console.WriteLine("File is improperly formatted");
+                            Console.ReadKey();
+                        }
+                        return false;
+                    }
+                }
                 else
                 {
                     try
                     {
-                        int fileNameColIndex = 0;
-                        int baseSeqColIndex = 3;
-                        int modSeqColIndex = 7;
-                        int massColIndex = 22;
-                        int ms2RtColIndex = 25;
-                        int chargeStateColIndex = 15;
-                        int proteinColIndex = 12;
-
                         var param = line.Split(delimiters);
 
-                        string fileName = param[fileNameColIndex];
-                        string BaseSequence = param[baseSeqColIndex];
-                        string ModSequence = param[modSeqColIndex];
-                        double monoisotopicMass = double.Parse(param[massColIndex]);
-                        double ms2RetentionTime = double.Parse(param[ms2RtColIndex]);
-                        int chargeState = int.Parse(param[chargeStateColIndex]);
+                        string fileName = param[fileNameCol];
+                        string BaseSequence = param[baseSequCol];
+                        string ModSequence = param[fullSequCol];
+                        double monoisotopicMass = double.Parse(param[monoMassCol]);
+                        double ms2RetentionTime = double.Parse(param[msmsRetnCol]);
+                        int chargeState = int.Parse(param[chargeStCol]);
 
                         var ident = new FlashLFQIdentification(fileName, BaseSequence, ModSequence, monoisotopicMass, ms2RetentionTime, chargeState);
                         allIdentifications.Add(ident);
 
                         FlashLFQProteinGroup pg;
-                        if (pepToProteinGroupDictionary.TryGetValue(param[proteinColIndex], out pg))
+                        if (pepToProteinGroupDictionary.TryGetValue(param[protNameCol], out pg))
                             ident.proteinGroup = pg;
                         else
                         {
-                            pg = new FlashLFQProteinGroup(param[proteinColIndex]);
-                            pepToProteinGroupDictionary.Add(param[proteinColIndex], pg);
+                            pg = new FlashLFQProteinGroup(param[protNameCol]);
+                            pepToProteinGroupDictionary.Add(param[protNameCol], pg);
                             ident.proteinGroup = pg;
                         }
                     }
@@ -378,8 +447,8 @@ namespace FlashLFQ
                 var t = allFeatures.Where(p => p.identifyingScans.First().BaseSequence.Equals("NLEEFFAR"));
 
                 // write features
-                featureOutputHeader = new string[] { "feature header test" };
-                List<string> featureOutput = new List<string> { string.Join("\t", featureOutputHeader) };
+                header = new string[] { "feature header test" };
+                List<string> featureOutput = new List<string> { string.Join("\t", header) };
                 featureOutput = featureOutput.Concat(allFeatures.Select(v => v.ToString())).ToList();
                 File.WriteAllLines(identificationFilePathNoExtention + "_FlashQuant_Features.tsv", featureOutput);
 
