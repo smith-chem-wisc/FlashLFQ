@@ -571,8 +571,8 @@ namespace FlashLFQ
                     // normalized abundance of each mass shift
                     abundances[i] /= highestAbundance;
 
-                    // if normalized abundance is higher than 20%, check for this peak in the data
-                    if (abundances[i] > 0.2)
+                    // look for these isotopes
+                    if (i < (numIsotopesRequired - 1) || abundances[i] > 0.1)
                         isotopicMassesAndNormalizedAbundances.Add(new KeyValuePair<double, double>(masses[i], abundances[i]));
                 }
 
@@ -1018,18 +1018,21 @@ namespace FlashLFQ
             var isotopeClusters = new List<FlashLFQIsotopeCluster>();
             var isotopeMassShifts = baseSequenceToIsotopicDistribution[identification.BaseSequence];
 
+            if (isotopeMassShifts.Count < numIsotopesRequired)
+                return isotopeClusters;
+
             foreach (var thisPeakWithScan in peaks)
             {
                 // calculate theoretical isotopes
-                var isotopeMzsToLookFor = new double[isotopeMassShifts.Count];
+                var theorIsotopeMzs = new double[isotopeMassShifts.Count];
                 var mainpeakMz = thisPeakWithScan.mainPeak.Mz;
                 for (int i = 0; i < isotopeMassShifts.Count; i++)
-                    isotopeMzsToLookFor[i] = mainpeakMz + (isotopeMassShifts[i].Key / chargeState);
-                isotopeMzsToLookFor = isotopeMzsToLookFor.OrderBy(p => p).ToArray();
+                    theorIsotopeMzs[i] = mainpeakMz + (isotopeMassShifts[i].Key / chargeState);
+                theorIsotopeMzs = theorIsotopeMzs.OrderBy(p => p).ToArray();
                 
-                var lowestMzIsotopePossible = isotopeMzsToLookFor.First();
+                var lowestMzIsotopePossible = theorIsotopeMzs.First();
                 lowestMzIsotopePossible -= (ppmTolerance / 1e6) * lowestMzIsotopePossible;
-                var highestMzIsotopePossible = isotopeMzsToLookFor.Last();
+                var highestMzIsotopePossible = theorIsotopeMzs.Last();
                 highestMzIsotopePossible += (ppmTolerance / 1e6) * highestMzIsotopePossible;
                 
                 // get possible isotope peaks from the peak's scan
@@ -1043,8 +1046,8 @@ namespace FlashLFQ
                 }
                 
                 int isotopeIndex = 0;
-                double theorIsotopeMz = isotopeMzsToLookFor[0];
-                double isotopeMzTol = (isotopePpmTolerance / 1e6) * isotopeMzsToLookFor[0];
+                double theorIsotopeMz = theorIsotopeMzs[0];
+                double isotopeMzTol = (isotopePpmTolerance / 1e6) * theorIsotopeMzs[0];
                 
                 /*
                 bool badPeak = false;
@@ -1076,13 +1079,13 @@ namespace FlashLFQ
                         // store the good isotope peak
                         isotopePeaks[isotopeIndex] = possibleIsotopePeak;
 
-                        if (isotopeIndex < isotopeMzsToLookFor.Length - 1)
+                        if (isotopeIndex < isotopePeaks.Length - 1)
                         {
                             // look for the next isotope
                             isotopeIndex++;
                             
-                            theorIsotopeMz = isotopeMzsToLookFor[isotopeIndex];
-                            isotopeMzTol = (isotopePpmTolerance / 1e6) * isotopeMzsToLookFor[isotopeIndex];
+                            theorIsotopeMz = theorIsotopeMzs[isotopeIndex];
+                            isotopeMzTol = (isotopePpmTolerance / 1e6) * theorIsotopeMzs[isotopeIndex];
                         }
                         else
                         {
