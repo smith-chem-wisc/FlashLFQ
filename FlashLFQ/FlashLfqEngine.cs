@@ -265,7 +265,7 @@ namespace FlashLFQ
                     }
 
                     // Morpheus MS/MS input
-                    if (header.Contains("Filename")
+                    else if (header.Contains("Filename")
                         && header.Contains("Base Peptide Sequence")
                         && header.Contains("Peptide Sequence")
                         && header.Contains("Theoretical Mass (Da)")
@@ -283,7 +283,7 @@ namespace FlashLFQ
                     }
 
                     // MaxQuant MS/MS input
-                    if (header.Contains("Raw file")
+                    else if (header.Contains("Raw file")
                         && header.Contains("Sequence")
                         && header.Contains("Modified sequence")
                         && header.Contains("Mass")
@@ -378,7 +378,10 @@ namespace FlashLFQ
             allFeaturesByFile[fileIndex] = MainFileSearch(thisFilename, localBins, ms1ScanNumbers);
 
             if (allFeaturesByFile[fileIndex] == null)
+            {
+                allFeaturesByFile[fileIndex] = new List<FlashLFQFeature>();
                 return;
+            }
 
             // find unidentified features based on other files' identification results (MBR)
             if (mbr && !silent)
