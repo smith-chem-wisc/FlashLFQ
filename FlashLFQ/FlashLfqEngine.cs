@@ -240,25 +240,33 @@ namespace FlashLFQ
                 {
                     try
                     {
+                        int fileNameColIndex = 0;
+                        int baseSeqColIndex = 3;
+                        int modSeqColIndex = 7;
+                        int massColIndex = 22;
+                        int ms2RtColIndex = 25;
+                        int chargeStateColIndex = 15;
+                        int proteinColIndex = 12;
+
                         var param = line.Split(delimiters);
 
-                        string fileName = param[0];
-                        string BaseSequence = param[1];
-                        string FullSequence = param[2];
-                        double monoisotopicMass = double.Parse(param[3]);
-                        double ms2RetentionTime = double.Parse(param[4]);
-                        int chargeState = int.Parse(param[5]);
+                        string fileName = param[fileNameColIndex];
+                        string BaseSequence = param[baseSeqColIndex];
+                        string ModSequence = param[modSeqColIndex];
+                        double monoisotopicMass = double.Parse(param[massColIndex]);
+                        double ms2RetentionTime = double.Parse(param[ms2RtColIndex]);
+                        int chargeState = int.Parse(param[chargeStateColIndex]);
 
-                        var ident = new FlashLFQIdentification(fileName, BaseSequence, FullSequence, monoisotopicMass, ms2RetentionTime, chargeState);
+                        var ident = new FlashLFQIdentification(fileName, BaseSequence, ModSequence, monoisotopicMass, ms2RetentionTime, chargeState);
                         allIdentifications.Add(ident);
 
                         FlashLFQProteinGroup pg;
-                        if (pepToProteinGroupDictionary.TryGetValue(param[6], out pg))
+                        if (pepToProteinGroupDictionary.TryGetValue(param[proteinColIndex], out pg))
                             ident.proteinGroup = pg;
                         else
                         {
-                            pg = new FlashLFQProteinGroup(param[6]);
-                            pepToProteinGroupDictionary.Add(param[6], pg);
+                            pg = new FlashLFQProteinGroup(param[proteinColIndex]);
+                            pepToProteinGroupDictionary.Add(param[proteinColIndex], pg);
                             ident.proteinGroup = pg;
                         }
                     }
@@ -782,7 +790,12 @@ namespace FlashLFQ
                                 double bestRTDifference;
 
                                 if (prevPeaks.Any())
+                                {
                                     bestRTDifference = Math.Abs(prevPeaks.Max());
+
+                                    if(bestRTDifference > initialRTWindow)
+                                        bestRTDifference = bestRTDifference = binPeaksHere.Select(p => Math.Abs(p.retentionTime - identification.ms2RetentionTime)).Min();
+                                }
                                 else
                                     bestRTDifference = bestRTDifference = binPeaksHere.Select(p => Math.Abs(p.retentionTime - identification.ms2RetentionTime)).Min();
                                 
@@ -805,7 +818,7 @@ namespace FlashLFQ
                                     var validPeaks = crawledRightPeaks.Concat(crawledLeftPeaks);
 
                                     var validIsotopeClusters = FilterPeaksByIsotopicDistribution(validPeaks, identification, chargeState);
-                            
+                                    
                                     foreach (var validCluster in validIsotopeClusters)
                                         msmsFeature.isotopeClusters.Add(validCluster);
                                 }

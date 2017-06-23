@@ -32,7 +32,7 @@ namespace FlashLFQ
             if (engine.mbr)
                 engine.RetentionTimeCalibrationAndErrorCheckMatchedFeatures();
 
-            //engine.QuantifyProteins();
+            engine.QuantifyProteins();
 
             if (!engine.WriteResults())
                 return;
