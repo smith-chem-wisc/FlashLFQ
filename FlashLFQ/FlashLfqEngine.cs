@@ -143,9 +143,8 @@ namespace FlashLFQ
                     return false;
                 }
             }
-
-            /*
-            if (filePaths.Length == 0)
+            
+            if (filePaths != null && filePaths.Length == 0)
             {
                 if (!silent)
                 {
@@ -155,8 +154,7 @@ namespace FlashLFQ
                 }
                 return false;
             }
-            */
-
+            
             allFeaturesByFile = new List<FlashLFQFeature>[filePaths.Length];
             return true;
         }
@@ -363,20 +361,15 @@ namespace FlashLFQ
             var localBins = ConstructLocalBins();
 
             // open raw file
-            int i = -1;
+            int i = Array.IndexOf(filePaths, filePath);
+            if (i < 0)
+                return;
             var currentDataFile = file;
             if (currentDataFile == null)
-            {
-                i = Array.IndexOf(filePaths, filePath);
-
-                if (i > -1)
-                    currentDataFile = ReadMSFile(i);
-                else
-                    return;
-            }
+                currentDataFile = ReadMSFile(i);
             if(currentDataFile == null)
                 return;
-
+            
             // fill bins with peaks from the raw file
             var ms1ScanNumbers = FillBinsWithPeaks(localBins, currentDataFile);
 
