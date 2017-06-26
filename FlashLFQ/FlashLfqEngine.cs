@@ -16,8 +16,9 @@ namespace FlashLFQ
     public class FlashLFQEngine
     {
         // file info stuff
-        private string identificationsFilePath;
+        public string identificationsFilePath { get; private set; }
         public string[] filePaths { get; private set; }
+        public string outputFolder;
 
         // structures used in the FlashLFQ program
         private List<FlashLFQIdentification> allIdentifications;
@@ -31,25 +32,24 @@ namespace FlashLFQ
         public bool silent { get; private set; }
         public bool pause { get; private set; }
         public int maxParallelFiles { get; private set; }
-        private int maxDegreesOfParallelism;
-        private IEnumerable<int> chargeStates;
-        private double ppmTolerance;
-        private double rtTol;
-        private double isotopePpmTolerance;
-        private bool integrate;
-        private bool sumFeatures;
-        private double initialRTWindow;
-        private int missedScansAllowed;
-        private int numIsotopesRequired;
-        private double signalToBackgroundRequired;
-        private double mbrRtWindow;
-        private double mbrSbrFilter;
-        private double mbrppmTolerance;
-        private bool errorCheckAmbiguousMatches;
-
+        public int maxDegreesOfParallelism { get; private set; }
+        public IEnumerable<int> chargeStates { get; private set; }
+        public double ppmTolerance { get; private set; }
+        public double rtTol { get; private set; }
+        public double isotopePpmTolerance { get; private set; }
+        public bool integrate { get; private set; }
+        public bool sumFeatures { get; private set; }
+        public double initialRTWindow { get; private set; }
+        public int missedScansAllowed { get; private set; }
+        public int numIsotopesRequired { get; private set; }
+        public double signalToBackgroundRequired { get; private set; }
+        public double mbrRtWindow { get; private set; }
+        public double mbrSbrFilter { get; private set; }
+        public double mbrppmTolerance { get; private set; }
+        public bool errorCheckAmbiguousMatches { get; private set; }
         public bool mbr { get; private set; }
-        private double sbrFilter;
-        private bool idSpecificChargeState;
+        public double sbrFilter { get; private set; }
+        public bool idSpecificChargeState { get; private set; }
 
         public FlashLFQEngine()
         {
@@ -78,7 +78,7 @@ namespace FlashLFQ
             mbr = false;
             maxParallelFiles = 1;
             maxDegreesOfParallelism = -1;
-            idSpecificChargeState = true;
+            idSpecificChargeState = false;
         }
 
         public bool ParseArgs(string[] args)
@@ -440,41 +440,44 @@ namespace FlashLFQ
                     cluster.peakWithScan.Compress();
         }
 
-        public bool WriteResults()
+        public bool WriteResults(string baseFileName, bool writePeaks, bool writePeptides, bool writeProteins)
         {
-            string identificationFilePathNoExtention = identificationsFilePath.Substring(0, identificationsFilePath.Length - (identificationsFilePath.Length - identificationsFilePath.IndexOf('.')));
-
             try
             {
-                var allFeatures = allFeaturesByFile.SelectMany(p => p.Select(v => v));
-                var t = allFeatures.Where(p => p.identifyingScans.First().BaseSequence.Equals("NLEEFFAR"));
+                if(outputFolder == null)
+                    outputFolder = identificationsFilePath.Substring(0, identificationsFilePath.Length - (identificationsFilePath.Length - identificationsFilePath.IndexOf('.')));
 
+                var allFeatures = allFeaturesByFile.SelectMany(p => p.Select(v => v));
+                
                 // write features
-                header = new string[] { "feature header test" };
+                header = new string[] { "Peaks Header" };
                 List<string> featureOutput = new List<string> { string.Join("\t", header) };
                 featureOutput = featureOutput.Concat(allFeatures.Select(v => v.ToString())).ToList();
-                File.WriteAllLines(identificationFilePathNoExtention + "_FlashQuant_Features.tsv", featureOutput);
+                if (writePeaks)
+                    File.WriteAllLines(outputFolder + baseFileName + "QuantifiedPeaks.tsv", featureOutput);
 
                 // write baseseq groups
                 var baseSeqOutputHeader = new string[1 + filePaths.Length];
-                baseSeqOutputHeader[0] = "BaseSequence";
+                baseSeqOutputHeader[0] = "Peptide Header";
                 for (int i = 1; i < baseSeqOutputHeader.Length; i++)
                     baseSeqOutputHeader[i] = Path.GetFileName(filePaths[i - 1]);
                 List<string> baseSeqOutput = new List<string> { string.Join("\t", baseSeqOutputHeader) };
                 baseSeqOutput = baseSeqOutput.Concat(SumFeatures(allFeatures).Select(p => p.ToString())).ToList();
-                File.WriteAllLines(identificationFilePathNoExtention + "_FlashQuant_BaseSeqGroups.tsv", baseSeqOutput);
+                if(writePeptides)
+                    File.WriteAllLines(outputFolder + baseFileName + "QuantifiedPeptides.tsv", baseSeqOutput);
 
                 // write protein results
                 var proteinGroups = allFeatures.Select(p => p.identifyingScans.First().proteinGroup).Where(v => v.intensitiesByFile != null).Distinct().OrderBy(p => p.proteinGroupName);
                 List<string> proteinOutput = new List<string> { string.Join("\t", new string[] { "test" }) };
                 proteinOutput = proteinOutput.Concat(proteinGroups.Select(v => v.ToString())).ToList();
-                File.WriteAllLines(identificationFilePathNoExtention + "_FlashQuant_Proteins.tsv", proteinOutput);
+                if(writeProteins)
+                    File.WriteAllLines(outputFolder + baseFileName + "QuantifiedProteins.tsv", proteinOutput);
             }
             catch (Exception e)
             {
                 if (!silent)
                 {
-                    Console.WriteLine("Unable to write results file for " + identificationFilePathNoExtention);
+                    Console.WriteLine("Unable to write results file to " + outputFolder);
                     Console.WriteLine(e.Message);
                     Console.WriteLine("Press any key to continue\n");
                     Console.ReadKey();

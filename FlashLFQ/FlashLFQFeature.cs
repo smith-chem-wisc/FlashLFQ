@@ -36,14 +36,14 @@ namespace FlashLFQ
                 // apex intensity
                 if (!integrate)
                 {
-                    /*
+                    
                     var peaksGroupedByChargeState = isotopeClusters.GroupBy(p => p.chargeState);
 
                     foreach (var chargeState in peaksGroupedByChargeState)
                         intensity += chargeState.Select(p => p.isotopeClusterIntensity).Max();
-                    */
+                    
 
-                    intensity = featureApexIntensity;
+                    //intensity = featureApexIntensity;
                 }
                 
                 // integrate, calculate half max

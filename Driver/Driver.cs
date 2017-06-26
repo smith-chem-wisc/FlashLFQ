@@ -34,7 +34,7 @@ namespace FlashLFQ
 
             engine.QuantifyProteins();
 
-            if (!engine.WriteResults())
+            if (!engine.WriteResults("_FlashLFQ_", true, true, true))
                 return;
 
             if (!engine.silent)
