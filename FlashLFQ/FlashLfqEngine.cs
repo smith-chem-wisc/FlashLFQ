@@ -1028,7 +1028,7 @@ namespace FlashLFQ
             }
         }
 
-        private IOrderedEnumerable<FlashLFQSummedFeatureGroup> SumFeatures(IEnumerable<FlashLFQFeature> features)
+        public IOrderedEnumerable<FlashLFQSummedFeatureGroup> SumFeatures(IEnumerable<FlashLFQFeature> features)
         {
             List<FlashLFQSummedFeatureGroup> returnList = new List<FlashLFQSummedFeatureGroup>();
 
