@@ -653,6 +653,8 @@ namespace FlashLFQ
                     if (i < (numIsotopesRequired - 1) || abundances[i] > 0.1)
                         isotopicMassesAndNormalizedAbundances.Add(new KeyValuePair<double, double>(masses[i], abundances[i]));
                 }
+
+                baseSequenceToIsotopicDistribution.Add(baseSeq, isotopicMassesAndNormalizedAbundances);
             }
 
             var minChargeState = allIdentifications.Select(p => p.chargeState).Min();
