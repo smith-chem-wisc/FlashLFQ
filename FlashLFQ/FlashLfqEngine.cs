@@ -54,7 +54,6 @@ namespace FlashLFQ
         public FlashLFQEngine()
         {
             allIdentifications = new List<FlashLFQIdentification>();
-            baseSequenceToIsotopicDistribution = new Dictionary<string, List<KeyValuePair<double, double>>>();
             pepToProteinGroupDictionary = new Dictionary<string, FlashLFQProteinGroup>();
 
             // default parameters
@@ -617,6 +616,7 @@ namespace FlashLFQ
             var peptideGroups = allIdentifications.GroupBy(p => p.FullSequence).ToList();
             var peptideBaseSeqs = new HashSet<string>(allIdentifications.Select(p => p.BaseSequence));
             var numCarbonsToIsotopicDistribution = new Dictionary<int, IsotopicDistribution>();
+            baseSequenceToIsotopicDistribution = new Dictionary<string, List<KeyValuePair<double, double>>>();
 
             foreach (var baseSeq in peptideBaseSeqs)
             {
