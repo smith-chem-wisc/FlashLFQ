@@ -164,6 +164,7 @@ namespace FlashLFQ
         public void PassFilePaths(string[] paths)
         {
             filePaths = paths.Distinct().ToArray();
+            allFeaturesByFile = new List<FlashLFQFeature>[filePaths.Length];
         }
 
         public bool ReadPeriodicTable()
@@ -353,90 +354,50 @@ namespace FlashLFQ
             return true;
         }
 
-        public void Quantify(int fileIndex)
+        public void Quantify(IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file, string filePath)
         {
-            var thisFilename = Path.GetFileNameWithoutExtension(filePaths[fileIndex]);
-
-            // construct bins
-            if (!silent)
-                Console.WriteLine("Constructing m/z bins for " + thisFilename);
-            var localBins = ConstructLocalBins();
-
-            // open raw file
-            var currentDataFile = ReadMSFile(fileIndex);
-            if (currentDataFile == null)
+            if (filePaths == null)
                 return;
-
-            // fill bins with peaks from the raw file
-            var ms1ScanNumbers = FillBinsWithPeaks(localBins, currentDataFile);
-
-            // quantify features using this file's IDs first
-            if (!silent)
-                Console.WriteLine("Quantifying peptides for " + thisFilename);
-
-            allFeaturesByFile[fileIndex] = MainFileSearch(thisFilename, localBins, ms1ScanNumbers);
-
-            if (allFeaturesByFile[fileIndex] == null)
-            {
-                allFeaturesByFile[fileIndex] = new List<FlashLFQFeature>();
-                return;
-            }
-
-            // find unidentified features based on other files' identification results (MBR)
-            if (mbr && !silent)
-                Console.WriteLine("Finding MBR features for " + thisFilename);
-            if (mbr)
-                MatchBetweenRuns(thisFilename, localBins, allFeaturesByFile[fileIndex]);
-
-            if (!silent)
-                Console.WriteLine("Checking errors for " + thisFilename);
-            // error checking function
-            // handles features with multiple identifying scans, and
-            // also handles scans that are associated with more than one feature
-            RunErrorChecking(allFeaturesByFile[fileIndex]);
-
-            foreach (var feature in allFeaturesByFile[fileIndex])
-                foreach (var cluster in feature.isotopeClusters)
-                    cluster.peakWithScan.Compress();
-
-            if (!silent)
-                Console.WriteLine("Finished " + thisFilename);
-        }
-
-        public void PassInFileAndQuantify(IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file, string fileName)
-        {
-            var thisFilename = Path.GetFileNameWithoutExtension(fileName);
-            allFeaturesByFile = new List<FlashLFQFeature>[1] { new List<FlashLFQFeature>() };
-
+            
             // construct bins
             var localBins = ConstructLocalBins();
 
             // open raw file
+            int i = -1;
             var currentDataFile = file;
             if (currentDataFile == null)
+            {
+                i = Array.IndexOf(filePaths, filePath);
+
+                if (i > -1)
+                    currentDataFile = ReadMSFile(i);
+                else
+                    return;
+            }
+            if(currentDataFile == null)
                 return;
 
             // fill bins with peaks from the raw file
             var ms1ScanNumbers = FillBinsWithPeaks(localBins, currentDataFile);
 
             // quantify features using this file's IDs first
-            allFeaturesByFile[0] = MainFileSearch(thisFilename, localBins, ms1ScanNumbers);
-
-            if (allFeaturesByFile[0] == null)
-                return;
+            allFeaturesByFile[i] = MainFileSearch(Path.GetFileNameWithoutExtension(filePath), localBins, ms1ScanNumbers);
 
             // find unidentified features based on other files' identification results (MBR)
             if (mbr)
-                MatchBetweenRuns(thisFilename, localBins, allFeaturesByFile[0]);
+                MatchBetweenRuns(Path.GetFileNameWithoutExtension(filePath), localBins, allFeaturesByFile[i]);
             
             // error checking function
             // handles features with multiple identifying scans, and
             // also handles scans that are associated with more than one feature
-            RunErrorChecking(allFeaturesByFile[0]);
+            RunErrorChecking(allFeaturesByFile[i]);
 
-            foreach (var feature in allFeaturesByFile[0])
+            foreach (var feature in allFeaturesByFile[i])
                 foreach (var cluster in feature.isotopeClusters)
                     cluster.peakWithScan.Compress();
+
+            if (!silent)
+                Console.WriteLine("Finished " + Path.GetFileNameWithoutExtension(filePath));
         }
 
         public bool WriteResults(string baseFileName, bool writePeaks, bool writePeptides, bool writeProteins)

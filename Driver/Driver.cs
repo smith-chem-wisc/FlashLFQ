@@ -24,7 +24,7 @@ namespace FlashLFQ
                 new ParallelOptions { MaxDegreeOfParallelism = engine.maxParallelFiles },
                 fileNumber =>
                 {
-                    engine.Quantify(fileNumber);
+                    engine.Quantify(null, engine.filePaths[fileNumber]);
                     GC.Collect();
                 }
             );
