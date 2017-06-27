@@ -16,13 +16,40 @@ namespace FlashLFQ
         public List<FlashLFQIsotopeCluster> isotopeClusters;
         public int numIdentificationsByBaseSeq { get; private set; }
         public int numIdentificationsByFullSeq { get; private set; }
-
+        
         public FlashLFQFeature()
         {
             numIdentificationsByBaseSeq = 1;
             numIdentificationsByFullSeq = 1;
             identifyingScans = new List<FlashLFQIdentification>();
             isotopeClusters = new List<FlashLFQIsotopeCluster>();
+        }
+
+        public static string TabSeparatedHeader
+        {
+            get
+            {
+                var sb = new StringBuilder();
+                sb.Append("File Name" + "\t");
+                sb.Append("Base Sequence" + "\t");
+                sb.Append("Full Sequence" + "\t");
+                sb.Append("Peptide Monoisotopic Mass" + "\t");
+                sb.Append("MS2 Retention Time" + "\t");
+                sb.Append("Precursor Charge" + "\t");
+                sb.Append("Precursor MZ" + "\t");
+                sb.Append("Peak intensity" + "\t");
+                sb.Append("Peak RT Start" + "\t");
+                sb.Append("Peak RT Apex" + "\t");
+                sb.Append("Peak RT End" + "\t");
+                sb.Append("Peak MZ" + "\t");
+                sb.Append("Peak Charge" + "\t");
+                sb.Append("Apex Signal-To-Background" + "\t");
+                sb.Append("Peak Detection Type" + "\t");
+                sb.Append("PSMs Mapped" + "\t");
+                sb.Append("Base Sequences Mapped" + "\t");
+                sb.Append("Full Sequences Mapped");
+                return sb.ToString();
+            }
         }
 
         public void CalculateIntensityForThisFeature(string fileName, bool integrate)
