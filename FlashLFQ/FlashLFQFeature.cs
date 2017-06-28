@@ -36,7 +36,7 @@ namespace FlashLFQ
                 sb.Append("Peptide Monoisotopic Mass" + "\t");
                 sb.Append("MS2 Retention Time" + "\t");
                 sb.Append("Precursor Charge" + "\t");
-                sb.Append("Precursor MZ" + "\t");
+                sb.Append("Theoretical MZ" + "\t");
                 sb.Append("Peak intensity" + "\t");
                 sb.Append("Peak RT Start" + "\t");
                 sb.Append("Peak RT Apex" + "\t");
@@ -52,45 +52,16 @@ namespace FlashLFQ
             }
         }
 
-        public void CalculateIntensityForThisFeature(string fileName, bool integrate)
+        public void CalculateIntensityForThisFeature(bool integrate)
         {
-            this.fileName = fileName;
             if (isotopeClusters.Any())
             {
-                double featureApexIntensity = isotopeClusters.Select(p => p.isotopeClusterIntensity).Max();
-                apexPeak = isotopeClusters.Where(p => p.isotopeClusterIntensity == featureApexIntensity).FirstOrDefault();
+                apexPeak = isotopeClusters.Where(p => p.isotopeClusterIntensity == isotopeClusters.Max(v => v.isotopeClusterIntensity)).FirstOrDefault();
 
-                // apex intensity
-                if (!integrate)
-                {
-                    
-                    var peaksGroupedByChargeState = isotopeClusters.GroupBy(p => p.chargeState);
-
-                    foreach (var chargeState in peaksGroupedByChargeState)
-                        intensity += chargeState.Select(p => p.isotopeClusterIntensity).Max();
-                    
-
-                    //intensity = featureApexIntensity;
-                }
-                
-                // integrate, calculate half max
                 if (integrate)
-                {
                     intensity = isotopeClusters.Select(p => p.isotopeClusterIntensity).Sum();
-
-                    /*
-                    var peaksGroupedByChargeState = isotopeClusters.GroupBy(p => p.chargeState);
-
-                    foreach (var chargeState in peaksGroupedByChargeState)
-                    {
-                        var peaksList = chargeState.OrderBy(p => p.peakWithScan.retentionTime).ToList();
-                        for(int i = 1; i < peaksList.Count; i++)
-                        {
-                            intensity += ((peaksList[i].peakWithScan.backgroundSubtractedIntensity + peaksList[i - 1].peakWithScan.backgroundSubtractedIntensity) / 2.0) * (peaksList[i].peakWithScan.retentionTime - peaksList[i - 1].peakWithScan.retentionTime);
-                        }
-                    }
-                    */
-                }
+                else
+                    intensity = isotopeClusters.Select(p => p.isotopeClusterIntensity).Max();
             }
         }
 
