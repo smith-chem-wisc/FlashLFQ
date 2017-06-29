@@ -6,7 +6,7 @@
         public readonly string FullSequence;
         public readonly double ms2RetentionTime;
         public readonly double monoisotopicMass;
-        public readonly int chargeState;
+        public int chargeState;
         public FlashLFQProteinGroup proteinGroup;
         public double massToLookFor;
         public string fileName = "";

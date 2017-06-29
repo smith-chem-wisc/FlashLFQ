@@ -136,6 +136,7 @@ namespace FlashLFQ
                         case ("sum"): sumFeatures = Boolean.Parse(arg.Substring(3)); break;
                         case ("mbr"): mbr = Boolean.Parse(arg.Substring(3)); break;
                         case ("chg"): idSpecificChargeState = Boolean.Parse(arg.Substring(3)); break;
+                        case ("nis"): numIsotopesRequired = int.Parse(arg.Substring(3)); break;
                         default:
                             if (!silent)
                             {
@@ -380,7 +381,7 @@ namespace FlashLFQ
                         else
                             chargeState = int.Parse(param[chargeStCol]);
 
-                        var ident = new FlashLFQIdentification(fileName, BaseSequence, ModSequence, monoisotopicMass, ms2RetentionTime, chargeState);
+                        var ident = new FlashLFQIdentification(Path.GetFileNameWithoutExtension(fileName), BaseSequence, ModSequence, monoisotopicMass, ms2RetentionTime, chargeState);
                         allIdentifications.Add(ident);
 
                         FlashLFQProteinGroup pg;
@@ -401,6 +402,36 @@ namespace FlashLFQ
                             Console.ReadKey();
                         }
                         return false;
+                    }
+                }
+            }
+
+            if (identificationFileType == IdentificationFileType.TDPortal)
+            {
+                var idsGroupedByFile = allIdentifications.GroupBy(p => p.fileName);
+                var idFileNames = idsGroupedByFile.Select(p => p.Key);
+                string[] fileNames = new string[filePaths.Length];
+                for (int i = 0; i < filePaths.Length; i++)
+                {
+                    fileNames[i] = Path.GetFileNameWithoutExtension(filePaths[i]);
+                }
+
+                foreach (var fileName in idFileNames)
+                {
+                    int fileIndex = Array.IndexOf(fileNames, fileName);
+                    if(fileIndex == -1)
+                        continue;
+                    IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file = OpenDataFile(fileIndex);
+                    var identificationsForThisFile = allIdentifications.Where(p => Path.GetFileNameWithoutExtension(p.fileName) == Path.GetFileNameWithoutExtension(filePaths[0]));
+
+                    foreach (var identification in identificationsForThisFile)
+                    {
+                        int scanNum = file.GetClosestOneBasedSpectrumNumber(identification.ms2RetentionTime);
+                        var scan = file.GetOneBasedScan(scanNum) as IMsDataScanWithPrecursor<IMzSpectrum<IMzPeak>>;
+                        if (scan != null)
+                        {
+                            identification.chargeState = (int)(identification.monoisotopicMass / scan.SelectedIonMZ);
+                        }
                     }
                 }
             }
