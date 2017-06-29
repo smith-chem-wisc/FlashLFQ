@@ -13,6 +13,8 @@ using UsefulProteomicsDatabases;
 
 namespace FlashLFQ
 {
+    public enum IdentificationFileType { MetaMorpheus, Morpheus, MaxQuant, TDPortal };
+
     public class FlashLFQEngine
     {
         // file info stuff
@@ -51,6 +53,7 @@ namespace FlashLFQ
         public double sbrFilter { get; private set; }
         public bool idSpecificChargeState { get; private set; }
         public double qValueCutoff { get; private set; }
+        public IdentificationFileType identificationFileType { get; private set; }
 
         public FlashLFQEngine()
         {
@@ -279,6 +282,7 @@ namespace FlashLFQ
                         protNameCol = Array.IndexOf(header, "Protein Accession");
                         decoyCol = Array.IndexOf(header, "Decoy/Contaminant/Target");
                         qValueCol = Array.IndexOf(header, "QValue");
+                        identificationFileType = IdentificationFileType.MetaMorpheus;
                     }
 
                     // Morpheus MS/MS input
@@ -301,6 +305,7 @@ namespace FlashLFQ
                         protNameCol = Array.IndexOf(header, "Protein Description");
                         decoyCol = Array.IndexOf(header, "Decoy?");
                         qValueCol = Array.IndexOf(header, "Q-Value (%)");
+                        identificationFileType = IdentificationFileType.Morpheus;
                     }
 
                     // MaxQuant MS/MS input
@@ -319,6 +324,25 @@ namespace FlashLFQ
                         msmsRetnCol = Array.IndexOf(header, "Retention time");
                         chargeStCol = Array.IndexOf(header, "Charge");
                         protNameCol = Array.IndexOf(header, "Proteins");
+                        identificationFileType = IdentificationFileType.MaxQuant;
+                    }
+
+                    // TDPortal Input
+                    if (header.Contains("File Name")
+                        && header.Contains("Sequence")
+                        && header.Contains("Modifications")
+                        && header.Contains("Monoisotopic Mass")
+                        && header.Contains("RetentionTime")
+                        && header.Contains("Accession")
+                        && header.Contains("% Cleavages"))
+                    {
+                        fileNameCol = Array.IndexOf(header, "File Name");
+                        baseSequCol = Array.IndexOf(header, "Sequence");
+                        fullSequCol = Array.IndexOf(header, "Modifications");
+                        monoMassCol = Array.IndexOf(header, "Monoisotopic Mass");
+                        msmsRetnCol = Array.IndexOf(header, "RetentionTime");
+                        protNameCol = Array.IndexOf(header, "Accession");
+                        identificationFileType = IdentificationFileType.TDPortal;
                     }
 
                     // other search engines
@@ -343,9 +367,18 @@ namespace FlashLFQ
                         string fileName = param[fileNameCol];
                         string BaseSequence = param[baseSequCol];
                         string ModSequence = param[fullSequCol];
+                        if (identificationFileType == IdentificationFileType.TDPortal)
+                            ModSequence = BaseSequence + ModSequence;
                         double monoisotopicMass = double.Parse(param[monoMassCol]);
                         double ms2RetentionTime = double.Parse(param[msmsRetnCol]);
-                        int chargeState = int.Parse(param[chargeStCol]);
+
+                        int chargeState;
+                        if (identificationFileType == IdentificationFileType.TDPortal)
+                        {
+                            chargeState = 1;
+                        }
+                        else
+                            chargeState = int.Parse(param[chargeStCol]);
 
                         var ident = new FlashLFQIdentification(fileName, BaseSequence, ModSequence, monoisotopicMass, ms2RetentionTime, chargeState);
                         allIdentifications.Add(ident);
@@ -389,7 +422,7 @@ namespace FlashLFQ
                 return;
             var currentDataFile = file;
             if (currentDataFile == null)
-                currentDataFile = ReadMSFile(i);
+                currentDataFile = OpenDataFile(i);
             if (currentDataFile == null)
                 return;
 
@@ -528,7 +561,7 @@ namespace FlashLFQ
             allIdentifications.Add(ident);
         }
 
-        private IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> ReadMSFile(int fileIndex)
+        private IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> OpenDataFile(int fileIndex)
         {
             var massSpecFileFormat = filePaths[fileIndex].Substring(filePaths[fileIndex].IndexOf('.')).ToUpper();
             IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file = null;
@@ -632,7 +665,7 @@ namespace FlashLFQ
 
             var minChargeState = allIdentifications.Select(p => p.chargeState).Min();
             var maxChargeState = allIdentifications.Select(p => p.chargeState).Max();
-            chargeStates = Enumerable.Range(minChargeState, maxChargeState - 1);
+            chargeStates = Enumerable.Range(minChargeState, (maxChargeState - minChargeState) + 1);
 
             // build theoretical m/z bins
             foreach (var pepGroup in peptideGroups)
@@ -795,14 +828,16 @@ namespace FlashLFQ
             if (!silent)
                 Console.WriteLine("Quantifying peptides for " + fileName);
 
-            var groups = allIdentifications.GroupBy(p => p.fileName);
-            var identificationsForThisFile = groups.Where(p => p.Key.Equals(fileName)).FirstOrDefault();
-            if (identificationsForThisFile == null)
-                return null;
-
-            var identifications = identificationsForThisFile.ToList();
             var concurrentBagOfFeatures = new ConcurrentBag<FlashLFQFeature>();
 
+            var groups = allIdentifications.GroupBy(p => p.fileName);
+            var identificationsForThisFile = groups.Where(p => p.Key.Equals(fileName)).FirstOrDefault();
+
+            if (identificationsForThisFile == null)
+                return concurrentBagOfFeatures.ToList();
+
+            var identifications = identificationsForThisFile.ToList();
+            
             Parallel.ForEach(Partitioner.Create(0, identifications.Count),
                 new ParallelOptions { MaxDegreeOfParallelism = maxDegreesOfParallelism },
                 (range, loopState) =>
@@ -1018,6 +1053,11 @@ namespace FlashLFQ
         {
             List<FlashLFQSummedFeatureGroup> returnList = new List<FlashLFQSummedFeatureGroup>();
 
+            string[] fileNames = new string[filePaths.Length];
+            for (int i = 0; i < fileNames.Length; i++)
+                fileNames[i] = Path.GetFileNameWithoutExtension(filePaths[i]);
+            FlashLFQSummedFeatureGroup.files = fileNames;
+
             var baseSeqToFeatureMatch = new Dictionary<string, List<FlashLFQFeature>>();
             foreach (var feature in features)
             {
@@ -1066,12 +1106,8 @@ namespace FlashLFQ
                     else
                         identificationType[i] = "";
                 }
-
-                string[] fileNames = new string[filePaths.Length];
-                for (int i = 0; i < fileNames.Length; i++)
-                    fileNames[i] = Path.GetFileNameWithoutExtension(filePaths[i]);
-
-                returnList.Add(new FlashLFQSummedFeatureGroup(sequence.Key, intensitiesByFile, identificationType, fileNames));
+                
+                returnList.Add(new FlashLFQSummedFeatureGroup(sequence.Key, intensitiesByFile, identificationType));
             }
 
             return returnList.OrderBy(p => p.BaseSequence);
@@ -1132,7 +1168,6 @@ namespace FlashLFQ
                     if (badPeak)
                         continue;
                 }
-
 
                 // isotopic distribution check
                 bool isotopeDistributionCheck = false;

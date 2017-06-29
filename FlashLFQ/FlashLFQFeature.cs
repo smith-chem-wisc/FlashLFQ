@@ -56,12 +56,15 @@ namespace FlashLFQ
         {
             if (isotopeClusters.Any())
             {
-                apexPeak = isotopeClusters.Where(p => p.isotopeClusterIntensity == isotopeClusters.Max(v => v.isotopeClusterIntensity)).FirstOrDefault();
+                //apexPeak = isotopeClusters.Where(p => p.isotopeClusterIntensity == isotopeClusters.Max(v => v.isotopeClusterIntensity)).FirstOrDefault();
+
+                double monoisotopicPeakMax = isotopeClusters.Select(p => p.peakWithScan.backgroundSubtractedIntensity).Max();
+                apexPeak = isotopeClusters.Where(p => p.peakWithScan.backgroundSubtractedIntensity == monoisotopicPeakMax).FirstOrDefault();
 
                 if (integrate)
                     intensity = isotopeClusters.Select(p => p.isotopeClusterIntensity).Sum();
                 else
-                    intensity = isotopeClusters.Select(p => p.isotopeClusterIntensity).Max();
+                    intensity = apexPeak.isotopeClusterIntensity;
             }
         }
 

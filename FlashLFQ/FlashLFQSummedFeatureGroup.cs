@@ -9,12 +9,11 @@ namespace FlashLFQ
         public readonly string[] detectionType;
         public static string[] files;
 
-        public FlashLFQSummedFeatureGroup(string baseSeq, double[] intensitiesByFile, string[] detectionType, string[] files)
+        public FlashLFQSummedFeatureGroup(string baseSeq, double[] intensitiesByFile, string[] detectionType)
         {
             BaseSequence = baseSeq;
             this.intensitiesByFile = intensitiesByFile;
             this.detectionType = detectionType;
-            FlashLFQSummedFeatureGroup.files = files;
         }
 
         public static string TabSeparatedHeader
