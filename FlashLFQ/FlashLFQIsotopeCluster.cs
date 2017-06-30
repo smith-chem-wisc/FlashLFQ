@@ -12,5 +12,10 @@
             this.chargeState = chargeState;
             this.isotopeClusterIntensity = intensity;
         }
+
+        public override string ToString()
+        {
+            return isotopeClusterIntensity + "; " + peakWithScan.retentionTime;
+        }
     }
 }

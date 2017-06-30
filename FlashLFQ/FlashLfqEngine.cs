@@ -6,6 +6,7 @@ using Proteomics;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -54,9 +55,11 @@ namespace FlashLFQ
         public bool idSpecificChargeState { get; private set; }
         public double qValueCutoff { get; private set; }
         public IdentificationFileType identificationFileType { get; private set; }
+        public Stopwatch stopwatch;
 
         public FlashLFQEngine()
         {
+            stopwatch = new Stopwatch();
             allIdentifications = new List<FlashLFQIdentification>();
             pepToProteinGroupDictionary = new Dictionary<string, FlashLFQProteinGroup>();
             chargeStates = new List<int>();
@@ -419,7 +422,7 @@ namespace FlashLFQ
                 foreach (var fileName in idFileNames)
                 {
                     int fileIndex = Array.IndexOf(fileNames, fileName);
-                    if(fileIndex == -1)
+                    if (fileIndex == -1)
                         continue;
                     IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file = OpenDataFile(fileIndex);
                     var identificationsForThisFile = allIdentifications.Where(p => Path.GetFileNameWithoutExtension(p.fileName) == Path.GetFileNameWithoutExtension(filePaths[0]));
@@ -868,7 +871,7 @@ namespace FlashLFQ
                 return concurrentBagOfFeatures.ToList();
 
             var identifications = identificationsForThisFile.ToList();
-            
+
             Parallel.ForEach(Partitioner.Create(0, identifications.Count),
                 new ParallelOptions { MaxDegreeOfParallelism = maxDegreesOfParallelism },
                 (range, loopState) =>
@@ -904,52 +907,43 @@ namespace FlashLFQ
                             var binPeaksHere = binPeaks.Where(p => Math.Abs(p.mainPeak.Mz - theorMzHere) < mzTolHere);
                             // remove duplicates
                             binPeaksHere = binPeaksHere.Distinct();
+                            // filter by RT
+                            binPeaksHere = binPeaksHere.Where(p => Math.Abs(p.retentionTime - identification.ms2RetentionTime) < rtTol);
 
                             if (binPeaksHere.Any())
                             {
-                                // get precursor scan and adjacent scans to start at
+                                // get precursor scan to start at
                                 int ms2ScanNum = file.GetClosestOneBasedSpectrumNumber(identification.ms2RetentionTime);
                                 List<int> temp = new List<int>();
                                 foreach (var ms1ScanNum in ms1ScanNumbers)
                                 {
                                     int j = ms1ScanNum - ms2ScanNum;
-                                    if (j <= 0)
+                                    if (j < 0)
                                         temp.Add(ms1ScanNum);
                                     else
                                         break;
                                 }
-                                int bestScanNumToStartAt = temp.Last();
-                                int indexOfPrecursorScan = ms1ScanNumbers.IndexOf(bestScanNumToStartAt);
-                                List<int> scansToCheckFirst = new List<int>() { bestScanNumToStartAt };
-                                scansToCheckFirst.Add(ms1ScanNumbers[indexOfPrecursorScan - 1]);
-                                scansToCheckFirst.Add(ms1ScanNumbers[indexOfPrecursorScan + 1]);
-                                var peaksToCheckFirst = binPeaksHere.Where(p => scansToCheckFirst.Contains(p.oneBasedScanNumber)).OrderBy(p => Math.Abs(identification.ms2RetentionTime - p.retentionTime));
-                                var bestPeakToStartAt = peaksToCheckFirst.FirstOrDefault();
+                                int precursorScanNum = temp.Last();
+                                
+                                // separate peaks by rt into left and right of the identification RT
+                                var rightPeaks = binPeaksHere.Where(p => p.retentionTime >= identification.ms2RetentionTime).OrderBy(p => p.retentionTime);
+                                var leftPeaks = binPeaksHere.Where(p => p.retentionTime < identification.ms2RetentionTime).OrderByDescending(p => p.retentionTime);
 
-                                if (bestPeakToStartAt != null)
-                                {
-                                    // filter by RT
-                                    binPeaksHere = binPeaksHere.Where(p => Math.Abs(p.retentionTime - identification.ms2RetentionTime) < rtTol);
+                                // store peaks on each side of the identification RT
+                                var crawledRightPeaks = ScanCrawl(rightPeaks, missedScansAllowed, precursorScanNum, ms1ScanNumbers);
+                                var crawledLeftPeaks = ScanCrawl(leftPeaks, missedScansAllowed, precursorScanNum, ms1ScanNumbers);
 
-                                    // separate peaks by rt into left and right of the identification RT
-                                    var rightPeaks = binPeaksHere.Where(p => p.retentionTime >= bestPeakToStartAt.retentionTime).OrderBy(p => p.retentionTime);
-                                    var leftPeaks = binPeaksHere.Where(p => p.retentionTime < bestPeakToStartAt.retentionTime).OrderByDescending(p => p.retentionTime);
+                                var validPeaks = crawledRightPeaks.Concat(crawledLeftPeaks);
 
-                                    // store peaks on each side of the identification RT
-                                    var crawledRightPeaks = ScanCrawl(rightPeaks, missedScansAllowed, bestPeakToStartAt.oneBasedScanNumber, ms1ScanNumbers);
-                                    var crawledLeftPeaks = ScanCrawl(leftPeaks, missedScansAllowed, bestPeakToStartAt.oneBasedScanNumber, ms1ScanNumbers);
-
-                                    var validPeaks = crawledRightPeaks.Concat(crawledLeftPeaks);
-
-                                    var validIsotopeClusters = FilterPeaksByIsotopicDistribution(validPeaks, identification, chargeState, false);
-
-                                    foreach (var validCluster in validIsotopeClusters)
-                                        msmsFeature.isotopeClusters.Add(validCluster);
-                                }
+                                var validIsotopeClusters = FilterPeaksByIsotopicDistribution(validPeaks, identification, chargeState, false);
+                                
+                                foreach (var validCluster in validIsotopeClusters)
+                                    msmsFeature.isotopeClusters.Add(validCluster);
                             }
                         }
-
+                        
                         msmsFeature.CalculateIntensityForThisFeature(integrate);
+                        //SplitPeak(msmsFeature, integrate);
                         concurrentBagOfFeatures.Add(msmsFeature);
                     }
                 }
@@ -1044,7 +1038,13 @@ namespace FlashLFQ
             // condense duplicate features
             foreach (var duplicateFeature in featuresWithSamePeak)
                 duplicateFeature.First().MergeFeatureWith(duplicateFeature);
-            // check for multiple features per peptide within a time window
+
+            //// check for multiple features per peptide within a time window
+            //var featuresForThisSeq = features.Where(p => p.numIdentificationsByBaseSeq == 1).GroupBy(p => p.identifyingScans.First().BaseSequence);
+            //foreach(var feature in featuresForThisSeq)
+            //{
+            //    stuff
+            //}
 
             if (errorCheckAmbiguousMatches)
             {
@@ -1137,7 +1137,7 @@ namespace FlashLFQ
                     else
                         identificationType[i] = "";
                 }
-                
+
                 returnList.Add(new FlashLFQSummedFeatureGroup(sequence.Key, intensitiesByFile, identificationType));
             }
 
@@ -1202,7 +1202,8 @@ namespace FlashLFQ
 
                 // isotopic distribution check
                 bool isotopeDistributionCheck = false;
-                IMzPeak[] isotopePeaks = new IMzPeak[isotopeMassShifts.Count];
+                //IMzPeak[] isotopePeaks = new IMzPeak[isotopeMassShifts.Count];
+                IMzPeak[] isotopePeaks = new IMzPeak[numIsotopesRequired];
                 foreach (var possibleIsotopePeak in possibleIsotopePeaks)
                 {
                     if (Math.Abs(possibleIsotopePeak.Mz - theorIsotopeMz) < isotopeMzTol)
@@ -1253,33 +1254,107 @@ namespace FlashLFQ
             int ms1IndexHere = lastGoodIndex - 1;
             int missedScans = 0;
 
-            //int decreasingIntensityScans = 0;
-            //double lastIntensity = 0;
-
             foreach (var thisPeakWithScan in peaksWithScans)
             {
                 ms1IndexHere = ms1ScanNumbers.IndexOf(thisPeakWithScan.oneBasedScanNumber);
                 missedScans += Math.Abs(ms1IndexHere - lastGoodIndex) - 1;
 
-                //if (thisPeakWithScan.backgroundSubtractedIntensity < (lastIntensity * 0.5))
-                //    decreasingIntensityScans++;
-                //else if (thisPeakWithScan.backgroundSubtractedIntensity > lastIntensity)
-                //    decreasingIntensityScans = 0;
-
-                //if (decreasingIntensityScans >= 2 || (decreasingIntensityScans >= 2 && missedScans > 0))
-                //    break;
                 if (missedScans > missedScansAllowed)
                     break;
 
                 // found a good peak; reset missed scans to 0
                 missedScans = 0;
                 lastGoodIndex = ms1IndexHere;
-                //lastIntensity = thisPeakWithScan.backgroundSubtractedIntensity;
 
                 validPeaksWithScans.Add(thisPeakWithScan);
             }
 
             return validPeaksWithScans;
+        }
+
+        private void SplitPeak(FlashLFQFeature peak, bool integrate)
+        {
+            bool splitThisPeak = false;
+            FlashLFQIsotopeCluster valleyTimePoint = null;
+            
+            if (peak.isotopeClusters.Count() < 5)
+                return;
+
+            // find out if we need to split this peak by using the discrimination factor
+            var timePointsForApexZ = peak.isotopeClusters.Where(p => p.chargeState == peak.apexPeak.chargeState);
+            var leftTimePoints = timePointsForApexZ.Where(p => p.peakWithScan.retentionTime <= peak.apexPeak.peakWithScan.retentionTime).OrderByDescending(v => v.peakWithScan.retentionTime);
+            var rightTimePoints = timePointsForApexZ.Where(p => p.peakWithScan.retentionTime >= peak.apexPeak.peakWithScan.retentionTime).OrderBy(v => v.peakWithScan.retentionTime);
+
+            double mind0 = 0.6;
+
+            foreach (var timePoint in rightTimePoints)
+            {
+                var timePointsBetweenApexAndThisTimePoint = rightTimePoints.Where(p => p.peakWithScan.retentionTime <= timePoint.peakWithScan.retentionTime).ToList();
+
+                valleyTimePoint = timePointsBetweenApexAndThisTimePoint.Where(p => p.peakWithScan.backgroundSubtractedIntensity == timePointsBetweenApexAndThisTimePoint.Min(v => v.peakWithScan.backgroundSubtractedIntensity)).First();
+
+                var d0 = (timePoint.peakWithScan.backgroundSubtractedIntensity - valleyTimePoint.peakWithScan.backgroundSubtractedIntensity) / timePoint.peakWithScan.backgroundSubtractedIntensity;
+                if (d0 > mind0)
+                {
+                    //timePointsBetweenApexAndThisTimePoint.Remove(valleyTimePoint);
+                    //var secondValleyTimePoint = timePointsBetweenApexAndThisTimePoint.Where(p => p.peakWithScan.backgroundSubtractedIntensity == timePointsBetweenApexAndThisTimePoint.Min(v => v.peakWithScan.backgroundSubtractedIntensity)).First();
+                    var secondValleyTimePoint = timePointsBetweenApexAndThisTimePoint[timePointsBetweenApexAndThisTimePoint.IndexOf(valleyTimePoint) + 1];
+
+                    d0 = (timePoint.peakWithScan.backgroundSubtractedIntensity - secondValleyTimePoint.peakWithScan.backgroundSubtractedIntensity) / timePoint.peakWithScan.backgroundSubtractedIntensity;
+                    
+                    if (d0 > mind0)
+                    {
+                        splitThisPeak = true;
+                        break;
+                    }
+                }
+            }
+
+            if (splitThisPeak == false)
+            {
+                foreach (var timePoint in leftTimePoints)
+                {
+                    var timePointsBetweenApexAndThisTimePoint = leftTimePoints.Where(p => p.peakWithScan.retentionTime >= timePoint.peakWithScan.retentionTime).ToList();
+
+                    valleyTimePoint = timePointsBetweenApexAndThisTimePoint.Where(p => p.peakWithScan.backgroundSubtractedIntensity == timePointsBetweenApexAndThisTimePoint.Min(v => v.peakWithScan.backgroundSubtractedIntensity)).First();
+
+                    var d0 = (timePoint.peakWithScan.backgroundSubtractedIntensity - valleyTimePoint.peakWithScan.backgroundSubtractedIntensity) / timePoint.peakWithScan.backgroundSubtractedIntensity;
+                    if (d0 > mind0)
+                    {
+                        //timePointsBetweenApexAndThisTimePoint.Remove(valleyTimePoint);
+                        //var secondValleyTimePoint = timePointsBetweenApexAndThisTimePoint.Where(p => p.peakWithScan.backgroundSubtractedIntensity == timePointsBetweenApexAndThisTimePoint.Min(v => v.peakWithScan.backgroundSubtractedIntensity)).First();
+                        var secondValleyTimePoint = timePointsBetweenApexAndThisTimePoint[timePointsBetweenApexAndThisTimePoint.IndexOf(valleyTimePoint) + 1];
+
+                        d0 = (timePoint.peakWithScan.backgroundSubtractedIntensity - secondValleyTimePoint.peakWithScan.backgroundSubtractedIntensity) / timePoint.peakWithScan.backgroundSubtractedIntensity;
+
+                        if (d0 > mind0)
+                        {
+                            splitThisPeak = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // split
+            if(splitThisPeak)
+            {
+                var splitLeft = peak.isotopeClusters.Where(p => p.peakWithScan.retentionTime <= valleyTimePoint.peakWithScan.retentionTime).ToList();
+                var splitRight = peak.isotopeClusters.Where(p => p.peakWithScan.retentionTime >= valleyTimePoint.peakWithScan.retentionTime).ToList();
+
+                if(peak.identifyingScans.First().ms2RetentionTime > splitLeft.Max(p => p.peakWithScan.retentionTime))
+                    foreach (var timePoint in splitLeft)
+                        peak.isotopeClusters.Remove(timePoint);
+                else
+                    foreach (var timePoint in splitRight)
+                        peak.isotopeClusters.Remove(timePoint);
+
+                // recalculate intensity for the peak
+                peak.CalculateIntensityForThisFeature(integrate);
+
+                // recursively split
+                SplitPeak(peak, integrate);
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ namespace FlashLFQ
         static void Main(string[] args)
         {
             FlashLFQEngine engine = new FlashLFQEngine();
+            engine.stopwatch.Start();
 
             if (!engine.ReadPeriodicTable())
                 return;
@@ -39,6 +40,12 @@ namespace FlashLFQ
 
             if (!engine.silent)
                 Console.WriteLine("All done");
+
+            
+            if (!engine.silent)
+                Console.WriteLine("Analysis time: " + engine.stopwatch.Elapsed.Hours + "h " + engine.stopwatch.Elapsed.Minutes + "m " + 
+                    engine.stopwatch.Elapsed.Seconds + "s");
+
 
             if (engine.pause)
                 Console.ReadKey();
