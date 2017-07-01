@@ -68,8 +68,10 @@ namespace FlashLFQ
             }
         }
 
-        public void MergeFeatureWith(IEnumerable<FlashLFQFeature> otherFeatures)
+        public void MergeFeatureWith(IEnumerable<FlashLFQFeature> otherFeatures, bool integrate)
         {
+            var thisFeaturesPeaks = this.isotopeClusters.Select(p => p.peakWithScan);
+
             foreach (var feature in otherFeatures)
             {
                 if (feature != this)
@@ -77,9 +79,11 @@ namespace FlashLFQ
                     this.identifyingScans = this.identifyingScans.Union(feature.identifyingScans).Distinct().ToList();
                     this.numIdentificationsByBaseSeq = identifyingScans.Select(v => v.BaseSequence).Distinct().Count();
                     this.numIdentificationsByFullSeq = identifyingScans.Select(v => v.FullSequence).Distinct().Count();
+                    this.isotopeClusters.AddRange(feature.isotopeClusters.Where(p => !thisFeaturesPeaks.Contains(p.peakWithScan)));
                     feature.intensity = -1;
                 }
             }
+            this.CalculateIntensityForThisFeature(integrate);
         }
         
         override public string ToString()

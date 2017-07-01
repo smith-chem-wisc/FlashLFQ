@@ -936,14 +936,26 @@ namespace FlashLFQ
                                 var validPeaks = crawledRightPeaks.Concat(crawledLeftPeaks);
 
                                 var validIsotopeClusters = FilterPeaksByIsotopicDistribution(validPeaks, identification, chargeState, false);
-                                
+
+                                var peaksInSameScan = validIsotopeClusters.GroupBy(p => p.peakWithScan.oneBasedScanNumber).Where(v => v.Count() > 1);
+                                if(peaksInSameScan.Any())
+                                {
+                                    foreach(var group in peaksInSameScan)
+                                    {
+                                        var mzToUse = group.Select(p => Math.Abs(p.peakWithScan.mainPeak.Mz - theorMzHere)).Min();
+                                        var peakToUse = group.Where(p => Math.Abs(p.peakWithScan.mainPeak.Mz - theorMzHere) == mzToUse).First();
+                                        var peaksToRemove = group.Where(p => p != peakToUse);
+                                        validIsotopeClusters = validIsotopeClusters.Except(peaksToRemove);
+                                    }
+                                }
+
                                 foreach (var validCluster in validIsotopeClusters)
                                     msmsFeature.isotopeClusters.Add(validCluster);
                             }
                         }
                         
                         msmsFeature.CalculateIntensityForThisFeature(integrate);
-                        //SplitPeak(msmsFeature, integrate);
+                        SplitPeak(msmsFeature, integrate);
                         concurrentBagOfFeatures.Add(msmsFeature);
                     }
                 }
@@ -1037,14 +1049,28 @@ namespace FlashLFQ
 
             // condense duplicate features
             foreach (var duplicateFeature in featuresWithSamePeak)
-                duplicateFeature.First().MergeFeatureWith(duplicateFeature);
+                duplicateFeature.First().MergeFeatureWith(duplicateFeature, integrate);
+            features.RemoveAll(p => p.intensity == -1);
 
-            //// check for multiple features per peptide within a time window
-            //var featuresForThisSeq = features.Where(p => p.numIdentificationsByBaseSeq == 1).GroupBy(p => p.identifyingScans.First().BaseSequence);
-            //foreach(var feature in featuresForThisSeq)
-            //{
-            //    stuff
-            //}
+            // check for multiple features per peptide within a time window
+            var featuresToMaybeMerge = features.Where(p => p.numIdentificationsByFullSeq == 1 && p.apexPeak != null).GroupBy(p => p.identifyingScans.First().FullSequence).Where(p => p.Count() > 1);
+            if (featuresToMaybeMerge.Any())
+            {
+                foreach (var group in featuresToMaybeMerge)
+                {
+                    foreach(var feature in group)
+                    {
+                        if(feature.intensity != -1)
+                        {
+                            var featuresToMerge = group.Where(p => Math.Abs(p.apexPeak.peakWithScan.retentionTime - feature.apexPeak.peakWithScan.retentionTime) < rtTol && p.intensity != -1);
+                            if(featuresToMerge.Any())
+                                feature.MergeFeatureWith(featuresToMerge, integrate);
+                        }
+                    }
+                }
+
+                features.RemoveAll(p => p.intensity == -1);
+            }
 
             if (errorCheckAmbiguousMatches)
             {
@@ -1202,8 +1228,8 @@ namespace FlashLFQ
 
                 // isotopic distribution check
                 bool isotopeDistributionCheck = false;
-                //IMzPeak[] isotopePeaks = new IMzPeak[isotopeMassShifts.Count];
-                IMzPeak[] isotopePeaks = new IMzPeak[numIsotopesRequired];
+                IMzPeak[] isotopePeaks = new IMzPeak[isotopeMassShifts.Count];
+                //IMzPeak[] isotopePeaks = new IMzPeak[numIsotopesRequired];
                 foreach (var possibleIsotopePeak in possibleIsotopePeaks)
                 {
                     if (Math.Abs(possibleIsotopePeak.Mz - theorIsotopeMz) < isotopeMzTol)
@@ -1291,16 +1317,16 @@ namespace FlashLFQ
             {
                 var timePointsBetweenApexAndThisTimePoint = rightTimePoints.Where(p => p.peakWithScan.retentionTime <= timePoint.peakWithScan.retentionTime).ToList();
 
-                valleyTimePoint = timePointsBetweenApexAndThisTimePoint.Where(p => p.peakWithScan.backgroundSubtractedIntensity == timePointsBetweenApexAndThisTimePoint.Min(v => v.peakWithScan.backgroundSubtractedIntensity)).First();
+                valleyTimePoint = timePointsBetweenApexAndThisTimePoint.Where(p => p.isotopeClusterIntensity == timePointsBetweenApexAndThisTimePoint.Min(v => v.isotopeClusterIntensity)).First();
 
-                var d0 = (timePoint.peakWithScan.backgroundSubtractedIntensity - valleyTimePoint.peakWithScan.backgroundSubtractedIntensity) / timePoint.peakWithScan.backgroundSubtractedIntensity;
+                var d0 = (timePoint.isotopeClusterIntensity - valleyTimePoint.isotopeClusterIntensity) / timePoint.isotopeClusterIntensity;
                 if (d0 > mind0)
                 {
                     //timePointsBetweenApexAndThisTimePoint.Remove(valleyTimePoint);
                     //var secondValleyTimePoint = timePointsBetweenApexAndThisTimePoint.Where(p => p.peakWithScan.backgroundSubtractedIntensity == timePointsBetweenApexAndThisTimePoint.Min(v => v.peakWithScan.backgroundSubtractedIntensity)).First();
                     var secondValleyTimePoint = timePointsBetweenApexAndThisTimePoint[timePointsBetweenApexAndThisTimePoint.IndexOf(valleyTimePoint) + 1];
 
-                    d0 = (timePoint.peakWithScan.backgroundSubtractedIntensity - secondValleyTimePoint.peakWithScan.backgroundSubtractedIntensity) / timePoint.peakWithScan.backgroundSubtractedIntensity;
+                    d0 = (timePoint.isotopeClusterIntensity - secondValleyTimePoint.isotopeClusterIntensity) / timePoint.isotopeClusterIntensity;
                     
                     if (d0 > mind0)
                     {
@@ -1316,16 +1342,16 @@ namespace FlashLFQ
                 {
                     var timePointsBetweenApexAndThisTimePoint = leftTimePoints.Where(p => p.peakWithScan.retentionTime >= timePoint.peakWithScan.retentionTime).ToList();
 
-                    valleyTimePoint = timePointsBetweenApexAndThisTimePoint.Where(p => p.peakWithScan.backgroundSubtractedIntensity == timePointsBetweenApexAndThisTimePoint.Min(v => v.peakWithScan.backgroundSubtractedIntensity)).First();
+                    valleyTimePoint = timePointsBetweenApexAndThisTimePoint.Where(p => p.isotopeClusterIntensity == timePointsBetweenApexAndThisTimePoint.Min(v => v.isotopeClusterIntensity)).First();
 
-                    var d0 = (timePoint.peakWithScan.backgroundSubtractedIntensity - valleyTimePoint.peakWithScan.backgroundSubtractedIntensity) / timePoint.peakWithScan.backgroundSubtractedIntensity;
+                    var d0 = (timePoint.isotopeClusterIntensity - valleyTimePoint.isotopeClusterIntensity) / timePoint.isotopeClusterIntensity;
                     if (d0 > mind0)
                     {
                         //timePointsBetweenApexAndThisTimePoint.Remove(valleyTimePoint);
                         //var secondValleyTimePoint = timePointsBetweenApexAndThisTimePoint.Where(p => p.peakWithScan.backgroundSubtractedIntensity == timePointsBetweenApexAndThisTimePoint.Min(v => v.peakWithScan.backgroundSubtractedIntensity)).First();
                         var secondValleyTimePoint = timePointsBetweenApexAndThisTimePoint[timePointsBetweenApexAndThisTimePoint.IndexOf(valleyTimePoint) + 1];
 
-                        d0 = (timePoint.peakWithScan.backgroundSubtractedIntensity - secondValleyTimePoint.peakWithScan.backgroundSubtractedIntensity) / timePoint.peakWithScan.backgroundSubtractedIntensity;
+                        d0 = (timePoint.isotopeClusterIntensity - secondValleyTimePoint.isotopeClusterIntensity) / timePoint.isotopeClusterIntensity;
 
                         if (d0 > mind0)
                         {
