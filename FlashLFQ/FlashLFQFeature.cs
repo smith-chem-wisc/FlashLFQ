@@ -16,9 +16,13 @@ namespace FlashLFQ
         public List<FlashLFQIsotopeCluster> isotopeClusters;
         public int numIdentificationsByBaseSeq { get; private set; }
         public int numIdentificationsByFullSeq { get; private set; }
+        public double splitRT;
+        public double massError { get; private set; }
         
         public FlashLFQFeature()
         {
+            splitRT = 0;
+            massError = double.NaN;
             numIdentificationsByBaseSeq = 1;
             numIdentificationsByFullSeq = 1;
             identifyingScans = new List<FlashLFQIdentification>();
@@ -43,11 +47,12 @@ namespace FlashLFQ
                 sb.Append("Peak RT End" + "\t");
                 sb.Append("Peak MZ" + "\t");
                 sb.Append("Peak Charge" + "\t");
-                sb.Append("Apex Signal-To-Background" + "\t");
                 sb.Append("Peak Detection Type" + "\t");
                 sb.Append("PSMs Mapped" + "\t");
                 sb.Append("Base Sequences Mapped" + "\t");
-                sb.Append("Full Sequences Mapped");
+                sb.Append("Full Sequences Mapped" + "\t");
+                sb.Append("Peak Split Valley RT" + "\t");
+                sb.Append("Peak Apex Mass Error (ppm)");
                 return sb.ToString();
             }
         }
@@ -56,15 +61,17 @@ namespace FlashLFQ
         {
             if (isotopeClusters.Any())
             {
-                //apexPeak = isotopeClusters.Where(p => p.isotopeClusterIntensity == isotopeClusters.Max(v => v.isotopeClusterIntensity)).FirstOrDefault();
+                apexPeak = isotopeClusters.Where(p => p.isotopeClusterIntensity == isotopeClusters.Max(v => v.isotopeClusterIntensity)).FirstOrDefault();
 
-                double monoisotopicPeakMax = isotopeClusters.Select(p => p.peakWithScan.backgroundSubtractedIntensity).Max();
-                apexPeak = isotopeClusters.Where(p => p.peakWithScan.backgroundSubtractedIntensity == monoisotopicPeakMax).FirstOrDefault();
+                //double monoisotopicPeakMax = isotopeClusters.Select(p => p.peakWithScan.backgroundSubtractedIntensity).Max();
+                //apexPeak = isotopeClusters.Where(p => p.peakWithScan.backgroundSubtractedIntensity == monoisotopicPeakMax).FirstOrDefault();
 
                 if (integrate)
                     intensity = isotopeClusters.Select(p => p.isotopeClusterIntensity).Sum();
                 else
                     intensity = apexPeak.isotopeClusterIntensity;
+
+                massError = ((ClassExtensions.ToMass(apexPeak.peakWithScan.mainPeak.Mz, apexPeak.chargeState) - identifyingScans.First().monoisotopicMass) / identifyingScans.First().monoisotopicMass) * 1e6;
             }
         }
 
@@ -106,7 +113,6 @@ namespace FlashLFQ
 
                 sb.Append("" + apexPeak.peakWithScan.mainPeak.Mz + "\t");
                 sb.Append("" + apexPeak.chargeState + "\t");
-                sb.Append("" + (apexPeak.peakWithScan.signalToBackgroundRatio) + "\t");
             }
             else
             {
@@ -116,7 +122,6 @@ namespace FlashLFQ
 
                 sb.Append("" + "-" + "\t");
                 sb.Append("" + "-" + "\t");
-                sb.Append("" + 0 + "\t");
             }
             
             if (isMbrFeature)
@@ -126,7 +131,9 @@ namespace FlashLFQ
 
             sb.Append("" + identifyingScans.Count + "\t");
             sb.Append("" + numIdentificationsByBaseSeq + "\t");
-            sb.Append("" + numIdentificationsByFullSeq);
+            sb.Append("" + numIdentificationsByFullSeq + "\t");
+            sb.Append("" + splitRT + "\t");
+            sb.Append("" + massError);
 
             return sb.ToString();
         }

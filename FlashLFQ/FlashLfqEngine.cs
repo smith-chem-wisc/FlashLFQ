@@ -34,7 +34,6 @@ namespace FlashLFQ
         // settings
         public bool silent { get; private set; }
         public bool pause { get; private set; }
-        public int maxParallelFiles { get; private set; }
         public int maxDegreesOfParallelism { get; private set; }
         public IEnumerable<int> chargeStates { get; private set; }
         public double ppmTolerance { get; private set; }
@@ -42,16 +41,12 @@ namespace FlashLFQ
         public double isotopePpmTolerance { get; private set; }
         public bool integrate { get; private set; }
         public bool sumFeatures { get; private set; }
-        public double initialRTWindow { get; private set; }
         public int missedScansAllowed { get; private set; }
         public int numIsotopesRequired { get; private set; }
-        public double signalToBackgroundRequired { get; private set; }
         public double mbrRtWindow { get; private set; }
-        public double mbrSbrFilter { get; private set; }
         public double mbrppmTolerance { get; private set; }
         public bool errorCheckAmbiguousMatches { get; private set; }
         public bool mbr { get; private set; }
-        public double sbrFilter { get; private set; }
         public bool idSpecificChargeState { get; private set; }
         public double qValueCutoff { get; private set; }
         public IdentificationFileType identificationFileType { get; private set; }
@@ -65,16 +60,12 @@ namespace FlashLFQ
             chargeStates = new List<int>();
 
             // default parameters
-            signalToBackgroundRequired = 1.0;
-            sbrFilter = 1.0;
-            mbrSbrFilter = 1.0;
             mbrRtWindow = 1.5;
             ppmTolerance = 10.0;
             mbrppmTolerance = 5.0;
             isotopePpmTolerance = 5.0;
             integrate = false;
             sumFeatures = true;
-            initialRTWindow = 0.4;
             missedScansAllowed = 1;
             numIsotopesRequired = 2;
             rtTol = 5.0;
@@ -82,7 +73,6 @@ namespace FlashLFQ
             pause = true;
             errorCheckAmbiguousMatches = true;
             mbr = false;
-            maxParallelFiles = 1;
             maxDegreesOfParallelism = -1;
             idSpecificChargeState = false;
             qValueCutoff = 0.01;
@@ -821,38 +811,30 @@ namespace FlashLFQ
             foreach (var scan in allMs1Scans)
             {
                 int peakIndexInThisScan = 0;
-                //double backgroundForThisScan = scan.MassSpectrum.Select(p => p.Intensity).Min();
-                double backgroundForThisScan = 1;
 
                 foreach (var peak in scan.MassSpectrum)
                 {
-                    double signalToBackgroundRatio = peak.Intensity / backgroundForThisScan;
+                    List<FlashLFQMzBinElement> mzBin;
+                    FlashLFQMzBinElement element = null;
+                    double floorMz = Math.Floor(peak.Mz * 100) / 100;
+                    double ceilingMz = Math.Ceiling(peak.Mz * 100) / 100;
 
-                    if (signalToBackgroundRatio > signalToBackgroundRequired)
+                    if (mzBins.TryGetValue(floorMz, out mzBin))
                     {
-                        List<FlashLFQMzBinElement> mzBin;
-                        FlashLFQMzBinElement element = null;
-                        double floorMz = Math.Floor(peak.Mz * 100) / 100;
-                        double ceilingMz = Math.Ceiling(peak.Mz * 100) / 100;
+                        element = new FlashLFQMzBinElement(peak, scan, peakIndexInThisScan);
+                        mzBin.Add(element);
+                    }
 
-                        if (mzBins.TryGetValue(floorMz, out mzBin))
-                        {
-                            element = new FlashLFQMzBinElement(peak, scan, backgroundForThisScan, peakIndexInThisScan);
-                            mzBin.Add(element);
-                        }
-
-                        if (mzBins.TryGetValue(ceilingMz, out mzBin))
-                        {
-                            if (element == null)
-                                element = new FlashLFQMzBinElement(peak, scan, backgroundForThisScan, peakIndexInThisScan);
-                            mzBin.Add(element);
-                        }
+                    if (mzBins.TryGetValue(ceilingMz, out mzBin))
+                    {
+                        if (element == null)
+                            element = new FlashLFQMzBinElement(peak, scan, peakIndexInThisScan);
+                        mzBin.Add(element);
                     }
 
                     peakIndexInThisScan++;
                 }
             }
-
 
             return ms1ScanNumbers;
         }
@@ -924,7 +906,7 @@ namespace FlashLFQ
                                         break;
                                 }
                                 int precursorScanNum = temp.Last();
-                                
+
                                 // separate peaks by rt into left and right of the identification RT
                                 var rightPeaks = binPeaksHere.Where(p => p.retentionTime >= identification.ms2RetentionTime).OrderBy(p => p.retentionTime);
                                 var leftPeaks = binPeaksHere.Where(p => p.retentionTime < identification.ms2RetentionTime).OrderByDescending(p => p.retentionTime);
@@ -938,9 +920,9 @@ namespace FlashLFQ
                                 var validIsotopeClusters = FilterPeaksByIsotopicDistribution(validPeaks, identification, chargeState, false);
 
                                 var peaksInSameScan = validIsotopeClusters.GroupBy(p => p.peakWithScan.oneBasedScanNumber).Where(v => v.Count() > 1);
-                                if(peaksInSameScan.Any())
+                                if (peaksInSameScan.Any())
                                 {
-                                    foreach(var group in peaksInSameScan)
+                                    foreach (var group in peaksInSameScan)
                                     {
                                         var mzToUse = group.Select(p => Math.Abs(p.peakWithScan.mainPeak.Mz - theorMzHere)).Min();
                                         var peakToUse = group.Where(p => Math.Abs(p.peakWithScan.mainPeak.Mz - theorMzHere) == mzToUse).First();
@@ -953,7 +935,7 @@ namespace FlashLFQ
                                     msmsFeature.isotopeClusters.Add(validCluster);
                             }
                         }
-                        
+
                         msmsFeature.CalculateIntensityForThisFeature(integrate);
                         SplitPeak(msmsFeature, integrate);
                         concurrentBagOfFeatures.Add(msmsFeature);
@@ -1058,12 +1040,12 @@ namespace FlashLFQ
             {
                 foreach (var group in featuresToMaybeMerge)
                 {
-                    foreach(var feature in group)
+                    foreach (var feature in group)
                     {
-                        if(feature.intensity != -1)
+                        if (feature.intensity != -1)
                         {
                             var featuresToMerge = group.Where(p => Math.Abs(p.apexPeak.peakWithScan.retentionTime - feature.apexPeak.peakWithScan.retentionTime) < rtTol && p.intensity != -1);
-                            if(featuresToMerge.Any())
+                            if (featuresToMerge.Any())
                                 feature.MergeFeatureWith(featuresToMerge, integrate);
                         }
                     }
@@ -1090,16 +1072,7 @@ namespace FlashLFQ
                     else
                     {
                         ambiguousFeature.identifyingScans = msmsIdentsForThisFile.ToList();
-                        //ambiguousFeature.intensity = 0;
                     }
-                }
-
-                foreach (var feature in features)
-                {
-                    if (feature.apexPeak != null && feature.apexPeak.peakWithScan.signalToBackgroundRatio < sbrFilter)
-                        feature.intensity = 0;
-                    if (feature.isMbrFeature && feature.apexPeak.peakWithScan.signalToBackgroundRatio < mbrSbrFilter)
-                        feature.intensity = -1;
                 }
 
                 features.RemoveAll(p => p.intensity == -1);
@@ -1156,7 +1129,6 @@ namespace FlashLFQ
                             else
                             {
                                 intensitiesByFile[i] = 0;
-                                //intensitiesByFile[i] = featuresForThisBaseSeqAndFile.Select(p => (p.intensity)).Sum();
                             }
                         }
                     }
@@ -1216,7 +1188,7 @@ namespace FlashLFQ
                     {
                         var peak = thisPeakWithScan.scan.MassSpectrum[i];
                         if (Math.Abs(peak.Mz - prevIsotopePeakMz) < tol)
-                            if ((peak.Intensity / thisPeakWithScan.mainPeak.Intensity > 0.2) && (peak.Intensity / thisPeakWithScan.backgroundIntensity > 5.0))
+                            if (peak.Intensity / thisPeakWithScan.mainPeak.Intensity > 0.2)
                                 badPeak = true;
                         if (peak.Mz < (prevIsotopePeakMz - tol))
                             break;
@@ -1229,7 +1201,6 @@ namespace FlashLFQ
                 // isotopic distribution check
                 bool isotopeDistributionCheck = false;
                 IMzPeak[] isotopePeaks = new IMzPeak[isotopeMassShifts.Count];
-                //IMzPeak[] isotopePeaks = new IMzPeak[numIsotopesRequired];
                 foreach (var possibleIsotopePeak in possibleIsotopePeaks)
                 {
                     if (Math.Abs(possibleIsotopePeak.Mz - theorIsotopeMz) < isotopeMzTol)
@@ -1264,8 +1235,24 @@ namespace FlashLFQ
 
                 if (isotopeDistributionCheck)
                 {
-                    var goodIsotopePeaks = isotopePeaks.Where(p => p != null);
-                    isotopeClusters.Add(new FlashLFQIsotopeCluster(thisPeakWithScan, chargeState, goodIsotopePeaks.Select(p => p.Intensity).Sum() - thisPeakWithScan.backgroundIntensity * goodIsotopePeaks.Count()));
+                    double isotopeClusterIntensity = 0;
+
+                    for (int i = 0; i < isotopePeaks.Length; i++)
+                    {
+                        if (isotopePeaks[i] != null)
+                        {
+                            double relIsotopeAbundance = isotopePeaks[i].Intensity / isotopePeaks[0].Intensity;
+                            double theorIsotopeAbundance = isotopeMassShifts[i].Value / isotopeMassShifts[0].Value;
+
+                            // impute isotope intensity if it is very different from expected
+                            if ((relIsotopeAbundance / theorIsotopeAbundance) < 3.0)
+                                isotopeClusterIntensity += isotopePeaks[i].Intensity;
+                            else
+                                isotopeClusterIntensity += theorIsotopeAbundance * isotopePeaks[0].Intensity;
+                        }
+                    }
+
+                    isotopeClusters.Add(new FlashLFQIsotopeCluster(thisPeakWithScan, chargeState, isotopeClusterIntensity));
                 }
             }
 
@@ -1302,7 +1289,7 @@ namespace FlashLFQ
         {
             bool splitThisPeak = false;
             FlashLFQIsotopeCluster valleyTimePoint = null;
-            
+
             if (peak.isotopeClusters.Count() < 5)
                 return;
 
@@ -1322,12 +1309,10 @@ namespace FlashLFQ
                 var d0 = (timePoint.isotopeClusterIntensity - valleyTimePoint.isotopeClusterIntensity) / timePoint.isotopeClusterIntensity;
                 if (d0 > mind0)
                 {
-                    //timePointsBetweenApexAndThisTimePoint.Remove(valleyTimePoint);
-                    //var secondValleyTimePoint = timePointsBetweenApexAndThisTimePoint.Where(p => p.peakWithScan.backgroundSubtractedIntensity == timePointsBetweenApexAndThisTimePoint.Min(v => v.peakWithScan.backgroundSubtractedIntensity)).First();
                     var secondValleyTimePoint = timePointsBetweenApexAndThisTimePoint[timePointsBetweenApexAndThisTimePoint.IndexOf(valleyTimePoint) + 1];
 
                     d0 = (timePoint.isotopeClusterIntensity - secondValleyTimePoint.isotopeClusterIntensity) / timePoint.isotopeClusterIntensity;
-                    
+
                     if (d0 > mind0)
                     {
                         splitThisPeak = true;
@@ -1347,8 +1332,6 @@ namespace FlashLFQ
                     var d0 = (timePoint.isotopeClusterIntensity - valleyTimePoint.isotopeClusterIntensity) / timePoint.isotopeClusterIntensity;
                     if (d0 > mind0)
                     {
-                        //timePointsBetweenApexAndThisTimePoint.Remove(valleyTimePoint);
-                        //var secondValleyTimePoint = timePointsBetweenApexAndThisTimePoint.Where(p => p.peakWithScan.backgroundSubtractedIntensity == timePointsBetweenApexAndThisTimePoint.Min(v => v.peakWithScan.backgroundSubtractedIntensity)).First();
                         var secondValleyTimePoint = timePointsBetweenApexAndThisTimePoint[timePointsBetweenApexAndThisTimePoint.IndexOf(valleyTimePoint) + 1];
 
                         d0 = (timePoint.isotopeClusterIntensity - secondValleyTimePoint.isotopeClusterIntensity) / timePoint.isotopeClusterIntensity;
@@ -1363,12 +1346,12 @@ namespace FlashLFQ
             }
 
             // split
-            if(splitThisPeak)
+            if (splitThisPeak)
             {
                 var splitLeft = peak.isotopeClusters.Where(p => p.peakWithScan.retentionTime <= valleyTimePoint.peakWithScan.retentionTime).ToList();
                 var splitRight = peak.isotopeClusters.Where(p => p.peakWithScan.retentionTime >= valleyTimePoint.peakWithScan.retentionTime).ToList();
 
-                if(peak.identifyingScans.First().ms2RetentionTime > splitLeft.Max(p => p.peakWithScan.retentionTime))
+                if (peak.identifyingScans.First().ms2RetentionTime > splitLeft.Max(p => p.peakWithScan.retentionTime))
                     foreach (var timePoint in splitLeft)
                         peak.isotopeClusters.Remove(timePoint);
                 else
@@ -1377,6 +1360,7 @@ namespace FlashLFQ
 
                 // recalculate intensity for the peak
                 peak.CalculateIntensityForThisFeature(integrate);
+                peak.splitRT = valleyTimePoint.peakWithScan.retentionTime;
 
                 // recursively split
                 SplitPeak(peak, integrate);

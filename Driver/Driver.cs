@@ -22,7 +22,7 @@ namespace FlashLFQ
             engine.ConstructBinsFromIdentifications();
 
             Parallel.For(0, engine.filePaths.Length,
-                new ParallelOptions { MaxDegreeOfParallelism = engine.maxParallelFiles },
+                new ParallelOptions { MaxDegreeOfParallelism = 1 },
                 fileNumber =>
                 {
                     engine.Quantify(null, engine.filePaths[fileNumber]);
