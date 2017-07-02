@@ -1250,6 +1250,8 @@ namespace FlashLFQ
                             else
                                 isotopeClusterIntensity += theorIsotopeAbundance * isotopePeaks[0].Intensity;
                         }
+                        else
+                            isotopeClusterIntensity += (isotopeMassShifts[i].Value / isotopeMassShifts[0].Value) * isotopePeaks[0].Intensity;
                     }
 
                     isotopeClusters.Add(new FlashLFQIsotopeCluster(thisPeakWithScan, chargeState, isotopeClusterIntensity));
