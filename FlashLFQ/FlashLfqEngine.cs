@@ -60,11 +60,12 @@ namespace FlashLFQ
             chargeStates = new List<int>();
 
             // default parameters
-            mbrRtWindow = 1.5;
-            peakfindingPpmTolerance = 20.0;
             ppmTolerance = 10.0;
-            mbrppmTolerance = 5.0;
+            peakfindingPpmTolerance = 20.0;
             isotopePpmTolerance = 5.0;
+            mbr = false;
+            mbrRtWindow = 1.5;
+            mbrppmTolerance = 5.0;
             integrate = false;
             missedScansAllowed = 1;
             numIsotopesRequired = 2;
@@ -72,7 +73,6 @@ namespace FlashLFQ
             silent = false;
             pause = true;
             errorCheckAmbiguousMatches = true;
-            mbr = false;
             maxDegreesOfParallelism = -1;
             idSpecificChargeState = false;
             qValueCutoff = 0.01;
@@ -478,7 +478,7 @@ namespace FlashLFQ
             {
                 if (outputFolder == null)
                     outputFolder = identificationsFilePath.Substring(0, identificationsFilePath.Length - (identificationsFilePath.Length - identificationsFilePath.IndexOf('.')));
-
+                
                 var allFeatures = allFeaturesByFile.SelectMany(p => p.Select(v => v));
 
                 // write features
@@ -500,6 +500,24 @@ namespace FlashLFQ
                 proteinOutput = proteinOutput.Concat(proteinGroups.Select(v => v.ToString())).ToList();
                 if (writeProteins)
                     File.WriteAllLines(outputFolder + baseFileName + "QuantifiedProteins.tsv", proteinOutput);
+                
+                //write log
+                File.WriteAllText(outputFolder + baseFileName + "Log.txt",
+                    "Analysis Time = " + stopwatch.Elapsed.ToString() + "\n" +
+                    "peakfindingPpmTolerance = " + peakfindingPpmTolerance + "\n" +
+                    "missedScansAllowed = " + missedScansAllowed + "\n" +
+                    "ppmTolerance = " + ppmTolerance + "\n" +
+                    "isotopePpmTolerance = " + isotopePpmTolerance + "\n" +
+                    "numIsotopesRequired = " + numIsotopesRequired + "\n" +
+                    "rtTol = " + rtTol + "\n" +
+                    "integrate = " + integrate + "\n" +
+                    "idSpecificChargeState = " + idSpecificChargeState + "\n" +
+                    "maxDegreesOfParallelism = " + maxDegreesOfParallelism + "\n" +
+                    "mbr = " + mbr + "\n" +
+                    "mbrppmTolerance = " + mbrppmTolerance + "\n" +
+                    "mbrRtWindow = " + mbrRtWindow + "\n" +
+                    "errorCheckAmbiguousMatches = " + errorCheckAmbiguousMatches
+                    );
             }
             catch (Exception e)
             {
@@ -914,13 +932,15 @@ namespace FlashLFQ
                                 var crawledRightPeaks = ScanCrawl(rightPeaks, missedScansAllowed, precursorScanNum, ms1ScanNumbers);
                                 var crawledLeftPeaks = ScanCrawl(leftPeaks, missedScansAllowed, precursorScanNum, ms1ScanNumbers);
 
+                                // filter again by smaller mz tolerance
+                                mzTolHere = (ppmTolerance / 1e6) * theorMzHere;
                                 var validPeaks = crawledRightPeaks.Concat(crawledLeftPeaks);
+                                validPeaks = validPeaks.Where(p => Math.Abs(p.mainPeak.Mz - theorMzHere) < mzTolHere);
 
+                                // filter by isotopic distribution
                                 var validIsotopeClusters = FilterPeaksByIsotopicDistribution(validPeaks, identification, chargeState, false);
 
-                                mzTolHere = (ppmTolerance / 1e6) * theorMzHere;
-                                validIsotopeClusters = validIsotopeClusters.Where(p => Math.Abs(p.peakWithScan.mainPeak.Mz - theorMzHere) < mzTolHere);
-
+                                // if multiple mass spectral peaks in the same scan are valid, pick the one with the smallest mass error
                                 var peaksInSameScan = validIsotopeClusters.GroupBy(p => p.peakWithScan.oneBasedScanNumber).Where(v => v.Count() > 1);
                                 if (peaksInSameScan.Any())
                                 {
@@ -939,7 +959,7 @@ namespace FlashLFQ
                         }
 
                         msmsFeature.CalculateIntensityForThisFeature(integrate);
-                        SplitPeak(msmsFeature, integrate);
+                        CutPeak(msmsFeature, integrate);
                         concurrentBagOfFeatures.Add(msmsFeature);
                     }
                 }
@@ -1309,9 +1329,9 @@ namespace FlashLFQ
             return validPeaksWithScans;
         }
 
-        private void SplitPeak(FlashLFQFeature peak, bool integrate)
+        private void CutPeak(FlashLFQFeature peak, bool integrate)
         {
-            bool splitThisPeak = false;
+            bool cutThisPeak = false;
             FlashLFQIsotopeCluster valleyTimePoint = null;
 
             if (peak.isotopeClusters.Count() < 5)
@@ -1339,13 +1359,13 @@ namespace FlashLFQ
 
                     if (d0 > mind0)
                     {
-                        splitThisPeak = true;
+                        cutThisPeak = true;
                         break;
                     }
                 }
             }
 
-            if (splitThisPeak == false)
+            if (cutThisPeak == false)
             {
                 foreach (var timePoint in leftTimePoints)
                 {
@@ -1362,15 +1382,15 @@ namespace FlashLFQ
 
                         if (d0 > mind0)
                         {
-                            splitThisPeak = true;
+                            cutThisPeak = true;
                             break;
                         }
                     }
                 }
             }
 
-            // split
-            if (splitThisPeak)
+            // cut
+            if (cutThisPeak)
             {
                 var splitLeft = peak.isotopeClusters.Where(p => p.peakWithScan.retentionTime <= valleyTimePoint.peakWithScan.retentionTime).ToList();
                 var splitRight = peak.isotopeClusters.Where(p => p.peakWithScan.retentionTime >= valleyTimePoint.peakWithScan.retentionTime).ToList();
@@ -1386,8 +1406,8 @@ namespace FlashLFQ
                 peak.CalculateIntensityForThisFeature(integrate);
                 peak.splitRT = valleyTimePoint.peakWithScan.retentionTime;
 
-                // recursively split
-                SplitPeak(peak, integrate);
+                // recursively cut
+                CutPeak(peak, integrate);
             }
         }
     }
