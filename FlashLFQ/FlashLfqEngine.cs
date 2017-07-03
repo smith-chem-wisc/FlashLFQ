@@ -36,11 +36,11 @@ namespace FlashLFQ
         public bool pause { get; private set; }
         public int maxDegreesOfParallelism { get; private set; }
         public IEnumerable<int> chargeStates { get; private set; }
+        public double peakfindingPpmTolerance { get; private set; }
         public double ppmTolerance { get; private set; }
         public double rtTol { get; private set; }
         public double isotopePpmTolerance { get; private set; }
         public bool integrate { get; private set; }
-        public bool sumFeatures { get; private set; }
         public int missedScansAllowed { get; private set; }
         public int numIsotopesRequired { get; private set; }
         public double mbrRtWindow { get; private set; }
@@ -61,11 +61,11 @@ namespace FlashLFQ
 
             // default parameters
             mbrRtWindow = 1.5;
+            peakfindingPpmTolerance = 20.0;
             ppmTolerance = 10.0;
             mbrppmTolerance = 5.0;
             isotopePpmTolerance = 5.0;
             integrate = false;
-            sumFeatures = true;
             missedScansAllowed = 1;
             numIsotopesRequired = 2;
             rtTol = 5.0;
@@ -126,7 +126,6 @@ namespace FlashLFQ
                         case ("sil"): silent = Boolean.Parse(arg.Substring(3)); break;
                         case ("pau"): pause = Boolean.Parse(arg.Substring(3)); break;
                         case ("int"): integrate = Boolean.Parse(arg.Substring(3)); break;
-                        case ("sum"): sumFeatures = Boolean.Parse(arg.Substring(3)); break;
                         case ("mbr"): mbr = Boolean.Parse(arg.Substring(3)); break;
                         case ("chg"): idSpecificChargeState = Boolean.Parse(arg.Substring(3)); break;
                         case ("nis"): numIsotopesRequired = int.Parse(arg.Substring(3)); break;
@@ -873,7 +872,7 @@ namespace FlashLFQ
                                     continue;
 
                             double theorMzHere = ClassExtensions.ToMz(identification.massToLookFor, chargeState);
-                            double mzTolHere = (ppmTolerance / 1e6) * theorMzHere;
+                            double mzTolHere = (peakfindingPpmTolerance / 1e6) * theorMzHere;
 
                             double floorMz = Math.Floor(theorMzHere * 100) / 100;
                             double ceilingMz = Math.Ceiling(theorMzHere * 100) / 100;
@@ -918,6 +917,9 @@ namespace FlashLFQ
                                 var validPeaks = crawledRightPeaks.Concat(crawledLeftPeaks);
 
                                 var validIsotopeClusters = FilterPeaksByIsotopicDistribution(validPeaks, identification, chargeState, false);
+
+                                mzTolHere = (ppmTolerance / 1e6) * theorMzHere;
+                                validIsotopeClusters = validIsotopeClusters.Where(p => Math.Abs(p.peakWithScan.mainPeak.Mz - theorMzHere) < mzTolHere);
 
                                 var peaksInSameScan = validIsotopeClusters.GroupBy(p => p.peakWithScan.oneBasedScanNumber).Where(v => v.Count() > 1);
                                 if (peaksInSameScan.Any())
@@ -1040,13 +1042,33 @@ namespace FlashLFQ
             {
                 foreach (var group in featuresToMaybeMerge)
                 {
-                    foreach (var feature in group)
+                    if (idSpecificChargeState)
                     {
-                        if (feature.intensity != -1)
+                        var group2 = group.ToList().GroupBy(p => p.apexPeak.chargeState).Where(v => v.Count() > 1);
+
+                        foreach (var group3 in group2)
                         {
-                            var featuresToMerge = group.Where(p => Math.Abs(p.apexPeak.peakWithScan.retentionTime - feature.apexPeak.peakWithScan.retentionTime) < rtTol && p.intensity != -1);
-                            if (featuresToMerge.Any())
-                                feature.MergeFeatureWith(featuresToMerge, integrate);
+                            foreach (var feature in group3)
+                            {
+                                if (feature.intensity != -1)
+                                {
+                                    var featuresToMerge = group.Where(p => Math.Abs(p.apexPeak.peakWithScan.retentionTime - feature.apexPeak.peakWithScan.retentionTime) < rtTol && p.intensity != -1);
+                                    if (featuresToMerge.Any())
+                                        feature.MergeFeatureWith(featuresToMerge, integrate);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (var feature in group)
+                        {
+                            if (feature.intensity != -1)
+                            {
+                                var featuresToMerge = group.Where(p => Math.Abs(p.apexPeak.peakWithScan.retentionTime - feature.apexPeak.peakWithScan.retentionTime) < rtTol && p.intensity != -1);
+                                if (featuresToMerge.Any())
+                                    feature.MergeFeatureWith(featuresToMerge, integrate);
+                            }
                         }
                     }
                 }
