@@ -21,6 +21,7 @@ namespace FlashLFQ
         // file info stuff
         public string identificationsFilePath { get; private set; }
         public string[] filePaths { get; private set; }
+        public string[] analysisSummaryPerFile { get; private set; }
         public string outputFolder;
 
         // structures used in the FlashLFQ program
@@ -50,15 +51,17 @@ namespace FlashLFQ
         public bool idSpecificChargeState { get; private set; }
         public double qValueCutoff { get; private set; }
         public IdentificationFileType identificationFileType { get; private set; }
-        public Stopwatch stopwatch;
+        public Stopwatch globalStopwatch;
+        public Stopwatch fileLocalStopwatch;
 
         public FlashLFQEngine()
         {
-            stopwatch = new Stopwatch();
+            globalStopwatch = new Stopwatch();
+            fileLocalStopwatch = new Stopwatch();
             allIdentifications = new List<FlashLFQIdentification>();
             pepToProteinGroupDictionary = new Dictionary<string, FlashLFQProteinGroup>();
             chargeStates = new List<int>();
-
+            
             // default parameters
             ppmTolerance = 10.0;
             peakfindingPpmTolerance = 20.0;
@@ -164,6 +167,10 @@ namespace FlashLFQ
                 return false;
             }
 
+            if (outputFolder == null)
+                outputFolder = identificationsFilePath.Substring(0, identificationsFilePath.Length - (identificationsFilePath.Length - identificationsFilePath.IndexOf('.')));
+            
+            analysisSummaryPerFile = new string[filePaths.Length];
             allFeaturesByFile = new List<FlashLFQFeature>[filePaths.Length];
             return true;
         }
@@ -171,6 +178,7 @@ namespace FlashLFQ
         public void PassFilePaths(string[] paths)
         {
             filePaths = paths.Distinct().ToArray();
+            analysisSummaryPerFile = new string[filePaths.Length];
             allFeaturesByFile = new List<FlashLFQFeature>[filePaths.Length];
         }
 
@@ -207,7 +215,7 @@ namespace FlashLFQ
 
             // read identification file
             if (!silent)
-                Console.WriteLine("Opening " + identificationsFilePath);
+                Console.WriteLine("Opening identification file " + identificationsFilePath);
             string[] tsv;
 
             try
@@ -414,7 +422,7 @@ namespace FlashLFQ
                     if (fileIndex == -1)
                         continue;
                     IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file = OpenDataFile(fileIndex);
-                    var identificationsForThisFile = allIdentifications.Where(p => Path.GetFileNameWithoutExtension(p.fileName) == Path.GetFileNameWithoutExtension(filePaths[0]));
+                    var identificationsForThisFile = allIdentifications.Where(p => Path.GetFileNameWithoutExtension(p.fileName) == Path.GetFileNameWithoutExtension(fileName));
 
                     foreach (var identification in identificationsForThisFile)
                     {
@@ -435,6 +443,8 @@ namespace FlashLFQ
         {
             if (filePaths == null)
                 return;
+
+            fileLocalStopwatch.Restart();
 
             // construct bins
             var localBins = ConstructLocalBins();
@@ -470,15 +480,16 @@ namespace FlashLFQ
 
             if (!silent)
                 Console.WriteLine("Finished " + Path.GetFileNameWithoutExtension(filePath));
+
+            analysisSummaryPerFile[i] = "File analysis time = " + fileLocalStopwatch.Elapsed.ToString();
         }
 
         public bool WriteResults(string baseFileName, bool writePeaks, bool writePeptides, bool writeProteins)
         {
+            if (!silent)
+                Console.WriteLine("Writing results");
             try
             {
-                if (outputFolder == null)
-                    outputFolder = identificationsFilePath.Substring(0, identificationsFilePath.Length - (identificationsFilePath.Length - identificationsFilePath.IndexOf('.')));
-                
                 var allFeatures = allFeaturesByFile.SelectMany(p => p.Select(v => v));
 
                 // write features
@@ -500,24 +511,36 @@ namespace FlashLFQ
                 proteinOutput = proteinOutput.Concat(proteinGroups.Select(v => v.ToString())).ToList();
                 if (writeProteins)
                     File.WriteAllLines(outputFolder + baseFileName + "QuantifiedProteins.tsv", proteinOutput);
-                
+
                 //write log
-                File.WriteAllText(outputFolder + baseFileName + "Log.txt",
-                    "Analysis Time = " + stopwatch.Elapsed.ToString() + "\n" +
-                    "peakfindingPpmTolerance = " + peakfindingPpmTolerance + "\n" +
-                    "missedScansAllowed = " + missedScansAllowed + "\n" +
-                    "ppmTolerance = " + ppmTolerance + "\n" +
-                    "isotopePpmTolerance = " + isotopePpmTolerance + "\n" +
-                    "numIsotopesRequired = " + numIsotopesRequired + "\n" +
-                    "rtTol = " + rtTol + "\n" +
-                    "integrate = " + integrate + "\n" +
-                    "idSpecificChargeState = " + idSpecificChargeState + "\n" +
-                    "maxDegreesOfParallelism = " + maxDegreesOfParallelism + "\n" +
-                    "mbr = " + mbr + "\n" +
-                    "mbrppmTolerance = " + mbrppmTolerance + "\n" +
-                    "mbrRtWindow = " + mbrRtWindow + "\n" +
-                    "errorCheckAmbiguousMatches = " + errorCheckAmbiguousMatches
-                    );
+                List<string> logOutput = new List<string>()
+                {
+                    "Analysis Finish DateTime = " + DateTime.Now.ToString(),
+                    "Total Analysis Time = " + globalStopwatch.Elapsed.ToString(),
+                    "peakfindingPpmTolerance = " + peakfindingPpmTolerance,
+                    "missedScansAllowed = " + missedScansAllowed,
+                    "ppmTolerance = " + ppmTolerance,
+                    "isotopePpmTolerance = " + isotopePpmTolerance,
+                    "numIsotopesRequired = " + numIsotopesRequired,
+                    "rtTol = " + rtTol,
+                    "integrate = " + integrate,
+                    "idSpecificChargeState = " + idSpecificChargeState,
+                    "maxDegreesOfParallelism = " + maxDegreesOfParallelism,
+                    "mbr = " + mbr,
+                    "mbrppmTolerance = " + mbrppmTolerance,
+                    "mbrppmTolerance = " + mbrppmTolerance,
+                    "mbrRtWindow = " + mbrRtWindow,
+                    "errorCheckAmbiguousMatches = " + errorCheckAmbiguousMatches,
+                    ""
+                };
+
+                for(int i = 0; i < filePaths.Length; i++)
+                {
+                    logOutput.Add("Analysis summary for: " + filePaths[i]);
+                    logOutput.Add("\t" + analysisSummaryPerFile[i] + "\n");
+                }
+
+                File.WriteAllLines(outputFolder + baseFileName + "Log.txt", logOutput);
             }
             catch (Exception e)
             {
@@ -536,12 +559,92 @@ namespace FlashLFQ
 
         public void RetentionTimeCalibrationAndErrorCheckMatchedFeatures()
         {
-            // get features from both files, find RT difference
-            //allFeaturesByFile
+            return;
+            if (!silent)
+                Console.WriteLine("Running retention time calibration");
+            
+            var allFeatures = allFeaturesByFile.SelectMany(p => p);
+            var allAmbiguousFeatures = allFeatures.Where(p => p.numIdentificationsByFullSeq > 1).ToList();
+            var ambiguousFeatureSeqs = new HashSet<string>(allAmbiguousFeatures.SelectMany(p => p.identifyingScans.Select(v => v.FullSequence)));
+
+            foreach (var feature in allFeatures)
+                if (ambiguousFeatureSeqs.Contains(feature.identifyingScans.First().FullSequence))
+                    allAmbiguousFeatures.Add(feature);
+
+            var unambiguousPeaksGroupedByFile = allFeatures.Except(allAmbiguousFeatures).Where(v => v.apexPeak != null).GroupBy(p => p.fileName);
+            
+            foreach(var file in unambiguousPeaksGroupedByFile)
+            {
+                Dictionary<string, FlashLFQFeature> pepToBestFeatureForThisFile = new Dictionary<string, FlashLFQFeature>();
+                foreach(var testPeak in file)
+                {
+                    FlashLFQFeature currentBestPeak;
+                    if (pepToBestFeatureForThisFile.TryGetValue(testPeak.identifyingScans.First().FullSequence, out currentBestPeak))
+                    {
+                        if (currentBestPeak.intensity > testPeak.intensity)
+                            pepToBestFeatureForThisFile[testPeak.identifyingScans.First().FullSequence] = testPeak;
+                    }
+                    else
+                        pepToBestFeatureForThisFile.Add(testPeak.identifyingScans.First().FullSequence, testPeak);
+                }
+
+                foreach(var otherFile in unambiguousPeaksGroupedByFile)
+                {
+                    if (otherFile.Key.Equals(file.Key))
+                        continue;
+
+                    var featuresInCommon = otherFile.Where(p => pepToBestFeatureForThisFile.ContainsKey(p.identifyingScans.First().FullSequence));
+
+                    Dictionary<string, FlashLFQFeature> pepToBestFeatureForOtherFile = new Dictionary<string, FlashLFQFeature>();
+                    foreach (var testPeak in featuresInCommon)
+                    {
+                        FlashLFQFeature currentBestPeak;
+                        if (pepToBestFeatureForOtherFile.TryGetValue(testPeak.identifyingScans.First().FullSequence, out currentBestPeak))
+                        {
+                            if (currentBestPeak.intensity > testPeak.intensity)
+                                pepToBestFeatureForOtherFile[testPeak.identifyingScans.First().FullSequence] = testPeak;
+                        }
+                        else
+                            pepToBestFeatureForOtherFile.Add(testPeak.identifyingScans.First().FullSequence, testPeak);
+                    }
+
+                    Dictionary<string, Tuple<double, double>> rtCalPoints = new Dictionary<string, Tuple<double, double>>();
+
+                    foreach(var kvp in pepToBestFeatureForOtherFile)
+                        rtCalPoints.Add(kvp.Key, new Tuple<double, double>(pepToBestFeatureForThisFile[kvp.Key].apexPeak.peakWithScan.retentionTime, kvp.Value.apexPeak.peakWithScan.retentionTime));
+                    
+                    var someDoubles = rtCalPoints.Select(p => (p.Value.Item1 - p.Value.Item2));
+                    double average = someDoubles.Average();
+                    double sumOfSquaresOfDifferences = someDoubles.Select(val => (val - average) * (val - average)).Sum();
+                    double sd = Math.Sqrt(sumOfSquaresOfDifferences / (someDoubles.Count() - 1));
+                    
+                    while(sd > 1.0)
+                    {
+                        var pointsToRemove = rtCalPoints.Where(p => p.Value.Item1 - p.Value.Item2 > average + sd || p.Value.Item1 - p.Value.Item2 < average - sd).ToList();
+                        foreach(var point in pointsToRemove)
+                            rtCalPoints.Remove(point.Key);
+                        
+                        someDoubles = rtCalPoints.Select(p => (p.Value.Item1 - p.Value.Item2));
+                        average = someDoubles.Average();
+                        sumOfSquaresOfDifferences = someDoubles.Select(val => (val - average) * (val - average)).Sum();
+                        sd = Math.Sqrt(sumOfSquaresOfDifferences / (someDoubles.Count() - 1));
+                    }
+
+                    List<string> output = new List<string>();
+                    foreach(var point in rtCalPoints)
+                    {
+                        output.Add("" + point.Key + "\t" + point.Value.Item1 + "\t" + point.Value.Item2 + "\t" + (point.Value.Item1 - point.Value.Item2));
+                    }
+                    
+                    File.WriteAllLines(outputFolder + "RTCal.tsv", output);
+                }
+            }
         }
 
         public void QuantifyProteins()
         {
+            if (!silent)
+                Console.WriteLine("Quantifying proteins");
             var fileNames = filePaths.Select(p => Path.GetFileNameWithoutExtension(p)).ToList();
 
             var allFeatures = allFeaturesByFile.SelectMany(p => p);
@@ -609,7 +712,7 @@ namespace FlashLFQ
 
             // read mass spec file
             if (!silent)
-                Console.WriteLine("Opening " + filePaths[fileIndex]);
+                Console.WriteLine("Opening " + filePaths[fileIndex] + " (" + (fileIndex + 1) + "/" + filePaths.Length + ")");
             if (massSpecFileFormat == ".RAW")
             {
                 try
@@ -972,7 +1075,7 @@ namespace FlashLFQ
         private void MatchBetweenRuns(string thisFileName, Dictionary<double, List<FlashLFQMzBinElement>> mzBins, List<FlashLFQFeature> features)
         {
             if (!silent)
-                Console.WriteLine("Quantifying matched peptides for " + thisFileName);
+                Console.WriteLine("Finding possible matched peptides for " + thisFileName);
 
             var concurrentBagOfMatchedFeatures = new ConcurrentBag<FlashLFQFeature>();
             var identificationsFromOtherRunsToLookFor = new List<FlashLFQIdentification>();
@@ -1048,6 +1151,8 @@ namespace FlashLFQ
 
         private void RunErrorChecking(List<FlashLFQFeature> features)
         {
+            if (!silent)
+                Console.WriteLine("Checking errors");
             var featuresWithSamePeak = features.Where(v => v.intensity != 0).GroupBy(p => p.apexPeak.peakWithScan);
             featuresWithSamePeak = featuresWithSamePeak.Where(p => p.Count() > 1);
 
