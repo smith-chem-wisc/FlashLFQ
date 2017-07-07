@@ -846,12 +846,13 @@ namespace FlashLFQ
             return mzBinsTemplate.ToDictionary(v => v.Key, v => new List<FlashLFQMzBinElement>());
         }
 
-        private List<int> FillBinsWithPeaks(Dictionary<double, List<FlashLFQMzBinElement>> mzBins, IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file)
+        private List<KeyValuePair<int, double>> FillBinsWithPeaks(Dictionary<double, List<FlashLFQMzBinElement>> mzBins, IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file)
         {
             var allMs1Scans = new List<IMsDataScan<IMzSpectrum<IMzPeak>>>();
+            var ms1ScanNumbersWithRetentionTimes = new List<KeyValuePair<int, double>>();
 
-            // thermo files read differently than mzml
-            var thermoFile = file as ThermoDynamicData;
+             // thermo files read differently than mzml
+             var thermoFile = file as ThermoDynamicData;
             if (thermoFile != null)
             {
                 int[] msOrders = thermoFile.ThermoGlobalParams.msOrderByScan;
@@ -862,7 +863,11 @@ namespace FlashLFQ
             else
                 allMs1Scans = file.Where(s => s.MsnOrder == 1).ToList();
 
-            var ms1ScanNumbers = allMs1Scans.Select(p => p.OneBasedScanNumber).Distinct().OrderBy(p => p).ToList();
+
+            foreach (var scan in allMs1Scans)
+                ms1ScanNumbersWithRetentionTimes.Add(new KeyValuePair<int, double>(scan.OneBasedScanNumber, scan.RetentionTime));
+
+            ms1ScanNumbersWithRetentionTimes = ms1ScanNumbersWithRetentionTimes.OrderBy(p => p.Key).ToList();
 
             if (!silent)
                 Console.WriteLine("Assigning MS1 peaks to bins");
@@ -952,14 +957,15 @@ namespace FlashLFQ
             }
             */
             
-            return ms1ScanNumbers;
+            return ms1ScanNumbersWithRetentionTimes;
         }
 
-        private List<FlashLFQFeature> MainFileSearch(string fileName, Dictionary<double, List<FlashLFQMzBinElement>> mzBins, List<int> ms1ScanNumbers, IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file)
+        private List<FlashLFQFeature> MainFileSearch(string fileName, Dictionary<double, List<FlashLFQMzBinElement>> mzBins, List<KeyValuePair<int, double>> ms1ScanNumbersWithRts, IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file)
         {
             if (!silent)
                 Console.WriteLine("Quantifying peptides for " + fileName);
 
+            var ms1ScanNumbers = ms1ScanNumbersWithRts.Select(p => p.Key).OrderBy(p => p).ToList();
             var concurrentBagOfFeatures = new ConcurrentBag<FlashLFQFeature>();
 
             var groups = allIdentifications.GroupBy(p => p.fileName);
@@ -1011,18 +1017,17 @@ namespace FlashLFQ
                             if (binPeaksHere.Any())
                             {
                                 // get precursor scan to start at
-                                int ms2ScanNum = file.GetClosestOneBasedSpectrumNumber(identification.ms2RetentionTime);
-                                List<int> temp = new List<int>();
-                                foreach (var ms1ScanNum in ms1ScanNumbers)
+                                int precursorScanNum = 0;
+                                foreach (var ms1Scan in ms1ScanNumbersWithRts)
                                 {
-                                    int j = ms1ScanNum - ms2ScanNum;
-                                    if (j < 0)
-                                        temp.Add(ms1ScanNum);
+                                    if (ms1Scan.Value < identification.ms2RetentionTime)
+                                        precursorScanNum = ms1Scan.Key;
                                     else
                                         break;
                                 }
-                                int precursorScanNum = temp.Last();
-
+                                if (precursorScanNum == 0)
+                                    throw new Exception("Error getting precursor scan number");
+                                
                                 // separate peaks by rt into left and right of the identification RT
                                 var rightPeaks = binPeaksHere.Where(p => p.retentionTime >= identification.ms2RetentionTime).OrderBy(p => p.retentionTime);
                                 var leftPeaks = binPeaksHere.Where(p => p.retentionTime < identification.ms2RetentionTime).OrderByDescending(p => p.retentionTime);
