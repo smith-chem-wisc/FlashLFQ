@@ -1454,10 +1454,11 @@ namespace FlashLFQ
 
             foreach (var timePoint in rightTimePoints)
             {
+                if (valleyTimePoint == null || timePoint.isotopeClusterIntensity < valleyTimePoint.isotopeClusterIntensity)
+                    valleyTimePoint = timePoint;
+
                 var timePointsBetweenApexAndThisTimePoint = rightTimePoints.Where(p => p.peakWithScan.retentionTime <= timePoint.peakWithScan.retentionTime).ToList();
-
-                valleyTimePoint = timePointsBetweenApexAndThisTimePoint.Where(p => p.isotopeClusterIntensity == timePointsBetweenApexAndThisTimePoint.Min(v => v.isotopeClusterIntensity)).First();
-
+                
                 var d0 = (timePoint.isotopeClusterIntensity - valleyTimePoint.isotopeClusterIntensity) / timePoint.isotopeClusterIntensity;
                 if (d0 > mind0)
                 {
@@ -1472,15 +1473,18 @@ namespace FlashLFQ
                     }
                 }
             }
-
+            
             if (cutThisPeak == false)
             {
+                valleyTimePoint = null;
+
                 foreach (var timePoint in leftTimePoints)
                 {
+                    if (valleyTimePoint == null || timePoint.isotopeClusterIntensity < valleyTimePoint.isotopeClusterIntensity)
+                        valleyTimePoint = timePoint;
+
                     var timePointsBetweenApexAndThisTimePoint = leftTimePoints.Where(p => p.peakWithScan.retentionTime >= timePoint.peakWithScan.retentionTime).ToList();
-
-                    valleyTimePoint = timePointsBetweenApexAndThisTimePoint.Where(p => p.isotopeClusterIntensity == timePointsBetweenApexAndThisTimePoint.Min(v => v.isotopeClusterIntensity)).First();
-
+                    
                     var d0 = (timePoint.isotopeClusterIntensity - valleyTimePoint.isotopeClusterIntensity) / timePoint.isotopeClusterIntensity;
                     if (d0 > mind0)
                     {
