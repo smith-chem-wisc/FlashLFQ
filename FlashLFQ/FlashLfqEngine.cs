@@ -61,7 +61,7 @@ namespace FlashLFQ
             allIdentifications = new List<FlashLFQIdentification>();
             pepToProteinGroupDictionary = new Dictionary<string, FlashLFQProteinGroup>();
             chargeStates = new List<int>();
-            
+
             // default parameters
             ppmTolerance = 10.0;
             peakfindingPpmTolerance = 20.0;
@@ -169,7 +169,7 @@ namespace FlashLFQ
 
             if (outputFolder == null)
                 outputFolder = identificationsFilePath.Substring(0, identificationsFilePath.Length - (identificationsFilePath.Length - identificationsFilePath.IndexOf('.')));
-            
+
             analysisSummaryPerFile = new string[filePaths.Length];
             allFeaturesByFile = new List<FlashLFQFeature>[filePaths.Length];
             return true;
@@ -534,7 +534,7 @@ namespace FlashLFQ
                     ""
                 };
 
-                for(int i = 0; i < filePaths.Length; i++)
+                for (int i = 0; i < filePaths.Length; i++)
                 {
                     logOutput.Add("Analysis summary for: " + filePaths[i]);
                     logOutput.Add("\t" + analysisSummaryPerFile[i] + "\n");
@@ -562,7 +562,7 @@ namespace FlashLFQ
             return;
             if (!silent)
                 Console.WriteLine("Running retention time calibration");
-            
+
             var allFeatures = allFeaturesByFile.SelectMany(p => p);
             var allAmbiguousFeatures = allFeatures.Where(p => p.numIdentificationsByFullSeq > 1).ToList();
             var ambiguousFeatureSeqs = new HashSet<string>(allAmbiguousFeatures.SelectMany(p => p.identifyingScans.Select(v => v.FullSequence)));
@@ -572,11 +572,11 @@ namespace FlashLFQ
                     allAmbiguousFeatures.Add(feature);
 
             var unambiguousPeaksGroupedByFile = allFeatures.Except(allAmbiguousFeatures).Where(v => v.apexPeak != null).GroupBy(p => p.fileName);
-            
-            foreach(var file in unambiguousPeaksGroupedByFile)
+
+            foreach (var file in unambiguousPeaksGroupedByFile)
             {
                 Dictionary<string, FlashLFQFeature> pepToBestFeatureForThisFile = new Dictionary<string, FlashLFQFeature>();
-                foreach(var testPeak in file)
+                foreach (var testPeak in file)
                 {
                     FlashLFQFeature currentBestPeak;
                     if (pepToBestFeatureForThisFile.TryGetValue(testPeak.identifyingScans.First().FullSequence, out currentBestPeak))
@@ -588,7 +588,7 @@ namespace FlashLFQ
                         pepToBestFeatureForThisFile.Add(testPeak.identifyingScans.First().FullSequence, testPeak);
                 }
 
-                foreach(var otherFile in unambiguousPeaksGroupedByFile)
+                foreach (var otherFile in unambiguousPeaksGroupedByFile)
                 {
                     if (otherFile.Key.Equals(file.Key))
                         continue;
@@ -610,20 +610,20 @@ namespace FlashLFQ
 
                     Dictionary<string, Tuple<double, double>> rtCalPoints = new Dictionary<string, Tuple<double, double>>();
 
-                    foreach(var kvp in pepToBestFeatureForOtherFile)
+                    foreach (var kvp in pepToBestFeatureForOtherFile)
                         rtCalPoints.Add(kvp.Key, new Tuple<double, double>(pepToBestFeatureForThisFile[kvp.Key].apexPeak.peakWithScan.retentionTime, kvp.Value.apexPeak.peakWithScan.retentionTime));
-                    
+
                     var someDoubles = rtCalPoints.Select(p => (p.Value.Item1 - p.Value.Item2));
                     double average = someDoubles.Average();
                     double sumOfSquaresOfDifferences = someDoubles.Select(val => (val - average) * (val - average)).Sum();
                     double sd = Math.Sqrt(sumOfSquaresOfDifferences / (someDoubles.Count() - 1));
-                    
-                    while(sd > 1.0)
+
+                    while (sd > 1.0)
                     {
                         var pointsToRemove = rtCalPoints.Where(p => p.Value.Item1 - p.Value.Item2 > average + sd || p.Value.Item1 - p.Value.Item2 < average - sd).ToList();
-                        foreach(var point in pointsToRemove)
+                        foreach (var point in pointsToRemove)
                             rtCalPoints.Remove(point.Key);
-                        
+
                         someDoubles = rtCalPoints.Select(p => (p.Value.Item1 - p.Value.Item2));
                         average = someDoubles.Average();
                         sumOfSquaresOfDifferences = someDoubles.Select(val => (val - average) * (val - average)).Sum();
@@ -631,11 +631,11 @@ namespace FlashLFQ
                     }
 
                     List<string> output = new List<string>();
-                    foreach(var point in rtCalPoints)
+                    foreach (var point in rtCalPoints)
                     {
                         output.Add("" + point.Key + "\t" + point.Value.Item1 + "\t" + point.Value.Item2 + "\t" + (point.Value.Item1 - point.Value.Item2));
                     }
-                    
+
                     File.WriteAllLines(outputFolder + "RTCal.tsv", output);
                 }
             }
@@ -866,68 +866,63 @@ namespace FlashLFQ
 
             if (!silent)
                 Console.WriteLine("Assigning MS1 peaks to bins");
+            
+            //multithreaded bin-filling
+            var allGoodPeaks = new List<List<KeyValuePair<double, FlashLFQMzBinElement>>>();
 
-
-
-
-            //int threads = Environment.ProcessorCount;
-            //Dictionary<double, List<FlashLFQMzBinElement>>[] multithreadedDictionary = new Dictionary<double, List<FlashLFQMzBinElement>>[maxDegreesOfParallelism];
-
-
-            /*
             Parallel.ForEach(Partitioner.Create(0, allMs1Scans.Count),
-                // initialize thread-local mz bins
-                () => mzBins.ToDictionary(x => x.Key, x => new List<FlashLFQMzBinElement>()),
-                // process each ms1 scan block
-                (scan, loopState, threadLocalDictionary) =>
+                new ParallelOptions { MaxDegreeOfParallelism = maxDegreesOfParallelism },
+                (range, loopState) =>
                 {
-                    for (int i = scan.Item1; i < scan.Item2; i++)
+                    var threadLocalGoodPeaks = new List<KeyValuePair<double, FlashLFQMzBinElement>>();
+
+                    for (int i = range.Item1; i < range.Item2; i++)
                     {
                         int peakIndexInThisScan = 0;
-                        double backgroundForThisScan = allMs1Scans[i].MassSpectrum.Select(p => p.Intensity).Min();
 
                         foreach (var peak in allMs1Scans[i].MassSpectrum)
                         {
-                            double signalToBackgroundRatio = peak.Intensity / backgroundForThisScan;
+                            FlashLFQMzBinElement element = null;
+                            double floorMz = (Math.Floor(peak.Mz * 100) / 100);
+                            double ceilingMz = (Math.Ceiling(peak.Mz * 100) / 100);
 
-                            if (signalToBackgroundRatio > signalToBackgroundRequired)
+                            if (mzBins.ContainsKey(floorMz))
                             {
-                                List<FlashLFQMzBinElement> mzBin;
-                                FlashLFQMzBinElement element = new FlashLFQMzBinElement(peak, allMs1Scans[i], backgroundForThisScan, peakIndexInThisScan);
-                                double floorMz = Math.Floor(peak.Mz * 100) / 100;
-                                double ceilingMz = Math.Ceiling(peak.Mz * 100) / 100;
-
-                                if (threadLocalDictionary.TryGetValue(floorMz, out mzBin))
-                                {
-                                    element = new FlashLFQMzBinElement(peak, allMs1Scans[i], backgroundForThisScan, peakIndexInThisScan);
-                                    mzBin.Add(element);
-                                }
-
-                                if (threadLocalDictionary.TryGetValue(ceilingMz, out mzBin))
-                                {
-                                    if (element == null)
-                                        element = new FlashLFQMzBinElement(peak, allMs1Scans[i], backgroundForThisScan, peakIndexInThisScan);
-                                    mzBin.Add(element);
-                                }
+                                element = new FlashLFQMzBinElement(peak, allMs1Scans[i], peakIndexInThisScan);
+                                threadLocalGoodPeaks.Add(new KeyValuePair<double, FlashLFQMzBinElement>(floorMz, element));
+                            }
+                            if (mzBins.ContainsKey(ceilingMz))
+                            {
+                                if (element == null)
+                                    element = new FlashLFQMzBinElement(peak, allMs1Scans[i], peakIndexInThisScan);
+                                threadLocalGoodPeaks.Add(new KeyValuePair<double, FlashLFQMzBinElement>(ceilingMz, element));
                             }
 
                             peakIndexInThisScan++;
                         }
                     }
 
-                    return threadLocalDictionary;
-                },
-                // aggregate results from the individual threads
-                threadLocalDictionary =>
-                {
-                    lock (mzBins)
-                        foreach (var bin in mzBins.Keys)
-                            mzBins[bin].AddRange(threadLocalDictionary[bin]);
+                    lock (allGoodPeaks)
+                        allGoodPeaks.Add(threadLocalGoodPeaks);
                 }
             );
-            */
+            
+            Parallel.ForEach(Partitioner.Create(0, allGoodPeaks.Count), (range) =>
+                {
+                    for (int i = range.Item1; i < range.Item2; i++)
+                    {
+                        foreach (var element in allGoodPeaks[i])
+                        {
+                            var t = mzBins[element.Key];
+                            lock (t)
+                                t.Add(element.Value);
+                        }
+                    }
+                }
+            );
 
-
+            /*
+            // single-threaded bin-filling
             foreach (var scan in allMs1Scans)
             {
                 int peakIndexInThisScan = 0;
@@ -955,7 +950,8 @@ namespace FlashLFQ
                     peakIndexInThisScan++;
                 }
             }
-
+            */
+            
             return ms1ScanNumbers;
         }
 
@@ -1278,6 +1274,8 @@ namespace FlashLFQ
                                 intensitiesByFile[i] = 0;
                             }
                         }
+                        //if (featuresForThisBaseSeqAndFile.Where(p => p.couldBeBadPeak == true).Any())
+                        //    intensitiesByFile[i] = 0;
                     }
                     else
                         identificationType[i] = "";
