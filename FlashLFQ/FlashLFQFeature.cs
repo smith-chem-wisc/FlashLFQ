@@ -62,7 +62,7 @@ namespace FlashLFQ
             if (isotopeClusters.Any())
             {
                 apexPeak = isotopeClusters.Where(p => p.isotopeClusterIntensity == isotopeClusters.Max(v => v.isotopeClusterIntensity)).FirstOrDefault();
-                
+
                 if (integrate)
                     intensity = isotopeClusters.Select(p => p.isotopeClusterIntensity).Sum();
                 else
@@ -70,6 +70,8 @@ namespace FlashLFQ
 
                 massError = ((ClassExtensions.ToMass(apexPeak.peakWithScan.mainPeak.Mz, apexPeak.chargeState) - identifyingScans.First().monoisotopicMass) / identifyingScans.First().monoisotopicMass) * 1e6;
             }
+            else
+                apexPeak = null;
         }
 
         public void MergeFeatureWith(IEnumerable<FlashLFQFeature> otherFeatures, bool integrate)

@@ -31,6 +31,8 @@ namespace FlashLFQ
         private Dictionary<string, List<KeyValuePair<double, double>>> baseSequenceToIsotopicDistribution;
         private Dictionary<string, FlashLFQProteinGroup> pepToProteinGroupDictionary;
         private string[] header;
+        public Stopwatch globalStopwatch;
+        public Stopwatch fileLocalStopwatch;
 
         // settings
         public bool silent { get; private set; }
@@ -51,8 +53,6 @@ namespace FlashLFQ
         public bool idSpecificChargeState { get; private set; }
         public double qValueCutoff { get; private set; }
         public IdentificationFileType identificationFileType { get; private set; }
-        public Stopwatch globalStopwatch;
-        public Stopwatch fileLocalStopwatch;
 
         public FlashLFQEngine()
         {
@@ -439,10 +439,10 @@ namespace FlashLFQ
             return true;
         }
 
-        public void Quantify(IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file, string filePath)
+        public bool Quantify(IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file, string filePath)
         {
             if (filePaths == null)
-                return;
+                return false;
 
             fileLocalStopwatch.Restart();
 
@@ -452,12 +452,12 @@ namespace FlashLFQ
             // open raw file
             int i = Array.IndexOf(filePaths, filePath);
             if (i < 0)
-                return;
+                return false;
             var currentDataFile = file;
             if (currentDataFile == null)
                 currentDataFile = OpenDataFile(i);
             if (currentDataFile == null)
-                return;
+                return false;
 
             // fill bins with peaks from the raw file
             var ms1ScanNumbers = FillBinsWithPeaks(localBins, currentDataFile);
@@ -482,6 +482,7 @@ namespace FlashLFQ
                 Console.WriteLine("Finished " + Path.GetFileNameWithoutExtension(filePath));
 
             analysisSummaryPerFile[i] = "File analysis time = " + fileLocalStopwatch.Elapsed.ToString();
+            return true;
         }
 
         public bool WriteResults(string baseFileName, bool writePeaks, bool writePeptides, bool writeProteins)
@@ -851,8 +852,8 @@ namespace FlashLFQ
             var allMs1Scans = new List<IMsDataScan<IMzSpectrum<IMzPeak>>>();
             var ms1ScanNumbersWithRetentionTimes = new List<KeyValuePair<int, double>>();
 
-             // thermo files read differently than mzml
-             var thermoFile = file as ThermoDynamicData;
+            // thermo files read differently than mzml
+            var thermoFile = file as ThermoDynamicData;
             if (thermoFile != null)
             {
                 int[] msOrders = thermoFile.ThermoGlobalParams.msOrderByScan;
@@ -863,10 +864,8 @@ namespace FlashLFQ
             else
                 allMs1Scans = file.Where(s => s.MsnOrder == 1).ToList();
 
-
             foreach (var scan in allMs1Scans)
                 ms1ScanNumbersWithRetentionTimes.Add(new KeyValuePair<int, double>(scan.OneBasedScanNumber, scan.RetentionTime));
-
             ms1ScanNumbersWithRetentionTimes = ms1ScanNumbersWithRetentionTimes.OrderBy(p => p.Key).ToList();
 
             if (!silent)
@@ -911,20 +910,19 @@ namespace FlashLFQ
                         allGoodPeaks.Add(threadLocalGoodPeaks);
                 }
             );
-            
+
             Parallel.ForEach(Partitioner.Create(0, allGoodPeaks.Count), (range) =>
+            {
+                for (int i = range.Item1; i < range.Item2; i++)
                 {
-                    for (int i = range.Item1; i < range.Item2; i++)
+                    foreach (var element in allGoodPeaks[i])
                     {
-                        foreach (var element in allGoodPeaks[i])
-                        {
-                            var t = mzBins[element.Key];
-                            lock (t)
-                                t.Add(element.Value);
-                        }
+                        var t = mzBins[element.Key];
+                        lock (t)
+                            t.Add(element.Value);
                     }
                 }
-            );
+            });
 
             /*
             // single-threaded bin-filling
@@ -956,7 +954,7 @@ namespace FlashLFQ
                 }
             }
             */
-            
+
             return ms1ScanNumbersWithRetentionTimes;
         }
 
@@ -1027,7 +1025,7 @@ namespace FlashLFQ
                                 }
                                 if (precursorScanNum == 0)
                                     throw new Exception("Error getting precursor scan number");
-                                
+
                                 // separate peaks by rt into left and right of the identification RT
                                 var rightPeaks = binPeaksHere.Where(p => p.retentionTime >= identification.ms2RetentionTime).OrderBy(p => p.retentionTime);
                                 var leftPeaks = binPeaksHere.Where(p => p.retentionTime < identification.ms2RetentionTime).OrderByDescending(p => p.retentionTime);
@@ -1458,7 +1456,7 @@ namespace FlashLFQ
                     valleyTimePoint = timePoint;
 
                 var timePointsBetweenApexAndThisTimePoint = rightTimePoints.Where(p => p.peakWithScan.retentionTime <= timePoint.peakWithScan.retentionTime).ToList();
-                
+
                 var d0 = (timePoint.isotopeClusterIntensity - valleyTimePoint.isotopeClusterIntensity) / timePoint.isotopeClusterIntensity;
                 if (d0 > mind0)
                 {
@@ -1473,7 +1471,7 @@ namespace FlashLFQ
                     }
                 }
             }
-            
+
             if (cutThisPeak == false)
             {
                 valleyTimePoint = null;
@@ -1484,7 +1482,7 @@ namespace FlashLFQ
                         valleyTimePoint = timePoint;
 
                     var timePointsBetweenApexAndThisTimePoint = leftTimePoints.Where(p => p.peakWithScan.retentionTime >= timePoint.peakWithScan.retentionTime).ToList();
-                    
+
                     var d0 = (timePoint.isotopeClusterIntensity - valleyTimePoint.isotopeClusterIntensity) / timePoint.isotopeClusterIntensity;
                     if (d0 > mind0)
                     {

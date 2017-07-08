@@ -25,7 +25,8 @@ namespace FlashLFQ
                 new ParallelOptions { MaxDegreeOfParallelism = 1 },
                 fileNumber =>
                 {
-                    engine.Quantify(null, engine.filePaths[fileNumber]);
+                    if (!engine.Quantify(null, engine.filePaths[fileNumber]) && !engine.silent)
+                        Console.WriteLine("Error quantifying file " + engine.filePaths[fileNumber]);
                     GC.Collect();
                 }
             );
@@ -40,7 +41,6 @@ namespace FlashLFQ
 
             if (!engine.silent)
                 Console.WriteLine("All done");
-
             
             if (!engine.silent)
                 Console.WriteLine("Analysis time: " + engine.globalStopwatch.Elapsed.Hours + "h " + engine.globalStopwatch.Elapsed.Minutes + "m " + 
