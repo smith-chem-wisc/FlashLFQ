@@ -12,7 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using UsefulProteomicsDatabases;
 
-namespace Engine
+namespace FlashLFQ
 {
     public enum IdentificationFileType { MetaMorpheus, Morpheus, MaxQuant, TDPortal };
 

@@ -35,7 +35,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>Engine.FlashLFQ</StartupObject>
+    <StartupObject>FlashLFQ.FlashLFQ</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Chemistry, Version=1.0.178.0, Culture=neutral, processorArchitecture=AMD64">
@@ -92,9 +92,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\FlashLFQ\Engine.csproj">
+    <ProjectReference Include="..\FlashLFQ\FlashLFQ.csproj">
       <Project>{5e1f73df-4f01-4c79-9d3f-671dd60bafaf}</Project>
-      <Name>Engine</Name>
+      <Name>FlashLFQ</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

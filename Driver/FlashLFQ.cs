@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Engine
+namespace FlashLFQ
 {
     class FlashLFQ
     {

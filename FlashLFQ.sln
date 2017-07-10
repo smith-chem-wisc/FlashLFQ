@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26228.9
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine", "FlashLFQ\Engine.csproj", "{5E1F73DF-4F01-4C79-9D3F-671DD60BAFAF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlashLFQ", "FlashLFQ\FlashLFQ.csproj", "{5E1F73DF-4F01-4C79-9D3F-671DD60BAFAF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlashLFQ", "Driver\FlashLFQ.csproj", "{7AF2532B-0108-403B-A05A-1CC60F2A7407}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlashLFQ Executable", "Driver\FlashLFQ Executable.csproj", "{7AF2532B-0108-403B-A05A-1CC60F2A7407}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

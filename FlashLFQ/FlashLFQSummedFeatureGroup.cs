@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Engine
+namespace FlashLFQ
 {
     public class FlashLFQSummedFeatureGroup
     {
@@ -22,7 +22,8 @@ namespace Engine
             {
                 var sb = new StringBuilder();
                 sb.Append("Base Sequence" + "\t");
-                for(int i = 0; i < files.Length; i++)
+                sb.Append("Protein Group" + "\t");
+                for (int i = 0; i < files.Length; i++)
                     sb.Append("Intensity_" + files[i] + "\t");
                 for (int i = 0; i < files.Length; i++)
                     sb.Append("Detection Type_" + files[i] + "\t");

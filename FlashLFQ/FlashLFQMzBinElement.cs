@@ -1,6 +1,6 @@
 ﻿using MassSpectrometry;
 
-namespace Engine
+namespace FlashLFQ
 {
     public class FlashLFQMzBinElement
     {

@@ -1,4 +1,4 @@
-﻿namespace Engine
+﻿namespace FlashLFQ
 {
     public class FlashLFQIdentification
     {
