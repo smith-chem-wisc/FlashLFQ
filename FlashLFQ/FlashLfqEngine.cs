@@ -12,7 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using UsefulProteomicsDatabases;
 
-namespace FlashLFQ
+namespace Engine
 {
     public enum IdentificationFileType { MetaMorpheus, Morpheus, MaxQuant, TDPortal };
 
@@ -560,7 +560,6 @@ namespace FlashLFQ
 
         public void RetentionTimeCalibrationAndErrorCheckMatchedFeatures()
         {
-            return;
             if (!silent)
                 Console.WriteLine("Running retention time calibration");
 
@@ -1270,11 +1269,18 @@ namespace FlashLFQ
                         else
                         {
                             identificationType[i] = "MSMS";
-                            if (featuresForThisBaseSeqAndFile.Select(p => p.numIdentificationsByBaseSeq).Max() == 1)
-                                intensitiesByFile[i] = featuresForThisBaseSeqAndFile.Select(p => (p.intensity / p.numIdentificationsByFullSeq)).Sum();
+                            double summedPeakIntensity = featuresForThisBaseSeqAndFile.Sum(p => p.intensity);
+
+                            if (featuresForThisBaseSeqAndFile.Max(p => p.numIdentificationsByBaseSeq) == 1)
+                                intensitiesByFile[i] = summedPeakIntensity;
                             else
                             {
-                                intensitiesByFile[i] = 0;
+                                double ambigPeakIntensity = featuresForThisBaseSeqAndFile.Where(p => p.numIdentificationsByBaseSeq > 1).Sum(v => v.intensity);
+
+                                if ((ambigPeakIntensity / summedPeakIntensity) < 0.3)
+                                    intensitiesByFile[i] = featuresForThisBaseSeqAndFile.Select(p => (p.intensity / p.numIdentificationsByBaseSeq)).Sum();
+                                else
+                                    intensitiesByFile[i] = 0;
                             }
                         }
                         //if (featuresForThisBaseSeqAndFile.Where(p => p.couldBeBadPeak == true).Any())
@@ -1283,8 +1289,8 @@ namespace FlashLFQ
                     else
                         identificationType[i] = "";
                 }
-
-                returnList.Add(new FlashLFQSummedFeatureGroup(sequence.Key, intensitiesByFile, identificationType));
+                
+                returnList.Add(new FlashLFQSummedFeatureGroup(sequence.Key + "\t" + sequence.Value.First().identifyingScans.First().proteinGroup.proteinGroupName, intensitiesByFile, identificationType));
             }
 
             return returnList.OrderBy(p => p.BaseSequence);

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace FlashLFQ
+namespace Engine
 {
-    class Driver
+    class FlashLFQ
     {
         static void Main(string[] args)
         {

@@ -1,4 +1,4 @@
-﻿namespace FlashLFQ
+﻿namespace Engine
 {
     public class FlashLFQIdentification
     {
@@ -19,6 +19,7 @@
             this.monoisotopicMass = monoisotopicMass;
             this.ms2RetentionTime = ms2RetentionTime;
             this.chargeState = chargeState;
+            this.proteinGroup = new FlashLFQProteinGroup("");
         }
 
         public override string ToString()

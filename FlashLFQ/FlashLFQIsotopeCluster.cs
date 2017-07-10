@@ -1,4 +1,4 @@
-﻿namespace FlashLFQ
+﻿namespace Engine
 {
     public class FlashLFQIsotopeCluster
     {
