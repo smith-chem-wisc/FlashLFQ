@@ -17,6 +17,7 @@ namespace Test
         [Test]
         public static void TestEverything()
         {
+            Console.WriteLine("UNIT TEST - Entering unit test");
             string elements = Path.Combine(TestContext.CurrentContext.TestDirectory, "elements.dat");
             string files = TestContext.CurrentContext.TestDirectory;
             string ident = Path.Combine(TestContext.CurrentContext.TestDirectory, "aggregatePSMs_5ppmAroundZero.psmtsv");
