@@ -7,6 +7,7 @@ using NUnit.Framework;
 using FlashLFQ;
 using IO.Thermo;
 using System.IO;
+using UsefulProteomicsDatabases;
 
 namespace Test
 {
@@ -16,14 +17,16 @@ namespace Test
         [Test]
         public static void TestEverything()
         {
-            Environment.CurrentDirectory = TestContext.CurrentContext.TestDirectory;
+            string elements = Path.Combine(TestContext.CurrentContext.TestDirectory, "elements.dat");
+            string files = TestContext.CurrentContext.TestDirectory;
+            string ident = Path.Combine(TestContext.CurrentContext.TestDirectory, "aggregatePSMs_5ppmAroundZero.psmtsv");
+            
             FlashLFQEngine engine = new FlashLFQEngine();
-
-            var path = Environment.CurrentDirectory;
+            Loaders.LoadElements(elements);
 
             Assert.That(engine.ParseArgs(new string[] {
-                        "--idt " + path + @"\aggregatePSMs_5ppmAroundZero.psmtsv",
-                        "--rep " + path,
+                        "--idt " + ident,
+                        "--rep " + files,
                         "--ppm 5",
                         "--sil true",
                         "--pau false",
@@ -35,7 +38,7 @@ namespace Test
             Assert.That(engine.outputFolder != null);
             engine.SetParallelization(1);
             
-            Assert.That(engine.ReadPeriodicTable());
+            //Assert.That(engine.ReadPeriodicTable());
             
             Assert.That(engine.ReadIdentificationsFromTSV());
 
