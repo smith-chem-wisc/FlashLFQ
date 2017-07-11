@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{7AF2532B-0108-403B-A05A-1CC60F2A7407}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Driver</RootNamespace>
-    <AssemblyName>Driver</AssemblyName>
+    <RootNamespace>FlashLFQ</RootNamespace>
+    <AssemblyName>FlashLFQ</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

@@ -58,7 +58,7 @@ namespace Test
                 {
                     Assert.That(engine.Quantify(null, engine.filePaths[i]));
                 }
-                catch (AssertionException e)
+                catch (AssertionException)
                 {
                     Console.WriteLine("UNIT TEST - Could not quantify file \"" + engine.filePaths[i] + "\"");
                 }
@@ -132,7 +132,7 @@ namespace Test
                 {
                     Assert.That(engine.Quantify(null, engine.filePaths[i]));
                 }
-                catch (AssertionException e)
+                catch (AssertionException)
                 {
                     Console.WriteLine("UNIT TEST - Could not quantify file \"" + engine.filePaths[i] + "\"");
                 }

@@ -397,7 +397,7 @@ namespace FlashLFQ
                             ident.proteinGroup = pg;
                         }
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         if (!silent)
                         {
