@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlashLFQ", "FlashLFQ\FlashL
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlashLFQ Executable", "Driver\FlashLFQ Executable.csproj", "{7AF2532B-0108-403B-A05A-1CC60F2A7407}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{AD596BA0-702A-45CB-B9EB-F50D78259FC8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{7AF2532B-0108-403B-A05A-1CC60F2A7407}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7AF2532B-0108-403B-A05A-1CC60F2A7407}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7AF2532B-0108-403B-A05A-1CC60F2A7407}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD596BA0-702A-45CB-B9EB-F50D78259FC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD596BA0-702A-45CB-B9EB-F50D78259FC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD596BA0-702A-45CB-B9EB-F50D78259FC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD596BA0-702A-45CB-B9EB-F50D78259FC8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

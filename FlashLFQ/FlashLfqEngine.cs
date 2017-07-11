@@ -27,8 +27,8 @@ namespace FlashLFQ
         // structures used in the FlashLFQ program
         private List<FlashLFQIdentification> allIdentifications;
         public List<FlashLFQFeature>[] allFeaturesByFile { get; private set; }
-        private Dictionary<double, List<FlashLFQMzBinElement>> mzBinsTemplate;
-        private Dictionary<string, List<KeyValuePair<double, double>>> baseSequenceToIsotopicDistribution;
+        public Dictionary<double, List<FlashLFQMzBinElement>> mzBinsTemplate { get; private set; }
+        public Dictionary<string, List<KeyValuePair<double, double>>> baseSequenceToIsotopicDistribution { get; private set; }
         private Dictionary<string, FlashLFQProteinGroup> pepToProteinGroupDictionary;
         private string[] header;
         public Stopwatch globalStopwatch;
@@ -123,7 +123,10 @@ namespace FlashLFQ
                             string newArg = arg;
                             if (newArg.EndsWith("\""))
                                 newArg = arg.Substring(0, arg.Length - 1);
-                            filePaths = Directory.GetFiles(newArg.Substring(3)).Where(f => f.Substring(f.IndexOf('.')).ToUpper().Equals(".RAW") || f.Substring(f.IndexOf('.')).ToUpper().Equals(".MZML")).ToArray(); break;
+                            filePaths = Directory.GetFiles(newArg.Substring(3)).Where(f => f.Substring(f.IndexOf('.')).ToUpper().Equals(".RAW") || f.Substring(f.IndexOf('.')).ToUpper().Equals(".MZML")).ToArray();
+                            for (int i = 0; i < filePaths.Length; i++)
+                                filePaths[i] = filePaths[i].Trim();
+                            break;
                         case ("ppm"): ppmTolerance = double.Parse(arg.Substring(3)); break;
                         case ("iso"): isotopePpmTolerance = double.Parse(arg.Substring(3)); break;
                         case ("sil"): silent = Boolean.Parse(arg.Substring(3)); break;
@@ -379,7 +382,7 @@ namespace FlashLFQ
                             chargeState = 1;
                         }
                         else
-                            chargeState = int.Parse(param[chargeStCol]);
+                            chargeState = (int) double.Parse(param[chargeStCol]);
 
                         var ident = new FlashLFQIdentification(Path.GetFileNameWithoutExtension(fileName), BaseSequence, ModSequence, monoisotopicMass, ms2RetentionTime, chargeState);
                         allIdentifications.Add(ident);
@@ -394,7 +397,7 @@ namespace FlashLFQ
                             ident.proteinGroup = pg;
                         }
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
                         if (!silent)
                         {
@@ -841,6 +844,11 @@ namespace FlashLFQ
             }
         }
 
+        public void SetParallelization(int maxDegreesOfParallelism)
+        {
+            this.maxDegreesOfParallelism = maxDegreesOfParallelism;
+        }
+
         private Dictionary<double, List<FlashLFQMzBinElement>> ConstructLocalBins()
         {
             return mzBinsTemplate.ToDictionary(v => v.Key, v => new List<FlashLFQMzBinElement>());
@@ -1088,33 +1096,35 @@ namespace FlashLFQ
                     identificationsFromOtherRunsToLookFor.AddRange(fullSequenceGroup);
             }
 
-            Parallel.ForEach(Partitioner.Create(0, identificationsFromOtherRunsToLookFor.Count),
-                new ParallelOptions { MaxDegreeOfParallelism = maxDegreesOfParallelism },
-                (range, loopState) =>
-                {
-                    for (int i = range.Item1; i < range.Item2; i++)
+            if (identificationsFromOtherRunsToLookFor.Any())
+            {
+                Parallel.ForEach(Partitioner.Create(0, identificationsFromOtherRunsToLookFor.Count),
+                    new ParallelOptions { MaxDegreeOfParallelism = maxDegreesOfParallelism },
+                    (range, loopState) =>
                     {
-                        var identification = identificationsFromOtherRunsToLookFor[i];
-
-                        FlashLFQFeature mbrFeature = new FlashLFQFeature();
-                        mbrFeature.identifyingScans.Add(identification);
-                        mbrFeature.isMbrFeature = true;
-                        mbrFeature.fileName = thisFileName;
-
-                        foreach (var chargeState in chargeStates)
+                        for (int i = range.Item1; i < range.Item2; i++)
                         {
-                            double theorMzHere = ClassExtensions.ToMz(identification.massToLookFor, chargeState);
-                            double mzTolHere = (mbrppmTolerance / 1e6) * theorMzHere;
+                            var identification = identificationsFromOtherRunsToLookFor[i];
 
-                            double floorMz = Math.Floor(theorMzHere * 100) / 100;
-                            double ceilingMz = Math.Ceiling(theorMzHere * 100) / 100;
+                            FlashLFQFeature mbrFeature = new FlashLFQFeature();
+                            mbrFeature.identifyingScans.Add(identification);
+                            mbrFeature.isMbrFeature = true;
+                            mbrFeature.fileName = thisFileName;
 
-                            IEnumerable<FlashLFQMzBinElement> binPeaks = new List<FlashLFQMzBinElement>();
-                            List<FlashLFQMzBinElement> t;
-                            if (mzBins.TryGetValue(floorMz, out t))
-                                binPeaks = binPeaks.Concat(t);
-                            if (mzBins.TryGetValue(ceilingMz, out t))
-                                binPeaks = binPeaks.Concat(t);
+                            foreach (var chargeState in chargeStates)
+                            {
+                                double theorMzHere = ClassExtensions.ToMz(identification.massToLookFor, chargeState);
+                                double mzTolHere = (mbrppmTolerance / 1e6) * theorMzHere;
+
+                                double floorMz = Math.Floor(theorMzHere * 100) / 100;
+                                double ceilingMz = Math.Ceiling(theorMzHere * 100) / 100;
+
+                                IEnumerable<FlashLFQMzBinElement> binPeaks = new List<FlashLFQMzBinElement>();
+                                List<FlashLFQMzBinElement> t;
+                                if (mzBins.TryGetValue(floorMz, out t))
+                                    binPeaks = binPeaks.Concat(t);
+                                if (mzBins.TryGetValue(ceilingMz, out t))
+                                    binPeaks = binPeaks.Concat(t);
 
                             // filter by mz tolerance
                             var binPeaksHere = binPeaks.Where(p => Math.Abs(p.mainPeak.Mz - theorMzHere) < mzTolHere);
@@ -1125,24 +1135,25 @@ namespace FlashLFQ
                             // filter by isotopic distribution
                             var validIsotopeClusters = FilterPeaksByIsotopicDistribution(binPeaksHere, identification, chargeState, true);
 
-                            if (validIsotopeClusters.Any())
-                            {
-                                double apexIntensity = validIsotopeClusters.Select(p => p.isotopeClusterIntensity).Max();
-                                var mbrApexPeak = validIsotopeClusters.Where(p => p.isotopeClusterIntensity == apexIntensity).First();
+                                if (validIsotopeClusters.Any())
+                                {
+                                    double apexIntensity = validIsotopeClusters.Select(p => p.isotopeClusterIntensity).Max();
+                                    var mbrApexPeak = validIsotopeClusters.Where(p => p.isotopeClusterIntensity == apexIntensity).First();
 
-                                mbrFeature.isotopeClusters.Add(mbrApexPeak);
+                                    mbrFeature.isotopeClusters.Add(mbrApexPeak);
                                 //mbrFeature.isotopeClusters.AddRange(validIsotopeClusters);
                             }
-                        }
+                            }
 
-                        if (mbrFeature.isotopeClusters.Any())
-                        {
-                            mbrFeature.CalculateIntensityForThisFeature(integrate);
-                            concurrentBagOfMatchedFeatures.Add(mbrFeature);
+                            if (mbrFeature.isotopeClusters.Any())
+                            {
+                                mbrFeature.CalculateIntensityForThisFeature(integrate);
+                                concurrentBagOfMatchedFeatures.Add(mbrFeature);
+                            }
                         }
                     }
-                }
-            );
+                );
+            }
 
             features.AddRange(concurrentBagOfMatchedFeatures);
         }
