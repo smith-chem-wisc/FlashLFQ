@@ -30,7 +30,7 @@ namespace Test
                         "--idt " + ident,
                         "--rep " + files,
                         "--ppm 5",
-                        "--sil true",
+                        "--sil false",
                         "--pau false",
                         "--mbr true" }
                     ));
