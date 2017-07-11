@@ -170,7 +170,7 @@ namespace FlashLFQ
                 return false;
             }
 
-            if (outputFolder == null)
+            if (outputFolder == null && identificationsFilePath != null)
                 outputFolder = identificationsFilePath.Substring(0, identificationsFilePath.Length - (identificationsFilePath.Length - identificationsFilePath.IndexOf('.')));
 
             analysisSummaryPerFile = new string[filePaths.Length];
