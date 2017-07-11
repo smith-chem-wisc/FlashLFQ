@@ -32,8 +32,7 @@ namespace Test
                         "--ppm 5",
                         "--sil true",
                         "--pau false",
-                        "--mbr true",
-                        "--pau false" }
+                        "--mbr true" }
                     ));
             Console.WriteLine("UNIT TEST - Done making engine");
             engine.globalStopwatch.Start();
@@ -54,7 +53,14 @@ namespace Test
             for (int i = 0; i < engine.filePaths.Length; i++)
             {
                 Console.WriteLine("UNIT TEST - Quantifying file " + (i + 1));
-                Assert.That(engine.Quantify(null, engine.filePaths[i]));
+                try
+                {
+                    Assert.That(engine.Quantify(null, engine.filePaths[i]));
+                }
+                catch (AssertionException e)
+                {
+                    Console.WriteLine("UNIT TEST - Could not quantify file \"" + engine.filePaths[i] + "\"");
+                }
             }
 
             //if (engine.mbr)
