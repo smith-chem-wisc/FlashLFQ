@@ -16,9 +16,10 @@ namespace Test
         [Test]
         public static void TestEverything()
         {
+            Environment.CurrentDirectory = TestContext.CurrentContext.TestDirectory;
             FlashLFQEngine engine = new FlashLFQEngine();
 
-            var path = Path.Combine(TestContext.CurrentContext.TestDirectory);
+            var path = Environment.CurrentDirectory;
 
             Assert.That(engine.ParseArgs(new string[] {
                         "--idt " + path + @"\aggregatePSMs_5ppmAroundZero.psmtsv",
