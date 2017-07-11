@@ -22,7 +22,9 @@ namespace Test
             string ident = Path.Combine(TestContext.CurrentContext.TestDirectory, "aggregatePSMs_5ppmAroundZero.psmtsv");
             
             FlashLFQEngine engine = new FlashLFQEngine();
+            Console.WriteLine("UNIT TEST - About to load elements");
             Loaders.LoadElements(elements);
+            Console.WriteLine("UNIT TEST - Finished loading elements");
 
             Assert.That(engine.ParseArgs(new string[] {
                         "--idt " + ident,
@@ -31,29 +33,37 @@ namespace Test
                         "--sil true",
                         "--pau false",
                         "--mbr true",
-                        "--sil false",
                         "--pau false" }
                     ));
+            Console.WriteLine("UNIT TEST - Done making engine");
             engine.globalStopwatch.Start();
             Assert.That(engine.outputFolder != null);
             engine.SetParallelization(1);
-            
-            //Assert.That(engine.ReadPeriodicTable());
-            
-            Assert.That(engine.ReadIdentificationsFromTSV());
 
+            //Assert.That(engine.ReadPeriodicTable());
+
+            Console.WriteLine("UNIT TEST - About to read TSV file");
+            Assert.That(engine.ReadIdentificationsFromTSV());
+            Console.WriteLine("UNIT TEST - Finished reading TSV");
             engine.ConstructBinsFromIdentifications();
+            Console.WriteLine("UNIT TEST - Finished constructing bins");
             Assert.That(engine.mzBinsTemplate.Count > 0);
             Assert.That(engine.baseSequenceToIsotopicDistribution.Count > 0);
-            
+            Console.WriteLine("UNIT TEST - Bins are OK");
+
             for (int i = 0; i < engine.filePaths.Length; i++)
+            {
+                Console.WriteLine("UNIT TEST - Quantifying file " + (i + 1));
                 Assert.That(engine.Quantify(null, engine.filePaths[i]));
+            }
 
             //if (engine.mbr)
             //    engine.RetentionTimeCalibrationAndErrorCheckMatchedFeatures();
 
+            Console.WriteLine("UNIT TEST - Quantifying proteins ");
             engine.QuantifyProteins();
 
+            Console.WriteLine("UNIT TEST - Asserting results");
             Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p)).Any());
 
             Assert.That(engine.allFeaturesByFile[0].First().intensity > 0);
@@ -61,6 +71,7 @@ namespace Test
 
             Assert.That(!engine.allFeaturesByFile[0].First().isMbrFeature);
             Assert.That(!engine.allFeaturesByFile[1].First().isMbrFeature);
+            Console.WriteLine("UNIT TEST - All passed");
         }
     }
 }
