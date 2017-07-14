@@ -566,6 +566,7 @@ namespace FlashLFQ
             if (!silent)
                 Console.WriteLine("Running retention time calibration");
 
+            // get all unambiguous peaks for all files
             var allFeatures = allFeaturesByFile.SelectMany(p => p);
             var allAmbiguousFeatures = allFeatures.Where(p => p.numIdentificationsByFullSeq > 1).ToList();
             var ambiguousFeatureSeqs = new HashSet<string>(allAmbiguousFeatures.SelectMany(p => p.identifyingScans.Select(v => v.FullSequence)));
@@ -578,6 +579,7 @@ namespace FlashLFQ
 
             foreach (var file in unambiguousPeaksGroupedByFile)
             {
+                // get the best (most intense) peak for each peptide in the file
                 Dictionary<string, FlashLFQFeature> pepToBestFeatureForThisFile = new Dictionary<string, FlashLFQFeature>();
                 foreach (var testPeak in file)
                 {
@@ -591,11 +593,13 @@ namespace FlashLFQ
                         pepToBestFeatureForThisFile.Add(testPeak.identifyingScans.First().FullSequence, testPeak);
                 }
 
+                
                 foreach (var otherFile in unambiguousPeaksGroupedByFile)
                 {
+                    // get the other files' best peak for the same peptides (to make an RT calibration curve) 
                     if (otherFile.Key.Equals(file.Key))
                         continue;
-
+                    
                     var featuresInCommon = otherFile.Where(p => pepToBestFeatureForThisFile.ContainsKey(p.identifyingScans.First().FullSequence));
 
                     Dictionary<string, FlashLFQFeature> pepToBestFeatureForOtherFile = new Dictionary<string, FlashLFQFeature>();
@@ -611,6 +615,7 @@ namespace FlashLFQ
                             pepToBestFeatureForOtherFile.Add(testPeak.identifyingScans.First().FullSequence, testPeak);
                     }
 
+                    // create a rt-to-rt correlation for the two files' peptides
                     Dictionary<string, Tuple<double, double>> rtCalPoints = new Dictionary<string, Tuple<double, double>>();
 
                     foreach (var kvp in pepToBestFeatureForOtherFile)
@@ -621,7 +626,9 @@ namespace FlashLFQ
                     double sumOfSquaresOfDifferences = someDoubles.Select(val => (val - average) * (val - average)).Sum();
                     double sd = Math.Sqrt(sumOfSquaresOfDifferences / (someDoubles.Count() - 1));
 
-                    while (sd > 1.0)
+                    
+                    // remove extreme outliers
+                    if (sd > 1.0)
                     {
                         var pointsToRemove = rtCalPoints.Where(p => p.Value.Item1 - p.Value.Item2 > average + sd || p.Value.Item1 - p.Value.Item2 < average - sd).ToList();
                         foreach (var point in pointsToRemove)
@@ -632,6 +639,22 @@ namespace FlashLFQ
                         sumOfSquaresOfDifferences = someDoubles.Select(val => (val - average) * (val - average)).Sum();
                         sd = Math.Sqrt(sumOfSquaresOfDifferences / (someDoubles.Count() - 1));
                     }
+                    
+
+                    List<Tuple<double,double>> rtCalPoints2 = rtCalPoints.Values.OrderBy(p => p.Item1).ToList();
+
+                    int minRt = (int) Math.Floor(rtCalPoints2.First().Item1);
+                    int maxRt = (int) Math.Ceiling(rtCalPoints2.Last().Item1);
+                    var roughRts = Enumerable.Range(minRt, (maxRt - minRt) + 1);
+                    var rtCalibrationDictionary = new Dictionary<int, List<double>>();
+                    foreach(var rt in rtCalPoints2)
+                    {
+                        List<double> points = null;
+                        if (rtCalibrationDictionary.TryGetValue((int)Math.Round(rt.Item1), out points))
+                            points.Add(rt.Item1 - rt.Item2);
+                        else
+                            rtCalibrationDictionary.Add((int)Math.Round(rt.Item1), new List<double> { rt.Item1 - rt.Item2 });
+                    }
 
                     List<string> output = new List<string>();
                     foreach (var point in rtCalPoints)
@@ -639,7 +662,44 @@ namespace FlashLFQ
                         output.Add("" + point.Key + "\t" + point.Value.Item1 + "\t" + point.Value.Item2 + "\t" + (point.Value.Item1 - point.Value.Item2));
                     }
 
-                    File.WriteAllLines(outputFolder + "RTCal.tsv", output);
+                    File.WriteAllLines(outputFolder + file.Key + otherFile.Key + "RTCal.tsv", output);
+
+                    output = new List<string>();
+                    // index is minute of source, double is rt calibration factor (in minutes) for destination file
+                    double[] rtCalRunningSpline = new double[maxRt + 1];
+                    double[] stdevRunningSpline = new double[maxRt + 1];
+                    for (int i = 0; i < rtCalRunningSpline.Length; i++)
+                        rtCalRunningSpline[i] = double.NaN;
+                    
+                    for(int i = 1; i <= maxRt; i++)
+                    {
+                        List<double> list;
+                        if (rtCalibrationDictionary.TryGetValue(i, out list))
+                        {
+                            if (list.Count > 3)
+                            {
+                                list.Sort();
+                                rtCalRunningSpline[i] = list[list.Count / 2];
+
+
+                                
+                                average = list.Average();
+                                sumOfSquaresOfDifferences = list.Select(val => (val - average) * (val - average)).Sum();
+                                sd = Math.Sqrt(sumOfSquaresOfDifferences / (list.Count - 1));
+
+                                if(3 * sd > (mbrRtWindow / 2.0))
+                                    stdevRunningSpline[i] = mbrRtWindow / 2.0;
+                                else
+                                    stdevRunningSpline[i] = 3 * sd;
+                            }
+                        }
+                    }
+
+                    for (int i = 1; i <= maxRt; i++)
+                        if(!double.IsNaN(rtCalRunningSpline[i]))
+                            output.Add("" + i + "\t" + rtCalRunningSpline[i] + "\t" + stdevRunningSpline[i]);
+
+                    File.WriteAllLines(outputFolder + file.Key + otherFile.Key + "RTCal2.tsv", output);
                 }
             }
         }
