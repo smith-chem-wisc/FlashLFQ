@@ -71,7 +71,8 @@ namespace Test
             engine.QuantifyProteins();
 
             Console.WriteLine("UNIT TEST - Asserting results");
-            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p)).Any());
+            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), "BaseSequence").Any());
+            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), "FullSequence").Any());
 
             Assert.That(engine.allFeaturesByFile[0].First().intensity > 0);
             Assert.That(engine.allFeaturesByFile[1].First().intensity > 0);
@@ -145,7 +146,8 @@ namespace Test
             engine.QuantifyProteins();
 
             Console.WriteLine("UNIT TEST - Asserting results");
-            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p)).Any());
+            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), "BaseSequence").Any());
+            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), "FullSequence").Any());
 
             Assert.That(engine.allFeaturesByFile[0].First().intensity > 0);
             Assert.That(engine.allFeaturesByFile[1].First().intensity > 0);

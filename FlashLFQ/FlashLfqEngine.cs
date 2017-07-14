@@ -503,11 +503,18 @@ namespace FlashLFQ
                     File.WriteAllLines(outputFolder + baseFileName + "QuantifiedPeaks.tsv", featureOutput);
 
                 // write baseseq groups
-                var peptides = SumFeatures(allFeatures);
+                var peptides = SumFeatures(allFeatures, "BaseSequence");
                 List<string> baseSeqOutput = new List<string> { FlashLFQSummedFeatureGroup.TabSeparatedHeader };
                 baseSeqOutput = baseSeqOutput.Concat(peptides.Select(p => p.ToString())).ToList();
                 if (writePeptides)
-                    File.WriteAllLines(outputFolder + baseFileName + "QuantifiedPeptides.tsv", baseSeqOutput);
+                    File.WriteAllLines(outputFolder + baseFileName + "QuantifiedBaseSequences.tsv", baseSeqOutput);
+
+                // write fullseq groups
+                peptides = SumFeatures(allFeatures, "FullSequence");
+                List<string> fullSeqOutput = new List<string> { FlashLFQSummedFeatureGroup.TabSeparatedHeader };
+                fullSeqOutput = fullSeqOutput.Concat(peptides.Select(p => p.ToString())).ToList();
+                if (writePeptides)
+                    File.WriteAllLines(outputFolder + baseFileName + "QuantifiedModifiedSequences.tsv", fullSeqOutput);
 
                 // write protein results
                 var proteinGroups = allFeatures.Select(p => p.identifyingScans.First().proteinGroup).Where(v => v.intensitiesByFile != null).Distinct().OrderBy(p => p.proteinGroupName);
@@ -1295,7 +1302,7 @@ namespace FlashLFQ
             }
         }
 
-        public IOrderedEnumerable<FlashLFQSummedFeatureGroup> SumFeatures(IEnumerable<FlashLFQFeature> features)
+        public List<FlashLFQSummedFeatureGroup> SumFeatures(IEnumerable<FlashLFQFeature> features, string sumByThisType)
         {
             List<FlashLFQSummedFeatureGroup> returnList = new List<FlashLFQSummedFeatureGroup>();
 
@@ -1304,22 +1311,28 @@ namespace FlashLFQ
                 fileNames[i] = Path.GetFileNameWithoutExtension(filePaths[i]);
             FlashLFQSummedFeatureGroup.files = fileNames;
 
-            var baseSeqToFeatureMatch = new Dictionary<string, List<FlashLFQFeature>>();
+            var sequenceToPeaksMatch = new Dictionary<string, List<FlashLFQFeature>>();
             foreach (var feature in features)
             {
-                var baseSeqs = feature.identifyingScans.GroupBy(p => p.BaseSequence);
+                IEnumerable<IGrouping<string, FlashLFQIdentification>> seqs;
+                if (sumByThisType.Equals("BaseSequence"))
+                    seqs = feature.identifyingScans.GroupBy(p => p.BaseSequence);
+                else if (sumByThisType.Equals("FullSequence"))
+                    seqs = feature.identifyingScans.GroupBy(p => p.FullSequence);
+                else
+                    return returnList;
 
-                foreach (var seq in baseSeqs)
+                foreach (var seq in seqs)
                 {
                     List<FlashLFQFeature> featuresForThisBaseSeq;
-                    if (baseSeqToFeatureMatch.TryGetValue(seq.Key, out featuresForThisBaseSeq))
+                    if (sequenceToPeaksMatch.TryGetValue(seq.Key, out featuresForThisBaseSeq))
                         featuresForThisBaseSeq.Add(feature);
                     else
-                        baseSeqToFeatureMatch.Add(seq.Key, new List<FlashLFQFeature>() { feature });
+                        sequenceToPeaksMatch.Add(seq.Key, new List<FlashLFQFeature>() { feature });
                 }
             }
 
-            foreach (var sequence in baseSeqToFeatureMatch)
+            foreach (var sequence in sequenceToPeaksMatch)
             {
                 double[] intensitiesByFile = new double[filePaths.Length];
                 string[] identificationType = new string[filePaths.Length];
@@ -1328,34 +1341,32 @@ namespace FlashLFQ
                 for (int i = 0; i < intensitiesByFile.Length; i++)
                 {
                     string file = Path.GetFileNameWithoutExtension(filePaths[i]);
-                    var featuresForThisBaseSeqAndFile = thisSeqPerFile.Where(p => p.Key.Equals(file)).FirstOrDefault();
+                    var featuresForThisSeqAndFile = thisSeqPerFile.Where(p => p.Key.Equals(file)).FirstOrDefault();
 
-                    if (featuresForThisBaseSeqAndFile != null)
+                    if (featuresForThisSeqAndFile != null)
                     {
-                        if (featuresForThisBaseSeqAndFile.First().isMbrFeature)
+                        if (featuresForThisSeqAndFile.First().isMbrFeature)
                         {
                             identificationType[i] = "MBR";
-                            intensitiesByFile[i] = featuresForThisBaseSeqAndFile.Select(p => p.intensity).Max();
+                            intensitiesByFile[i] = featuresForThisSeqAndFile.Select(p => p.intensity).Max();
                         }
                         else
                         {
                             identificationType[i] = "MSMS";
-                            double summedPeakIntensity = featuresForThisBaseSeqAndFile.Sum(p => p.intensity);
+                            double summedPeakIntensity = featuresForThisSeqAndFile.Sum(p => p.intensity);
 
-                            if (featuresForThisBaseSeqAndFile.Max(p => p.numIdentificationsByBaseSeq) == 1)
+                            if (featuresForThisSeqAndFile.Max(p => p.numIdentificationsByBaseSeq) == 1)
                                 intensitiesByFile[i] = summedPeakIntensity;
                             else
                             {
-                                double ambigPeakIntensity = featuresForThisBaseSeqAndFile.Where(p => p.numIdentificationsByBaseSeq > 1).Sum(v => v.intensity);
+                                double ambigPeakIntensity = featuresForThisSeqAndFile.Where(p => p.numIdentificationsByBaseSeq > 1).Sum(v => v.intensity);
 
                                 if ((ambigPeakIntensity / summedPeakIntensity) < 0.3)
-                                    intensitiesByFile[i] = featuresForThisBaseSeqAndFile.Select(p => (p.intensity / p.numIdentificationsByBaseSeq)).Sum();
+                                    intensitiesByFile[i] = featuresForThisSeqAndFile.Select(p => (p.intensity / p.numIdentificationsByBaseSeq)).Sum();
                                 else
-                                    intensitiesByFile[i] = 0;
+                                    intensitiesByFile[i] = -1;
                             }
                         }
-                        //if (featuresForThisBaseSeqAndFile.Where(p => p.couldBeBadPeak == true).Any())
-                        //    intensitiesByFile[i] = 0;
                     }
                     else
                         identificationType[i] = "";
@@ -1364,7 +1375,7 @@ namespace FlashLFQ
                 returnList.Add(new FlashLFQSummedFeatureGroup(sequence.Key + "\t" + sequence.Value.First().identifyingScans.First().proteinGroup.proteinGroupName, intensitiesByFile, identificationType));
             }
 
-            return returnList.OrderBy(p => p.BaseSequence);
+            return returnList.OrderBy(p => p.BaseSequence).ToList();
         }
 
         private IEnumerable<FlashLFQIsotopeCluster> FilterPeaksByIsotopicDistribution(IEnumerable<FlashLFQMzBinElement> peaks, FlashLFQIdentification identification, int chargeState, bool lookForBadIsotope)
