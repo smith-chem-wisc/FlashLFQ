@@ -1135,7 +1135,7 @@ namespace FlashLFQ
                         }
 
                         msmsFeature.CalculateIntensityForThisFeature(integrate);
-                        CutPeak(msmsFeature, integrate);
+                        CutPeak(msmsFeature, integrate, ms1ScanNumbers);
                         concurrentBagOfFeatures.Add(msmsFeature);
                     }
                 }
@@ -1523,7 +1523,7 @@ namespace FlashLFQ
             return validPeaksWithScans;
         }
 
-        private void CutPeak(FlashLFQFeature peak, bool integrate)
+        private void CutPeak(FlashLFQFeature peak, bool integrate, List<int> ms1ScanNumbers)
         {
             bool cutThisPeak = false;
             FlashLFQIsotopeCluster valleyTimePoint = null;
@@ -1557,6 +1557,26 @@ namespace FlashLFQ
                         cutThisPeak = true;
                         break;
                     }
+                    else
+                    {
+                        // check for missed scan around valley time point
+                        var tpBeforeValleyTimePoint = timePointsBetweenApexAndThisTimePoint[timePointsBetweenApexAndThisTimePoint.IndexOf(valleyTimePoint) -1];
+
+                        int indexOfTimepointBeforeValleyScan = ms1ScanNumbers.IndexOf(tpBeforeValleyTimePoint.peakWithScan.oneBasedScanNumber);
+                        int indexOfValleyScan = ms1ScanNumbers.IndexOf(valleyTimePoint.peakWithScan.oneBasedScanNumber);
+                        int indexOfSecondValleyScan = ms1ScanNumbers.IndexOf(secondValleyTimePoint.peakWithScan.oneBasedScanNumber);
+
+                        if(Math.Abs(indexOfValleyScan - indexOfTimepointBeforeValleyScan) > 1)
+                        {
+                            cutThisPeak = true;
+                            break;
+                        }
+                        else if (Math.Abs(indexOfValleyScan - indexOfSecondValleyScan) > 1)
+                        {
+                            cutThisPeak = true;
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -1583,6 +1603,26 @@ namespace FlashLFQ
                             cutThisPeak = true;
                             break;
                         }
+                        else
+                        {
+                            // check for missed scan around valley time point
+                            var tpBeforeValleyTimePoint = timePointsBetweenApexAndThisTimePoint[timePointsBetweenApexAndThisTimePoint.IndexOf(valleyTimePoint) - 1];
+
+                            int indexOfTimepointBeforeValleyScan = ms1ScanNumbers.IndexOf(tpBeforeValleyTimePoint.peakWithScan.oneBasedScanNumber);
+                            int indexOfValleyScan = ms1ScanNumbers.IndexOf(valleyTimePoint.peakWithScan.oneBasedScanNumber);
+                            int indexOfSecondValleyScan = ms1ScanNumbers.IndexOf(secondValleyTimePoint.peakWithScan.oneBasedScanNumber);
+
+                            if (Math.Abs(indexOfValleyScan - indexOfTimepointBeforeValleyScan) > 1)
+                            {
+                                cutThisPeak = true;
+                                break;
+                            }
+                            else if (Math.Abs(indexOfValleyScan - indexOfSecondValleyScan) > 1)
+                            {
+                                cutThisPeak = true;
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -1605,7 +1645,7 @@ namespace FlashLFQ
                 peak.splitRT = valleyTimePoint.peakWithScan.retentionTime;
 
                 // recursively cut
-                CutPeak(peak, integrate);
+                CutPeak(peak, integrate, ms1ScanNumbers);
             }
         }
     }
