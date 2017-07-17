@@ -1481,7 +1481,7 @@ namespace FlashLFQ
                             double theorIsotopeAbundance = isotopeMassShifts[i].Value / isotopeMassShifts[0].Value;
 
                             // impute isotope intensity if it is very different from expected
-                            if ((relIsotopeAbundance / theorIsotopeAbundance) < 3.0)
+                            if ((relIsotopeAbundance / theorIsotopeAbundance) < 5.0)
                                 isotopeClusterIntensity += isotopePeaks[i].Intensity;
                             else
                                 isotopeClusterIntensity += theorIsotopeAbundance * isotopePeaks[0].Intensity;
