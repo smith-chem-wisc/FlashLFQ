@@ -1114,7 +1114,7 @@ namespace FlashLFQ
                                 validPeaks = validPeaks.Where(p => Math.Abs(p.mainPeak.Mz - theorMzHere) < mzTolHere);
 
                                 // filter by isotopic distribution
-                                var validIsotopeClusters = FilterPeaksByIsotopicDistribution(validPeaks, identification, chargeState, false);
+                                var validIsotopeClusters = FilterPeaksByIsotopicDistribution(validPeaks, identification, chargeState, true);
 
                                 // if multiple mass spectral peaks in the same scan are valid, pick the one with the smallest mass error
                                 var peaksInSameScan = validIsotopeClusters.GroupBy(p => p.peakWithScan.oneBasedScanNumber).Where(v => v.Count() > 1);
@@ -1424,7 +1424,7 @@ namespace FlashLFQ
                     {
                         var peak = thisPeakWithScan.scan.MassSpectrum[i];
                         if (Math.Abs(peak.Mz - prevIsotopePeakMz) < tol)
-                            if (peak.Intensity / thisPeakWithScan.mainPeak.Intensity > 0.2)
+                            if (peak.Intensity / thisPeakWithScan.mainPeak.Intensity > 1.0)
                                 badPeak = true;
                         if (peak.Mz < (prevIsotopePeakMz - tol))
                             break;
@@ -1481,10 +1481,10 @@ namespace FlashLFQ
                             double theorIsotopeAbundance = isotopeMassShifts[i].Value / isotopeMassShifts[0].Value;
 
                             // impute isotope intensity if it is very different from expected
-                            if ((relIsotopeAbundance / theorIsotopeAbundance) < 5.0)
+                            if ((relIsotopeAbundance / theorIsotopeAbundance) < 2.0)
                                 isotopeClusterIntensity += isotopePeaks[i].Intensity;
                             else
-                                isotopeClusterIntensity += theorIsotopeAbundance * isotopePeaks[0].Intensity;
+                                isotopeClusterIntensity += theorIsotopeAbundance * isotopePeaks[0].Intensity * 2.0;
                         }
                         else
                             isotopeClusterIntensity += (isotopeMassShifts[i].Value / isotopeMassShifts[0].Value) * isotopePeaks[0].Intensity;
