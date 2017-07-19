@@ -1372,7 +1372,7 @@ namespace FlashLFQ
                         identificationType[i] = "";
                 }
                 
-                returnList.Add(new FlashLFQSummedFeatureGroup(sequence.Key + "\t" + sequence.Value.First().identifyingScans.First().proteinGroup.proteinGroupName, intensitiesByFile, identificationType));
+                returnList.Add(new FlashLFQSummedFeatureGroup(sequence.Key, sequence.Value.First().identifyingScans.First().proteinGroup.proteinGroupName, intensitiesByFile, identificationType));
             }
 
             return returnList.OrderBy(p => p.BaseSequence).ToList();
