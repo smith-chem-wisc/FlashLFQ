@@ -961,8 +961,8 @@ namespace FlashLFQ
                         for(int j = 0; j < allMs1Scans[i].MassSpectrum.XArray.Length; j++)
                         {
                             FlashLFQMzBinElement element = null;
-                            double floorMz = (Math.Floor(allMs1Scans[i].MassSpectrum[j].Mz * 100) / 100);
-                            double ceilingMz = (Math.Ceiling(allMs1Scans[i].MassSpectrum[j].Mz * 100) / 100);
+                            double floorMz = (Math.Floor(allMs1Scans[i].MassSpectrum.XArray[j] * 100) / 100);
+                            double ceilingMz = (Math.Ceiling(allMs1Scans[i].MassSpectrum.XArray[j] * 100) / 100);
 
                             if (mzBins.ContainsKey(floorMz))
                             {
