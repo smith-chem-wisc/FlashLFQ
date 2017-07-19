@@ -5,13 +5,15 @@ namespace FlashLFQ
     public class FlashLFQSummedFeatureGroup
     {
         public readonly string BaseSequence;
+        public readonly string ProteinGroup;
         public readonly double[] intensitiesByFile;
         public readonly string[] detectionType;
         public static string[] files;
 
-        public FlashLFQSummedFeatureGroup(string baseSeq, double[] intensitiesByFile, string[] detectionType)
+        public FlashLFQSummedFeatureGroup(string baseSeq, string proteinGroup, double[] intensitiesByFile, string[] detectionType)
         {
             BaseSequence = baseSeq;
+            ProteinGroup = proteinGroup;
             this.intensitiesByFile = intensitiesByFile;
             this.detectionType = detectionType;
         }
@@ -36,6 +38,7 @@ namespace FlashLFQ
             StringBuilder sb = new StringBuilder();
             
             sb.Append("" + BaseSequence + '\t');
+            sb.Append("" + ProteinGroup + '\t');
             sb.Append(string.Join("\t", intensitiesByFile) + '\t');
             sb.Append(string.Join("\t", detectionType));
 
