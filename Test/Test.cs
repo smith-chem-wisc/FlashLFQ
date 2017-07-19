@@ -83,10 +83,10 @@ namespace Test
         }
 
         [Test]
-        public static void TestExternal()
+        public static void TestExternalNoPassedFile()
         {
-            string[] filePaths = Directory.GetFiles(TestContext.CurrentContext.TestDirectory).Where(f => f.Substring(f.IndexOf('.')).ToUpper().Equals(".RAW") || f.Substring(f.IndexOf('.')).ToUpper().Equals(".MZML")).ToArray();
             Console.WriteLine("UNIT TEST - Entering unit test");
+            string[] filePaths = Directory.GetFiles(TestContext.CurrentContext.TestDirectory).Where(f => f.Substring(f.IndexOf('.')).ToUpper().Equals(".RAW") || f.Substring(f.IndexOf('.')).ToUpper().Equals(".MZML")).ToArray();
             string elements = Path.Combine(TestContext.CurrentContext.TestDirectory, "elements.dat");
             string ident = Path.Combine(TestContext.CurrentContext.TestDirectory, "aggregatePSMs_5ppmAroundZero.psmtsv");
 
@@ -154,6 +154,81 @@ namespace Test
 
             Assert.That(!engine.allFeaturesByFile[0].First().isMbrFeature);
             Assert.That(!engine.allFeaturesByFile[1].First().isMbrFeature);
+            Console.WriteLine("UNIT TEST - All passed");
+        }
+
+        [Test]
+        public static void TestExternalPassedFile()
+        {
+            Console.WriteLine("UNIT TEST - Entering unit test");
+            string[] filePaths = Directory.GetFiles(TestContext.CurrentContext.TestDirectory).Where(f => f.Substring(f.IndexOf('.')).ToUpper().Equals(".RAW")).ToArray();
+            var thermoFile = ThermoStaticData.LoadAllStaticData(filePaths[0]);
+
+            string elements = Path.Combine(TestContext.CurrentContext.TestDirectory, "elements.dat");
+            string ident = Path.Combine(TestContext.CurrentContext.TestDirectory, "aggregatePSMs_5ppmAroundZero.psmtsv");
+
+            FlashLFQEngine engine = new FlashLFQEngine();
+            Console.WriteLine("UNIT TEST - About to load elements");
+            Loaders.LoadElements(elements);
+            Console.WriteLine("UNIT TEST - Finished loading elements");
+
+            engine.PassFilePaths(filePaths);
+            Assert.That(engine.ParseArgs(new string[] {
+                        "--ppm 5",
+                        "--sil false",
+                        "--pau false",
+                        "--mbr true" }
+                    ));
+            Console.WriteLine("UNIT TEST - Done making engine");
+            engine.globalStopwatch.Start();
+            engine.SetParallelization(1);
+
+            Console.WriteLine("UNIT TEST - Adding identifications");
+            var ids = File.ReadAllLines(ident);
+            int lineCount = 1;
+            foreach (var line in ids)
+            {
+                if (lineCount != 1)
+                {
+                    var splitLine = line.Split('\t');
+                    engine.AddIdentification(Path.GetFileNameWithoutExtension(splitLine[0]), splitLine[20], splitLine[21], double.Parse(splitLine[27]), double.Parse(splitLine[2]), (int)double.Parse(splitLine[6]), splitLine[14]);
+                }
+                lineCount++;
+            }
+            Console.WriteLine("UNIT TEST - Finished adding IDs");
+
+            engine.ConstructBinsFromIdentifications();
+            Console.WriteLine("UNIT TEST - Finished constructing bins");
+            Assert.That(engine.mzBinsTemplate.Count > 0);
+            Assert.That(engine.baseSequenceToIsotopicDistribution.Count > 0);
+            Console.WriteLine("UNIT TEST - Bins are OK");
+
+            for (int i = 0; i < engine.filePaths.Length; i++)
+            {
+                Console.WriteLine("UNIT TEST - Quantifying file " + (i + 1));
+                try
+                {
+                    Assert.That(engine.Quantify(thermoFile, engine.filePaths[i]));
+                }
+                catch (AssertionException)
+                {
+                    Console.WriteLine("UNIT TEST - Could not quantify file \"" + engine.filePaths[i] + "\"");
+                }
+            }
+
+            //if (engine.mbr)
+            //    engine.RetentionTimeCalibrationAndErrorCheckMatchedFeatures();
+
+            Console.WriteLine("UNIT TEST - Quantifying proteins ");
+            engine.QuantifyProteins();
+
+            Console.WriteLine("UNIT TEST - Asserting results");
+            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), "BaseSequence").Any());
+            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), "FullSequence").Any());
+
+            Assert.That(engine.allFeaturesByFile[0].First().intensity > 0);
+
+            Assert.That(!engine.allFeaturesByFile[0].First().isMbrFeature);
             Console.WriteLine("UNIT TEST - All passed");
         }
     }

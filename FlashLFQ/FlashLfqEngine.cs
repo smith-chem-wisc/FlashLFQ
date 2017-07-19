@@ -958,21 +958,21 @@ namespace FlashLFQ
                     {
                         int peakIndexInThisScan = 0;
 
-                        foreach (var peak in allMs1Scans[i].MassSpectrum)
+                        for(int j = 0; j < allMs1Scans[i].MassSpectrum.XArray.Length; j++)
                         {
                             FlashLFQMzBinElement element = null;
-                            double floorMz = (Math.Floor(peak.Mz * 100) / 100);
-                            double ceilingMz = (Math.Ceiling(peak.Mz * 100) / 100);
+                            double floorMz = (Math.Floor(allMs1Scans[i].MassSpectrum[j].Mz * 100) / 100);
+                            double ceilingMz = (Math.Ceiling(allMs1Scans[i].MassSpectrum[j].Mz * 100) / 100);
 
                             if (mzBins.ContainsKey(floorMz))
                             {
-                                element = new FlashLFQMzBinElement(peak, allMs1Scans[i], peakIndexInThisScan);
+                                element = new FlashLFQMzBinElement(allMs1Scans[i].MassSpectrum[j], allMs1Scans[i], peakIndexInThisScan);
                                 threadLocalGoodPeaks.Add(new KeyValuePair<double, FlashLFQMzBinElement>(floorMz, element));
                             }
                             if (mzBins.ContainsKey(ceilingMz))
                             {
                                 if (element == null)
-                                    element = new FlashLFQMzBinElement(peak, allMs1Scans[i], peakIndexInThisScan);
+                                    element = new FlashLFQMzBinElement(allMs1Scans[i].MassSpectrum[j], allMs1Scans[i], peakIndexInThisScan);
                                 threadLocalGoodPeaks.Add(new KeyValuePair<double, FlashLFQMzBinElement>(ceilingMz, element));
                             }
 
