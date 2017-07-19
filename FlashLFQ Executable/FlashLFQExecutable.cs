@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
+using FlashLFQ;
 
-namespace FlashLFQ
+namespace FlashLFQExecutable
 {
-    class FlashLFQ
+    class FlashLFQExecutable
     {
         static void Main(string[] args)
         {
