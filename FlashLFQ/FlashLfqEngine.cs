@@ -1053,7 +1053,7 @@ namespace FlashLFQ
                 return concurrentBagOfFeatures.ToList();
 
             var identifications = identificationsForThisFile.ToList();
-
+            
             Parallel.ForEach(Partitioner.Create(0, identifications.Count),
                 new ParallelOptions { MaxDegreeOfParallelism = maxThreads },
                 (range, loopState) =>
@@ -1259,7 +1259,7 @@ namespace FlashLFQ
                             {
                                 if (feature.intensity != -1)
                                 {
-                                    var featuresToMerge = group.Where(p => Math.Abs(p.apexPeak.peakWithScan.retentionTime - feature.apexPeak.peakWithScan.retentionTime) < rtTol && p.intensity != -1);
+                                    var featuresToMerge = group3.Where(p => Math.Abs(p.apexPeak.peakWithScan.retentionTime - feature.apexPeak.peakWithScan.retentionTime) < rtTol && p.intensity != -1);
                                     if (featuresToMerge.Any())
                                         feature.MergeFeatureWith(featuresToMerge, integrate);
                                 }
