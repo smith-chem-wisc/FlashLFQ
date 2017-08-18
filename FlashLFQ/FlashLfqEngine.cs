@@ -37,7 +37,7 @@ namespace FlashLFQ
         // settings
         public bool silent { get; private set; }
         public bool pause { get; private set; }
-        public int maxDegreesOfParallelism { get; private set; }
+        public int maxThreads { get; private set; }
         public IEnumerable<int> chargeStates { get; private set; }
         public double peakfindingPpmTolerance { get; private set; }
         public double ppmTolerance { get; private set; }
@@ -76,7 +76,7 @@ namespace FlashLFQ
             silent = false;
             pause = true;
             errorCheckAmbiguousMatches = true;
-            maxDegreesOfParallelism = -1;
+            maxThreads = -1;
             idSpecificChargeState = false;
             qValueCutoff = 0.01;
         }
@@ -92,8 +92,6 @@ namespace FlashLFQ
                 "--sil [bool|silent mode]",
                 "--pau [bool|pause at end of run]",
                 "--int [bool|integrate features]",
-                "--sum [bool|sum features in a run]",
-                "--mbr [bool|match between runs]",
                 "--chg [bool|use only precursor charge state]"
             };
             var newargs = string.Join("", args).Split(new[] { "--" }, StringSplitOptions.None);
@@ -185,11 +183,17 @@ namespace FlashLFQ
             allFeaturesByFile = new List<FlashLFQFeature>[filePaths.Length];
         }
 
-        public bool ReadPeriodicTable()
+        public bool ReadPeriodicTable(string optionalPeriodicTablePath)
         {
+            string elementsLocation;
+
             try
             {
-                Loaders.LoadElements(@"elements.dat");
+                if (optionalPeriodicTablePath == null)
+                    elementsLocation = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"elements.dat");
+                else
+                    elementsLocation = optionalPeriodicTablePath;
+                Loaders.LoadElements(elementsLocation);
             }
             catch (Exception)
             {
@@ -536,7 +540,7 @@ namespace FlashLFQ
                     "rtTol = " + rtTol,
                     "integrate = " + integrate,
                     "idSpecificChargeState = " + idSpecificChargeState,
-                    "maxDegreesOfParallelism = " + maxDegreesOfParallelism,
+                    "maxDegreesOfParallelism = " + maxThreads,
                     "mbr = " + mbr,
                     "mbrppmTolerance = " + mbrppmTolerance,
                     "mbrppmTolerance = " + mbrppmTolerance,
@@ -913,7 +917,7 @@ namespace FlashLFQ
 
         public void SetParallelization(int maxDegreesOfParallelism)
         {
-            this.maxDegreesOfParallelism = maxDegreesOfParallelism;
+            this.maxThreads = maxDegreesOfParallelism;
         }
 
         private Dictionary<double, List<FlashLFQMzBinElement>> ConstructLocalBins()
@@ -949,7 +953,7 @@ namespace FlashLFQ
             var allGoodPeaks = new List<List<KeyValuePair<double, FlashLFQMzBinElement>>>();
 
             Parallel.ForEach(Partitioner.Create(0, allMs1Scans.Count),
-                new ParallelOptions { MaxDegreeOfParallelism = maxDegreesOfParallelism },
+                new ParallelOptions { MaxDegreeOfParallelism = maxThreads },
                 (range, loopState) =>
                 {
                     var threadLocalGoodPeaks = new List<KeyValuePair<double, FlashLFQMzBinElement>>();
@@ -985,18 +989,20 @@ namespace FlashLFQ
                 }
             );
 
-            Parallel.ForEach(Partitioner.Create(0, allGoodPeaks.Count), (range) =>
-            {
-                for (int i = range.Item1; i < range.Item2; i++)
+            Parallel.ForEach(Partitioner.Create(0, allGoodPeaks.Count),
+                new ParallelOptions { MaxDegreeOfParallelism = maxThreads },
+                (range) =>
                 {
-                    foreach (var element in allGoodPeaks[i])
+                    for (int i = range.Item1; i < range.Item2; i++)
                     {
-                        var t = mzBins[element.Key];
-                        lock (t)
-                            t.Add(element.Value);
+                        foreach (var element in allGoodPeaks[i])
+                        {
+                            var t = mzBins[element.Key];
+                            lock (t)
+                                t.Add(element.Value);
+                        }
                     }
-                }
-            });
+                });
 
             /*
             // single-threaded bin-filling
@@ -1047,9 +1053,9 @@ namespace FlashLFQ
                 return concurrentBagOfFeatures.ToList();
 
             var identifications = identificationsForThisFile.ToList();
-
+            
             Parallel.ForEach(Partitioner.Create(0, identifications.Count),
-                new ParallelOptions { MaxDegreeOfParallelism = maxDegreesOfParallelism },
+                new ParallelOptions { MaxDegreeOfParallelism = maxThreads },
                 (range, loopState) =>
                 {
                     for (int i = range.Item1; i < range.Item2; i++)
@@ -1166,7 +1172,7 @@ namespace FlashLFQ
             if (identificationsFromOtherRunsToLookFor.Any())
             {
                 Parallel.ForEach(Partitioner.Create(0, identificationsFromOtherRunsToLookFor.Count),
-                    new ParallelOptions { MaxDegreeOfParallelism = maxDegreesOfParallelism },
+                    new ParallelOptions { MaxDegreeOfParallelism = maxThreads },
                     (range, loopState) =>
                     {
                         for (int i = range.Item1; i < range.Item2; i++)
@@ -1253,7 +1259,7 @@ namespace FlashLFQ
                             {
                                 if (feature.intensity != -1)
                                 {
-                                    var featuresToMerge = group.Where(p => Math.Abs(p.apexPeak.peakWithScan.retentionTime - feature.apexPeak.peakWithScan.retentionTime) < rtTol && p.intensity != -1);
+                                    var featuresToMerge = group3.Where(p => Math.Abs(p.apexPeak.peakWithScan.retentionTime - feature.apexPeak.peakWithScan.retentionTime) < rtTol && p.intensity != -1);
                                     if (featuresToMerge.Any())
                                         feature.MergeFeatureWith(featuresToMerge, integrate);
                                 }
