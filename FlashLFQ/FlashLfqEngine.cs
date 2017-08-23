@@ -94,6 +94,7 @@ namespace FlashLFQ
                 "--sil [bool|silent mode]",
                 "--pau [bool|pause at end of run]",
                 "--int [bool|integrate features]",
+                "--mbr [bool|match between runs]",
                 "--chg [bool|use only precursor charge state]"
             };
             var newargs = string.Join("", args).Split(new[] { "--" }, StringSplitOptions.None);
@@ -482,6 +483,7 @@ namespace FlashLFQ
             // handles features with multiple identifying scans, and
             // also handles scans that are associated with more than one feature
             RunErrorChecking(allFeaturesByFile[i].Where(p => !p.isMbrFeature).ToList());
+            allFeaturesByFile[i].RemoveAll(p => p.intensity == -1);
 
             foreach (var feature in allFeaturesByFile[i])
                 foreach (var cluster in feature.isotopeClusters)
@@ -929,7 +931,7 @@ namespace FlashLFQ
             {
                 if (!silent)
                 {
-                    Console.WriteLine("\nUnsupported file format\nPress any key to exit");
+                    Console.WriteLine("\nUnsupported file format \"" + massSpecFileFormat + "\"" + "\nPress any key to exit");
                     Console.ReadKey();
                 }
                 return file;
