@@ -65,7 +65,7 @@ The following headers are required in the list of MS/MS identifications:
     
     Protein Accession - Protein accession(s) for the peptide; protein quantification is still preliminary
 
-As of v.0.1.69, a sample MS/MS identification file, a sample .mzml, and a sample .bat are included in FlashLFQ. You may modify the .bat file to point to the directory containing the .psmtsv and .mzml files and simply double-click the bat to run FlashLFQ.
+As of v.0.1.69, a sample MS/MS identification file, a sample .mzML, and a sample .bat are included with FlashLFQ. You may modify the .bat file (e.g., with Notepad) to point to the directory containing the .psmtsv and .mzml files and simply double-click the bat to run FlashLFQ.
 
 # Output
 FlashLFQ outputs several text files, described here. The .tsv files are convenient to view with Microsoft Excel.
