@@ -39,8 +39,20 @@ namespace FlashLFQ
             
             sb.Append("" + BaseSequence + '\t');
             sb.Append("" + ProteinGroup + '\t');
-            sb.Append(string.Join("\t", intensitiesByFile) + '\t');
-            sb.Append(string.Join("\t", detectionType));
+            for (int i = 0; i < intensitiesByFile.Length; i++)
+            {
+                if (!(detectionType[i] == "MBR" && intensitiesByFile[i] == 0))
+                    sb.Append(intensitiesByFile[i] + "\t");
+                else
+                    sb.Append("\t");
+            }
+            for (int i = 0; i < intensitiesByFile.Length; i++)
+            {
+                if (!(detectionType[i] == "MBR" && intensitiesByFile[i] == 0))
+                    sb.Append(detectionType[i] + "\t");
+                else
+                    sb.Append("\t");
+            }
 
             return sb.ToString();
         }
