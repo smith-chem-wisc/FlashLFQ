@@ -11,7 +11,7 @@ namespace FlashLFQExecutable
             FlashLFQEngine engine = new FlashLFQEngine();
             engine.globalStopwatch.Start();
 
-            if (!engine.ReadPeriodicTable())
+            if (!engine.ReadPeriodicTable(null))
                 return;
 
             if (!engine.ParseArgs(args))
@@ -35,9 +35,9 @@ namespace FlashLFQExecutable
             if (engine.mbr)
                 engine.RetentionTimeCalibrationAndErrorCheckMatchedFeatures();
 
-            engine.QuantifyProteins();
+            //engine.QuantifyProteins();
 
-            if (!engine.WriteResults("_FlashLFQ_", true, true, true))
+            if (!engine.WriteResults("_FlashLFQ_", true, true, false))
                 return;
 
             if (!engine.silent)
