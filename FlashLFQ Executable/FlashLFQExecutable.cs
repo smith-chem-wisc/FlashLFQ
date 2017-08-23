@@ -32,8 +32,8 @@ namespace FlashLFQExecutable
                 }
             );
 
-            //if (engine.mbr)
-            //    engine.RetentionTimeCalibrationAndErrorCheckMatchedFeatures();
+            if (engine.mbr)
+                engine.RetentionTimeCalibrationAndErrorCheckMatchedFeatures();
 
             //engine.QuantifyProteins();
 

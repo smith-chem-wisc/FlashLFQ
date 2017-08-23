@@ -77,6 +77,9 @@ namespace Test
             Assert.That(engine.allFeaturesByFile[0].First().intensity > 0);
             Assert.That(engine.allFeaturesByFile[1].First().intensity > 0);
 
+            Assert.That(engine.allFeaturesByFile[0].Count == 1);
+            Assert.That(engine.allFeaturesByFile[1].Count == 1);
+
             Assert.That(!engine.allFeaturesByFile[0].First().isMbrFeature);
             Assert.That(!engine.allFeaturesByFile[1].First().isMbrFeature);
             Console.WriteLine("UNIT TEST - All passed");

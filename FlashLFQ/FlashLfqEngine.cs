@@ -47,6 +47,7 @@ namespace FlashLFQ
         public int missedScansAllowed { get; private set; }
         public int numIsotopesRequired { get; private set; }
         public double mbrRtWindow { get; private set; }
+        public double initialMbrRtWindow { get; private set; }
         public double mbrppmTolerance { get; private set; }
         public bool errorCheckAmbiguousMatches { get; private set; }
         public bool mbr { get; private set; }
@@ -68,6 +69,7 @@ namespace FlashLFQ
             isotopePpmTolerance = 5.0;
             mbr = false;
             mbrRtWindow = 1.5;
+            initialMbrRtWindow = 10.0;
             mbrppmTolerance = 5.0;
             integrate = false;
             missedScansAllowed = 1;
@@ -92,6 +94,7 @@ namespace FlashLFQ
                 "--sil [bool|silent mode]",
                 "--pau [bool|pause at end of run]",
                 "--int [bool|integrate features]",
+                "--mbr [bool|match between runs]",
                 "--chg [bool|use only precursor charge state]"
             };
             var newargs = string.Join("", args).Split(new[] { "--" }, StringSplitOptions.None);
@@ -479,7 +482,8 @@ namespace FlashLFQ
             // error checking function
             // handles features with multiple identifying scans, and
             // also handles scans that are associated with more than one feature
-            RunErrorChecking(allFeaturesByFile[i]);
+            RunErrorChecking(allFeaturesByFile[i].Where(p => !p.isMbrFeature).ToList());
+            allFeaturesByFile[i].RemoveAll(p => p.intensity == -1);
 
             foreach (var feature in allFeaturesByFile[i])
                 foreach (var cluster in feature.isotopeClusters)
@@ -578,7 +582,7 @@ namespace FlashLFQ
                 Console.WriteLine("Running retention time calibration");
 
             // get all unambiguous peaks for all files
-            var allFeatures = allFeaturesByFile.SelectMany(p => p);
+            var allFeatures = allFeaturesByFile.SelectMany(p => p).Where(p => !p.isMbrFeature);
             var allAmbiguousFeatures = allFeatures.Where(p => p.numIdentificationsByFullSeq > 1).ToList();
             var ambiguousFeatureSeqs = new HashSet<string>(allAmbiguousFeatures.SelectMany(p => p.identifyingScans.Select(v => v.FullSequence)));
 
@@ -590,6 +594,18 @@ namespace FlashLFQ
 
             foreach (var file in unambiguousPeaksGroupedByFile)
             {
+                // used later
+                int fileIndex = 0;
+                for (int i = 0; i < filePaths.Length; i++)
+                {
+                    if (Path.GetFileNameWithoutExtension(filePaths[i]).Equals(file.Key))
+                    {
+                        fileIndex = i;
+                        break;
+                    }
+                }
+                var allMbrFeaturesForThisFile = allFeaturesByFile[fileIndex].Where(p => p.isMbrFeature);
+
                 // get the best (most intense) peak for each peptide in the file
                 Dictionary<string, FlashLFQFeature> pepToBestFeatureForThisFile = new Dictionary<string, FlashLFQFeature>();
                 foreach (var testPeak in file)
@@ -652,6 +668,7 @@ namespace FlashLFQ
                     }
                     
 
+                    // find rt differences between files
                     List<Tuple<double,double>> rtCalPoints2 = rtCalPoints.Values.OrderBy(p => p.Item1).ToList();
 
                     int minRt = (int) Math.Floor(rtCalPoints2.First().Item1);
@@ -661,10 +678,11 @@ namespace FlashLFQ
                     foreach(var rt in rtCalPoints2)
                     {
                         List<double> points = null;
-                        if (rtCalibrationDictionary.TryGetValue((int)Math.Round(rt.Item1), out points))
+                        int intRt = (int)Math.Round(rt.Item1);
+                        if (rtCalibrationDictionary.TryGetValue(intRt, out points))
                             points.Add(rt.Item1 - rt.Item2);
                         else
-                            rtCalibrationDictionary.Add((int)Math.Round(rt.Item1), new List<double> { rt.Item1 - rt.Item2 });
+                            rtCalibrationDictionary.Add(intRt, new List<double> { rt.Item1 - rt.Item2 });
                     }
 
                     List<string> output = new List<string>();
@@ -673,15 +691,20 @@ namespace FlashLFQ
                         output.Add("" + point.Key + "\t" + point.Value.Item1 + "\t" + point.Value.Item2 + "\t" + (point.Value.Item1 - point.Value.Item2));
                     }
 
-                    File.WriteAllLines(outputFolder + file.Key + otherFile.Key + "RTCal.tsv", output);
+                    //File.WriteAllLines(outputFolder + file.Key + otherFile.Key + "RTCal.tsv", output);
 
                     output = new List<string>();
+                    // create spline
                     // index is minute of source, double is rt calibration factor (in minutes) for destination file
                     double[] rtCalRunningSpline = new double[maxRt + 1];
                     double[] stdevRunningSpline = new double[maxRt + 1];
                     for (int i = 0; i < rtCalRunningSpline.Length; i++)
+                    {
                         rtCalRunningSpline[i] = double.NaN;
+                        stdevRunningSpline[i] = double.NaN;
+                    }
                     
+                    // calculate stdev for each element in spline
                     for(int i = 1; i <= maxRt; i++)
                     {
                         List<double> list;
@@ -690,9 +713,7 @@ namespace FlashLFQ
                             if (list.Count > 3)
                             {
                                 list.Sort();
-                                rtCalRunningSpline[i] = list[list.Count / 2];
-
-
+                                rtCalRunningSpline[i] = list[list.Count / 2]; // median rt difference for this timepoint
                                 
                                 average = list.Average();
                                 sumOfSquaresOfDifferences = list.Select(val => (val - average) * (val - average)).Sum();
@@ -705,13 +726,100 @@ namespace FlashLFQ
                             }
                         }
                     }
+                    
+                    // fill gaps in spline (linear interpolation)
+                    for(int i = minRt; i <= maxRt; i++)
+                    {
+                        if(double.IsNaN(rtCalRunningSpline[i]))
+                        {
+                            KeyValuePair<int, double> prevCalPoint = new KeyValuePair<int, double>(0, double.NaN);
+                            KeyValuePair<int, double> nextCalPoint = new KeyValuePair<int, double>(0, double.NaN);
 
-                    for (int i = 1; i <= maxRt; i++)
-                        if(!double.IsNaN(rtCalRunningSpline[i]))
-                            output.Add("" + i + "\t" + rtCalRunningSpline[i] + "\t" + stdevRunningSpline[i]);
+                            for (int j = i; j >= minRt; j--)
+                            {
+                                if (!double.IsNaN(rtCalRunningSpline[j]))
+                                {
+                                    prevCalPoint = new KeyValuePair<int, double>(j, rtCalRunningSpline[j]);
+                                    break;
+                                }
+                            }
+                            for (int j = i; j <= maxRt; j++)
+                            {
+                                if (!double.IsNaN(rtCalRunningSpline[j]))
+                                {
+                                    nextCalPoint = new KeyValuePair<int, double>(j, rtCalRunningSpline[j]);
+                                    break;
+                                }
+                            }
 
-                    File.WriteAllLines(outputFolder + file.Key + otherFile.Key + "RTCal2.tsv", output);
+                            if(!double.IsNaN(prevCalPoint.Value) && !double.IsNaN(nextCalPoint.Value))
+                            {
+                                var slope = (prevCalPoint.Value - nextCalPoint.Value) / (prevCalPoint.Key - nextCalPoint.Key);
+                                var yint = prevCalPoint.Value - slope * prevCalPoint.Key;
+                                double interpolatedRtCalPoint = slope * i + yint;
+
+                                rtCalRunningSpline[i] = interpolatedRtCalPoint;
+                                stdevRunningSpline[i] = stdevRunningSpline[i] = mbrRtWindow / 2.0;
+                            }
+                            else
+                            {
+
+                            }
+                        }
+                    }
+                    
+                    for (int i = minRt; i <= maxRt; i++)
+                        output.Add("" + i + "\t" + rtCalRunningSpline[i] + "\t" + stdevRunningSpline[i]);
+
+                    //File.WriteAllLines(outputFolder + file.Key + otherFile.Key + "RTCal2.tsv", output);
+
+                    
+                    // finished rt calibration for these 2 files; now use rt cal spline to find matched features
+                    var allMatchedFeaturesToLookForNow = allMbrFeaturesForThisFile.Where(p => p.identifyingScans.First().fileName.Equals(otherFile.Key)).ToList();
+
+                    // filter peak candidates with rt cal to get apex peak
+                    foreach (var mbrFeature in allMatchedFeaturesToLookForNow)
+                    {
+                        // shift = thisFileRt - otherFileRt
+                        int rtSplineLookupTime = (int)Math.Round(mbrFeature.identifyingScans.First().ms2RetentionTime);
+
+                        if (rtSplineLookupTime < rtCalRunningSpline.Length)
+                        {
+                            double rtShift = rtCalRunningSpline[rtSplineLookupTime];
+                            double rtToleranceHere = stdevRunningSpline[rtSplineLookupTime];
+                            double theoreticalRt = mbrFeature.identifyingScans.First().ms2RetentionTime + rtShift;
+
+                            mbrFeature.isotopeClusters = mbrFeature.isotopeClusters.Where(p => Math.Abs(p.peakWithScan.retentionTime - theoreticalRt) < rtToleranceHere).ToList();
+                        }
+                        else
+                            mbrFeature.isotopeClusters = new List<FlashLFQIsotopeCluster>();
+                    }
+
+                    // peak crawl to find other time points
+                    var goodMbrFeatures = allMatchedFeaturesToLookForNow.Where(p => p.isotopeClusters.Any());
+                    output = new List<string>();
+                    foreach (var feature in allMatchedFeaturesToLookForNow)
+                    {
+                        if (feature.isotopeClusters.Any())
+                        {
+                            feature.CalculateIntensityForThisFeature(integrate);
+                            output.Add("" + feature.apexPeak.peakWithScan.retentionTime + "\t" + feature.identifyingScans.First().ms2RetentionTime);
+                        }
+                        else
+                            feature.intensity = -1;
+                    }
+
+                    //File.WriteAllLines(outputFolder + file.Key + otherFile.Key + "RTCal3.tsv", output);
                 }
+            }
+            
+            for (int i = 0; i < allFeaturesByFile.Length; i++)
+            {
+                // remove empty mbr features
+                allFeaturesByFile[i].RemoveAll(p => p.intensity == -1);
+                allFeaturesByFile[i] = allFeaturesByFile[i].Where(p => !p.isMbrFeature || (p.isMbrFeature && p.isotopeClusters.Any())).ToList();
+                // error check
+                RunErrorChecking(allFeaturesByFile[i]);
             }
         }
 
@@ -823,7 +931,7 @@ namespace FlashLFQ
             {
                 if (!silent)
                 {
-                    Console.WriteLine("\nUnsupported file format\nPress any key to exit");
+                    Console.WriteLine("\nUnsupported file format \"" + massSpecFileFormat + "\"" + "\nPress any key to exit");
                     Console.ReadKey();
                 }
                 return file;
@@ -1202,7 +1310,7 @@ namespace FlashLFQ
                             // filter by mz tolerance
                             var binPeaksHere = binPeaks.Where(p => Math.Abs(p.mainPeak.Mz - theorMzHere) < mzTolHere);
                             // filter by rt
-                            binPeaksHere = binPeaksHere.Where(p => Math.Abs(p.retentionTime - identification.ms2RetentionTime) < mbrRtWindow);
+                            binPeaksHere = binPeaksHere.Where(p => Math.Abs(p.retentionTime - identification.ms2RetentionTime) < initialMbrRtWindow);
                             // remove duplicates
                             binPeaksHere = binPeaksHere.Distinct();
                             // filter by isotopic distribution
@@ -1210,17 +1318,17 @@ namespace FlashLFQ
 
                                 if (validIsotopeClusters.Any())
                                 {
-                                    double apexIntensity = validIsotopeClusters.Select(p => p.isotopeClusterIntensity).Max();
-                                    var mbrApexPeak = validIsotopeClusters.Where(p => p.isotopeClusterIntensity == apexIntensity).First();
+                                    //double apexIntensity = validIsotopeClusters.Select(p => p.isotopeClusterIntensity).Max();
+                                    //var mbrApexPeak = validIsotopeClusters.Where(p => p.isotopeClusterIntensity == apexIntensity).First();
 
-                                    mbrFeature.isotopeClusters.Add(mbrApexPeak);
-                                //mbrFeature.isotopeClusters.AddRange(validIsotopeClusters);
-                            }
+                                    //mbrFeature.isotopeClusters.Add(mbrApexPeak);
+                                    mbrFeature.isotopeClusters.AddRange(validIsotopeClusters);
+                                }
                             }
 
                             if (mbrFeature.isotopeClusters.Any())
                             {
-                                mbrFeature.CalculateIntensityForThisFeature(integrate);
+                                //mbrFeature.CalculateIntensityForThisFeature(integrate);
                                 concurrentBagOfMatchedFeatures.Add(mbrFeature);
                             }
                         }
@@ -1233,6 +1341,8 @@ namespace FlashLFQ
 
         private void RunErrorChecking(List<FlashLFQFeature> features)
         {
+            features.RemoveAll(p => p.isMbrFeature && p.intensity == 0);
+
             if (!silent)
                 Console.WriteLine("Checking errors");
             var featuresWithSamePeak = features.Where(v => v.intensity != 0).GroupBy(p => p.apexPeak.peakWithScan);
