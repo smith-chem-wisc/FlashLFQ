@@ -14,6 +14,7 @@ FlashLFQ is currently a command-line program, though it is also built into the M
 
 To use the FlashLFQ standalone version, run the "FlashLFQExecutable" program with command-line arguments. At minimum, the --idt (the identification file) and either the --raw or --rep (the raw file(s)) must be specified.
 
+Preferably, when specifying a filepath, use the absolute file path inside of quotes. Examples are listed below.
 
 **Accepted command-line arguments:**
 
