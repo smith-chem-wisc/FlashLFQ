@@ -839,33 +839,22 @@ namespace FlashLFQ
                     allAmbiguousFeatures.Add(feature);
             }
 
-            var allUnambiguousFeatures = allFeatures.Except(allAmbiguousFeatures);
+            var allUnambiguousFeatures = allFeatures.Except(allAmbiguousFeatures).ToList();
+            //allUnambiguousFeatures.RemoveAll(p => p.intensity == 0);
             var featuresGroupedByProtein = allUnambiguousFeatures.GroupBy(v => v.identifyingScans.First().proteinGroup);
 
             foreach (var proteinFeatures in featuresGroupedByProtein)
             {
-                var featuresByFile = proteinFeatures.GroupBy(p => p.fileName);
-                var pepBaseSeqs = proteinFeatures.Select(p => p.identifyingScans.First().BaseSequence).Distinct().ToList();
-
-                // construct empty peptide/file array for this protein
-                List<FlashLFQFeature>[,] temp = new List<FlashLFQFeature>[filePaths.Length, pepBaseSeqs.Count];
-                for (int i = 0; i < temp.GetLength(0); i++)
-                    for (int j = 0; j < temp.GetLength(1); j++)
-                        temp[i, j] = new List<FlashLFQFeature>();
-
-                // populate array
-                foreach (var file in featuresByFile)
-                {
-                    int fileIndex = fileNames.IndexOf(file.Key);
-                    foreach (var feature in file)
-                        temp[fileIndex, pepBaseSeqs.IndexOf(feature.identifyingScans.First().BaseSequence)].Add(feature);
-                }
-
                 proteinFeatures.Key.intensitiesByFile = new double[fileNames.Count];
-                for (int i = 0; i < fileNames.Count; i++)
+                //proteinFeatures.Key.peptidesByFile = new string[fileNames.Count];
+
+                var peaksForThisProteinPerFile = proteinFeatures.GroupBy(p => p.fileName);
+
+                foreach(var file in peaksForThisProteinPerFile)
                 {
-                    for (int j = 0; j < pepBaseSeqs.Count; j++)
-                        proteinFeatures.Key.intensitiesByFile[i] += temp[i, j].Select(p => (p.intensity / p.numIdentificationsByFullSeq)).Sum();
+                    int i = fileNames.IndexOf(file.Key);
+                    proteinFeatures.Key.intensitiesByFile[i] = file.Sum(p => p.intensity / p.numIdentificationsByFullSeq);
+                    //proteinFeatures.Key.peptidesByFile[i] = String.Join("|", file.Select(p => p.identifyingScans.First().BaseSequence).Distinct().OrderBy(p => p));
                 }
             }
         }
