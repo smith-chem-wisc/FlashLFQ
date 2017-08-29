@@ -389,7 +389,7 @@ namespace FlashLFQ
                             chargeState = 1;
                         }
                         else
-                            chargeState = (int) double.Parse(param[chargeStCol]);
+                            chargeState = (int)double.Parse(param[chargeStCol]);
 
                         var ident = new FlashLFQIdentification(Path.GetFileNameWithoutExtension(fileName), BaseSequence, ModSequence, monoisotopicMass, ms2RetentionTime, chargeState);
                         allIdentifications.Add(ident);
@@ -620,13 +620,13 @@ namespace FlashLFQ
                         pepToBestFeatureForThisFile.Add(testPeak.identifyingScans.First().FullSequence, testPeak);
                 }
 
-                
+
                 foreach (var otherFile in unambiguousPeaksGroupedByFile)
                 {
                     // get the other files' best peak for the same peptides (to make an RT calibration curve) 
                     if (otherFile.Key.Equals(file.Key))
                         continue;
-                    
+
                     var featuresInCommon = otherFile.Where(p => pepToBestFeatureForThisFile.ContainsKey(p.identifyingScans.First().FullSequence));
 
                     Dictionary<string, FlashLFQFeature> pepToBestFeatureForOtherFile = new Dictionary<string, FlashLFQFeature>();
@@ -653,7 +653,7 @@ namespace FlashLFQ
                     double sumOfSquaresOfDifferences = someDoubles.Select(val => (val - average) * (val - average)).Sum();
                     double sd = Math.Sqrt(sumOfSquaresOfDifferences / (someDoubles.Count() - 1));
 
-                    
+
                     // remove extreme outliers
                     if (sd > 1.0)
                     {
@@ -666,16 +666,16 @@ namespace FlashLFQ
                         sumOfSquaresOfDifferences = someDoubles.Select(val => (val - average) * (val - average)).Sum();
                         sd = Math.Sqrt(sumOfSquaresOfDifferences / (someDoubles.Count() - 1));
                     }
-                    
+
 
                     // find rt differences between files
-                    List<Tuple<double,double>> rtCalPoints2 = rtCalPoints.Values.OrderBy(p => p.Item1).ToList();
+                    List<Tuple<double, double>> rtCalPoints2 = rtCalPoints.Values.OrderBy(p => p.Item1).ToList();
 
-                    int minRt = (int) Math.Floor(rtCalPoints2.First().Item1);
-                    int maxRt = (int) Math.Ceiling(rtCalPoints2.Last().Item1);
+                    int minRt = (int)Math.Floor(rtCalPoints2.First().Item1);
+                    int maxRt = (int)Math.Ceiling(rtCalPoints2.Last().Item1);
                     var roughRts = Enumerable.Range(minRt, (maxRt - minRt) + 1);
                     var rtCalibrationDictionary = new Dictionary<int, List<double>>();
-                    foreach(var rt in rtCalPoints2)
+                    foreach (var rt in rtCalPoints2)
                     {
                         List<double> points = null;
                         int intRt = (int)Math.Round(rt.Item1);
@@ -703,9 +703,9 @@ namespace FlashLFQ
                         rtCalRunningSpline[i] = double.NaN;
                         stdevRunningSpline[i] = double.NaN;
                     }
-                    
+
                     // calculate stdev for each element in spline
-                    for(int i = 1; i <= maxRt; i++)
+                    for (int i = 1; i <= maxRt; i++)
                     {
                         List<double> list;
                         if (rtCalibrationDictionary.TryGetValue(i, out list))
@@ -714,23 +714,23 @@ namespace FlashLFQ
                             {
                                 list.Sort();
                                 rtCalRunningSpline[i] = list[list.Count / 2]; // median rt difference for this timepoint
-                                
+
                                 average = list.Average();
                                 sumOfSquaresOfDifferences = list.Select(val => (val - average) * (val - average)).Sum();
                                 sd = Math.Sqrt(sumOfSquaresOfDifferences / (list.Count - 1));
 
-                                if(3 * sd > (mbrRtWindow / 2.0))
+                                if (3 * sd > (mbrRtWindow / 2.0))
                                     stdevRunningSpline[i] = mbrRtWindow / 2.0;
                                 else
                                     stdevRunningSpline[i] = 3 * sd;
                             }
                         }
                     }
-                    
+
                     // fill gaps in spline (linear interpolation)
-                    for(int i = minRt; i <= maxRt; i++)
+                    for (int i = minRt; i <= maxRt; i++)
                     {
-                        if(double.IsNaN(rtCalRunningSpline[i]))
+                        if (double.IsNaN(rtCalRunningSpline[i]))
                         {
                             KeyValuePair<int, double> prevCalPoint = new KeyValuePair<int, double>(0, double.NaN);
                             KeyValuePair<int, double> nextCalPoint = new KeyValuePair<int, double>(0, double.NaN);
@@ -752,7 +752,7 @@ namespace FlashLFQ
                                 }
                             }
 
-                            if(!double.IsNaN(prevCalPoint.Value) && !double.IsNaN(nextCalPoint.Value))
+                            if (!double.IsNaN(prevCalPoint.Value) && !double.IsNaN(nextCalPoint.Value))
                             {
                                 var slope = (prevCalPoint.Value - nextCalPoint.Value) / (prevCalPoint.Key - nextCalPoint.Key);
                                 var yint = prevCalPoint.Value - slope * prevCalPoint.Key;
@@ -767,13 +767,13 @@ namespace FlashLFQ
                             }
                         }
                     }
-                    
+
                     for (int i = minRt; i <= maxRt; i++)
                         output.Add("" + i + "\t" + rtCalRunningSpline[i] + "\t" + stdevRunningSpline[i]);
 
                     //File.WriteAllLines(outputFolder + file.Key + otherFile.Key + "RTCal2.tsv", output);
 
-                    
+
                     // finished rt calibration for these 2 files; now use rt cal spline to find matched features
                     var allMatchedFeaturesToLookForNow = allMbrFeaturesForThisFile.Where(p => p.identifyingScans.First().fileName.Equals(otherFile.Key)).ToList();
 
@@ -812,7 +812,7 @@ namespace FlashLFQ
                     //File.WriteAllLines(outputFolder + file.Key + otherFile.Key + "RTCal3.tsv", output);
                 }
             }
-            
+
             for (int i = 0; i < allFeaturesByFile.Length; i++)
             {
                 // remove empty mbr features
@@ -823,8 +823,10 @@ namespace FlashLFQ
             }
         }
 
-        public void QuantifyProteins()
+        public List<FlashLFQProteinGroup> QuantifyProteins()
         {
+            List<FlashLFQProteinGroup> returnList = new List<FlashLFQProteinGroup>();
+
             if (!silent)
                 Console.WriteLine("Quantifying proteins");
             var fileNames = filePaths.Select(p => Path.GetFileNameWithoutExtension(p)).ToList();
@@ -850,13 +852,17 @@ namespace FlashLFQ
 
                 var peaksForThisProteinPerFile = proteinFeatures.GroupBy(p => p.fileName);
 
-                foreach(var file in peaksForThisProteinPerFile)
+                foreach (var file in peaksForThisProteinPerFile)
                 {
                     int i = fileNames.IndexOf(file.Key);
                     proteinFeatures.Key.intensitiesByFile[i] = file.Sum(p => p.intensity / p.numIdentificationsByFullSeq);
                     //proteinFeatures.Key.peptidesByFile[i] = String.Join("|", file.Select(p => p.identifyingScans.First().BaseSequence).Distinct().OrderBy(p => p));
                 }
+
+                returnList.Add(proteinFeatures.Key);
             }
+
+            return returnList;
         }
 
         public void AddIdentification(string fileName, string BaseSequence, string FullSequence, double monoisotopicMass, double ms2RetentionTime, int chargeState, string proteinGroupName)
@@ -1045,7 +1051,7 @@ namespace FlashLFQ
 
             if (!silent)
                 Console.WriteLine("Assigning MS1 peaks to bins");
-            
+
             //multithreaded bin-filling
             var allGoodPeaks = new List<List<KeyValuePair<double, FlashLFQMzBinElement>>>();
 
@@ -1059,7 +1065,7 @@ namespace FlashLFQ
                     {
                         int peakIndexInThisScan = 0;
 
-                        for(int j = 0; j < allMs1Scans[i].MassSpectrum.XArray.Length; j++)
+                        for (int j = 0; j < allMs1Scans[i].MassSpectrum.XArray.Length; j++)
                         {
                             FlashLFQMzBinElement element = null;
                             double floorMz = (Math.Floor(allMs1Scans[i].MassSpectrum.XArray[j] * 100) / 100);
@@ -1150,7 +1156,7 @@ namespace FlashLFQ
                 return concurrentBagOfFeatures.ToList();
 
             var identifications = identificationsForThisFile.ToList();
-            
+
             Parallel.ForEach(Partitioner.Create(0, identifications.Count),
                 new ParallelOptions { MaxDegreeOfParallelism = maxThreads },
                 (range, loopState) =>
@@ -1177,10 +1183,12 @@ namespace FlashLFQ
 
                             IEnumerable<FlashLFQMzBinElement> binPeaks = new List<FlashLFQMzBinElement>();
                             List<FlashLFQMzBinElement> list;
-                            if (mzBins.TryGetValue(floorMz, out list))
-                                binPeaks = binPeaks.Concat(list);
-                            if (mzBins.TryGetValue(ceilingMz, out list))
-                                binPeaks = binPeaks.Concat(list);
+
+                            for (double j = floorMz; j <= ceilingMz; j += 0.01)
+                            {
+                                if (mzBins.TryGetValue(j, out list))
+                                    binPeaks = binPeaks.Concat(list);
+                            }
 
                             // filter by mz tolerance
                             var binPeaksHere = binPeaks.Where(p => Math.Abs(p.mainPeak.Mz - theorMzHere) < mzTolHere);
@@ -1290,20 +1298,21 @@ namespace FlashLFQ
                                 double ceilingMz = Math.Ceiling(theorMzHere * 100) / 100;
 
                                 IEnumerable<FlashLFQMzBinElement> binPeaks = new List<FlashLFQMzBinElement>();
-                                List<FlashLFQMzBinElement> t;
-                                if (mzBins.TryGetValue(floorMz, out t))
-                                    binPeaks = binPeaks.Concat(t);
-                                if (mzBins.TryGetValue(ceilingMz, out t))
-                                    binPeaks = binPeaks.Concat(t);
+                                List<FlashLFQMzBinElement> list;
+                                for (double j = floorMz; j <= ceilingMz; j += 0.01)
+                                {
+                                    if (mzBins.TryGetValue(j, out list))
+                                        binPeaks = binPeaks.Concat(list);
+                                }
 
-                            // filter by mz tolerance
-                            var binPeaksHere = binPeaks.Where(p => Math.Abs(p.mainPeak.Mz - theorMzHere) < mzTolHere);
-                            // filter by rt
-                            binPeaksHere = binPeaksHere.Where(p => Math.Abs(p.retentionTime - identification.ms2RetentionTime) < initialMbrRtWindow);
-                            // remove duplicates
-                            binPeaksHere = binPeaksHere.Distinct();
-                            // filter by isotopic distribution
-                            var validIsotopeClusters = FilterPeaksByIsotopicDistribution(binPeaksHere, identification, chargeState, true);
+                                // filter by mz tolerance
+                                var binPeaksHere = binPeaks.Where(p => Math.Abs(p.mainPeak.Mz - theorMzHere) < mzTolHere);
+                                // filter by rt
+                                binPeaksHere = binPeaksHere.Where(p => Math.Abs(p.retentionTime - identification.ms2RetentionTime) < initialMbrRtWindow);
+                                // remove duplicates
+                                binPeaksHere = binPeaksHere.Distinct();
+                                // filter by isotopic distribution
+                                var validIsotopeClusters = FilterPeaksByIsotopicDistribution(binPeaksHere, identification, chargeState, true);
 
                                 if (validIsotopeClusters.Any())
                                 {
@@ -1476,7 +1485,7 @@ namespace FlashLFQ
                     else
                         identificationType[i] = "";
                 }
-                
+
                 returnList.Add(new FlashLFQSummedFeatureGroup(sequence.Key, sequence.Value.First().identifyingScans.First().proteinGroup.proteinGroupName, intensitiesByFile, identificationType));
             }
 
@@ -1665,13 +1674,13 @@ namespace FlashLFQ
                     else
                     {
                         // check for missed scan around valley time point
-                        var tpBeforeValleyTimePoint = timePointsBetweenApexAndThisTimePoint[timePointsBetweenApexAndThisTimePoint.IndexOf(valleyTimePoint) -1];
+                        var tpBeforeValleyTimePoint = timePointsBetweenApexAndThisTimePoint[timePointsBetweenApexAndThisTimePoint.IndexOf(valleyTimePoint) - 1];
 
                         int indexOfTimepointBeforeValleyScan = ms1ScanNumbers.IndexOf(tpBeforeValleyTimePoint.peakWithScan.oneBasedScanNumber);
                         int indexOfValleyScan = ms1ScanNumbers.IndexOf(valleyTimePoint.peakWithScan.oneBasedScanNumber);
                         int indexOfSecondValleyScan = ms1ScanNumbers.IndexOf(secondValleyTimePoint.peakWithScan.oneBasedScanNumber);
 
-                        if(Math.Abs(indexOfValleyScan - indexOfTimepointBeforeValleyScan) > 1)
+                        if (Math.Abs(indexOfValleyScan - indexOfTimepointBeforeValleyScan) > 1)
                         {
                             cutThisPeak = true;
                             break;
