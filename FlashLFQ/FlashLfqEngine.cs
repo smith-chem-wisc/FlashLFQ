@@ -858,7 +858,7 @@ namespace FlashLFQ
                     //proteinFeatures.Key.peptidesByFile[i] = String.Join("|", file.Select(p => p.identifyingScans.First().BaseSequence).Distinct().OrderBy(p => p));
                 }
 
-                returnList.Add(proteinFeatures.Key);
+                returnList.Add(protein.Key);
             }
 
             return returnList;
