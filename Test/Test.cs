@@ -71,8 +71,8 @@ namespace Test
             engine.QuantifyProteins();
 
             Console.WriteLine("UNIT TEST - Asserting results");
-            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), "BaseSequence").Any());
-            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), "FullSequence").Any());
+            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), true).Any());
+            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), false).Any());
 
             Assert.That(engine.allFeaturesByFile[0].First().intensity > 0);
             Assert.That(engine.allFeaturesByFile[1].First().intensity > 0);
@@ -117,7 +117,7 @@ namespace Test
                 if(lineCount != 1)
                 {
                     var splitLine = line.Split('\t');
-                    engine.AddIdentification(Path.GetFileNameWithoutExtension(splitLine[0]), splitLine[20], splitLine[21], double.Parse(splitLine[27]), double.Parse(splitLine[2]), (int) double.Parse(splitLine[6]), splitLine[14]);
+                    engine.AddIdentification(Path.GetFileNameWithoutExtension(splitLine[0]), splitLine[20], splitLine[21], double.Parse(splitLine[27]), double.Parse(splitLine[2]), (int) double.Parse(splitLine[6]), new List<string> { splitLine[14] });
                 }
                 lineCount++;
             }
@@ -149,8 +149,8 @@ namespace Test
             engine.QuantifyProteins();
 
             Console.WriteLine("UNIT TEST - Asserting results");
-            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), "BaseSequence").Any());
-            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), "FullSequence").Any());
+            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), true).Any());
+            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), false).Any());
 
             Assert.That(engine.allFeaturesByFile[0].First().intensity > 0);
             Assert.That(engine.allFeaturesByFile[1].First().intensity > 0);
@@ -194,7 +194,7 @@ namespace Test
                 if (lineCount != 1)
                 {
                     var splitLine = line.Split('\t');
-                    engine.AddIdentification(Path.GetFileNameWithoutExtension(splitLine[0]), splitLine[20], splitLine[21], double.Parse(splitLine[27]), double.Parse(splitLine[2]), (int)double.Parse(splitLine[6]), splitLine[14]);
+                    engine.AddIdentification(Path.GetFileNameWithoutExtension(splitLine[0]), splitLine[20], splitLine[21], double.Parse(splitLine[27]), double.Parse(splitLine[2]), (int)double.Parse(splitLine[6]), new List<string> { splitLine[14] });
                 }
                 lineCount++;
             }
@@ -226,8 +226,8 @@ namespace Test
             engine.QuantifyProteins();
 
             Console.WriteLine("UNIT TEST - Asserting results");
-            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), "BaseSequence").Any());
-            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), "FullSequence").Any());
+            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), true).Any());
+            Assert.That(engine.SumFeatures(engine.allFeaturesByFile.SelectMany(p => p), false).Any());
 
             Assert.That(engine.allFeaturesByFile[0].First().intensity > 0);
 

@@ -1,4 +1,6 @@
-﻿namespace FlashLFQ
+﻿using System.Collections.Generic;
+
+namespace FlashLFQ
 {
     public class FlashLFQIdentification
     {
@@ -7,7 +9,7 @@
         public readonly double ms2RetentionTime;
         public readonly double monoisotopicMass;
         public int chargeState;
-        public FlashLFQProteinGroup proteinGroup;
+        public List<FlashLFQProteinGroup> proteinGroups;
         public double massToLookFor;
         public string fileName = "";
 
@@ -19,7 +21,7 @@
             this.monoisotopicMass = monoisotopicMass;
             this.ms2RetentionTime = ms2RetentionTime;
             this.chargeState = chargeState;
-            this.proteinGroup = new FlashLFQProteinGroup("");
+            this.proteinGroups = new List<FlashLFQProteinGroup>();
         }
 
         public override string ToString()
