@@ -842,20 +842,19 @@ namespace FlashLFQ
             }
 
             var allUnambiguousFeatures = allFeatures.Except(allAmbiguousFeatures).ToList();
-            //allUnambiguousFeatures.RemoveAll(p => p.intensity == 0);
             var featuresGroupedByProtein = allUnambiguousFeatures.GroupBy(v => v.identifyingScans.First().proteinGroup);
 
-            foreach (var proteinFeatures in featuresGroupedByProtein)
+            foreach (var protein in featuresGroupedByProtein)
             {
-                proteinFeatures.Key.intensitiesByFile = new double[fileNames.Count];
+                protein.Key.intensitiesByFile = new double[fileNames.Count];
                 //proteinFeatures.Key.peptidesByFile = new string[fileNames.Count];
 
-                var peaksForThisProteinPerFile = proteinFeatures.GroupBy(p => p.fileName);
+                var peaksForThisProteinPerFile = protein.GroupBy(p => p.fileName);
 
                 foreach (var file in peaksForThisProteinPerFile)
                 {
                     int i = fileNames.IndexOf(file.Key);
-                    proteinFeatures.Key.intensitiesByFile[i] = file.Sum(p => p.intensity / p.numIdentificationsByFullSeq);
+                    protein.Key.intensitiesByFile[i] = file.Sum(p => p.intensity);
                     //proteinFeatures.Key.peptidesByFile[i] = String.Join("|", file.Select(p => p.identifyingScans.First().BaseSequence).Distinct().OrderBy(p => p));
                 }
 
