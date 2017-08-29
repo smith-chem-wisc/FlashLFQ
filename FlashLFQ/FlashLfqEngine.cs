@@ -29,7 +29,7 @@ namespace FlashLFQ
         public List<FlashLFQFeature>[] allFeaturesByFile { get; private set; }
         public Dictionary<double, List<FlashLFQMzBinElement>> mzBinsTemplate { get; private set; }
         public Dictionary<string, List<KeyValuePair<double, double>>> baseSequenceToIsotopicDistribution { get; private set; }
-        private Dictionary<string, FlashLFQProteinGroup> pepToProteinGroupDictionary;
+        private Dictionary<string, FlashLFQProteinGroup> pgNameToProteinGroup;
         private string[] header;
         public Stopwatch globalStopwatch;
         public Stopwatch fileLocalStopwatch;
@@ -60,7 +60,7 @@ namespace FlashLFQ
             globalStopwatch = new Stopwatch();
             fileLocalStopwatch = new Stopwatch();
             allIdentifications = new List<FlashLFQIdentification>();
-            pepToProteinGroupDictionary = new Dictionary<string, FlashLFQProteinGroup>();
+            pgNameToProteinGroup = new Dictionary<string, FlashLFQProteinGroup>();
             chargeStates = new List<int>();
 
             // default parameters
@@ -394,14 +394,14 @@ namespace FlashLFQ
                         var ident = new FlashLFQIdentification(Path.GetFileNameWithoutExtension(fileName), BaseSequence, ModSequence, monoisotopicMass, ms2RetentionTime, chargeState);
                         allIdentifications.Add(ident);
 
-                        FlashLFQProteinGroup pg;
-                        if (pepToProteinGroupDictionary.TryGetValue(param[protNameCol], out pg))
-                            ident.proteinGroup = pg;
+                        FlashLFQProteinGroup proteinGroup;
+                        if (pgNameToProteinGroup.TryGetValue(param[protNameCol], out proteinGroup))
+                            ident.proteinGroups.Add(proteinGroup);
                         else
                         {
-                            pg = new FlashLFQProteinGroup(param[protNameCol]);
-                            pepToProteinGroupDictionary.Add(param[protNameCol], pg);
-                            ident.proteinGroup = pg;
+                            proteinGroup = new FlashLFQProteinGroup(param[protNameCol]);
+                            pgNameToProteinGroup.Add(param[protNameCol], proteinGroup);
+                            ident.proteinGroups.Add(proteinGroup);
                         }
                     }
                     catch (Exception)
@@ -511,25 +511,28 @@ namespace FlashLFQ
                     File.WriteAllLines(outputFolder + baseFileName + "QuantifiedPeaks.tsv", featureOutput);
 
                 // write baseseq groups
-                var peptides = SumFeatures(allFeatures, "BaseSequence");
+                var peptides = SumFeatures(allFeatures, true);
                 List<string> baseSeqOutput = new List<string> { FlashLFQSummedFeatureGroup.TabSeparatedHeader };
                 baseSeqOutput = baseSeqOutput.Concat(peptides.Select(p => p.ToString())).ToList();
                 if (writePeptides)
                     File.WriteAllLines(outputFolder + baseFileName + "QuantifiedBaseSequences.tsv", baseSeqOutput);
 
                 // write fullseq groups
-                peptides = SumFeatures(allFeatures, "FullSequence");
+                peptides = SumFeatures(allFeatures, false);
                 List<string> fullSeqOutput = new List<string> { FlashLFQSummedFeatureGroup.TabSeparatedHeader };
                 fullSeqOutput = fullSeqOutput.Concat(peptides.Select(p => p.ToString())).ToList();
                 if (writePeptides)
                     File.WriteAllLines(outputFolder + baseFileName + "QuantifiedModifiedSequences.tsv", fullSeqOutput);
 
                 // write protein results
-                var proteinGroups = allFeatures.Select(p => p.identifyingScans.First().proteinGroup).Where(v => v.intensitiesByFile != null).Distinct().OrderBy(p => p.proteinGroupName);
-                List<string> proteinOutput = new List<string> { string.Join("\t", new string[] { "test" }) };
-                proteinOutput = proteinOutput.Concat(proteinGroups.Select(v => v.ToString())).ToList();
                 if (writeProteins)
+                {
+                    var proteinGroups = QuantifyProteins();
+                    proteinGroups = proteinGroups.Where(v => v.intensitiesByFile != null).Distinct().OrderBy(p => p.proteinGroupName).ToList();
+                    List<string> proteinOutput = new List<string> { string.Join("\t", new string[] { "test" }) };
+                    proteinOutput = proteinOutput.Concat(proteinGroups.Select(v => v.ToString())).ToList();
                     File.WriteAllLines(outputFolder + baseFileName + "QuantifiedProteins.tsv", proteinOutput);
+                }
 
                 //write log
                 List<string> logOutput = new List<string>()
@@ -842,40 +845,57 @@ namespace FlashLFQ
             }
 
             var allUnambiguousFeatures = allFeatures.Except(allAmbiguousFeatures).ToList();
-            var featuresGroupedByProtein = allUnambiguousFeatures.GroupBy(v => v.identifyingScans.First().proteinGroup);
 
-            foreach (var protein in featuresGroupedByProtein)
+            var proteinsWithFeatures = new Dictionary<FlashLFQProteinGroup, List<FlashLFQFeature>>();
+            foreach(var feature in allUnambiguousFeatures)
             {
-                protein.Key.intensitiesByFile = new double[fileNames.Count];
-                //proteinFeatures.Key.peptidesByFile = new string[fileNames.Count];
+                foreach(var proteinGroup in feature.identifyingScans.First().proteinGroups)
+                {
+                    List<FlashLFQFeature> featuresForThisProtein;
 
-                var peaksForThisProteinPerFile = protein.GroupBy(p => p.fileName);
+                    if (proteinsWithFeatures.TryGetValue(proteinGroup, out featuresForThisProtein))
+                        featuresForThisProtein.Add(feature);
+                    else
+                        proteinsWithFeatures.Add(proteinGroup, new List<FlashLFQFeature> { feature });
+                }
+            }
+
+            foreach(var proteinGroupsFeatures in proteinsWithFeatures)
+            {
+                var peaksForThisProteinPerFile = proteinGroupsFeatures.Value.GroupBy(p => p.fileName);
+                proteinGroupsFeatures.Key.intensitiesByFile = new double[fileNames.Count];
 
                 foreach (var file in peaksForThisProteinPerFile)
                 {
                     int i = fileNames.IndexOf(file.Key);
-                    protein.Key.intensitiesByFile[i] = file.Sum(p => p.intensity);
-                    //proteinFeatures.Key.peptidesByFile[i] = String.Join("|", file.Select(p => p.identifyingScans.First().BaseSequence).Distinct().OrderBy(p => p));
+                    foreach (var feature in file)
+                    {
+                        int numProteinGroupsClaimingThisFeature = feature.identifyingScans.SelectMany(p => p.proteinGroups).Distinct().Count();
+                        proteinGroupsFeatures.Key.intensitiesByFile[i] += (feature.intensity / numProteinGroupsClaimingThisFeature);
+                    }
                 }
 
-                returnList.Add(protein.Key);
+                returnList.Add(proteinGroupsFeatures.Key);
             }
 
             return returnList;
         }
 
-        public void AddIdentification(string fileName, string BaseSequence, string FullSequence, double monoisotopicMass, double ms2RetentionTime, int chargeState, string proteinGroupName)
+        public void AddIdentification(string fileName, string BaseSequence, string FullSequence, double monoisotopicMass, double ms2RetentionTime, int chargeState, List<string> proteinGroupNames)
         {
             var ident = new FlashLFQIdentification(fileName, BaseSequence, FullSequence, monoisotopicMass, ms2RetentionTime, chargeState);
 
-            FlashLFQProteinGroup pg;
-            if (pepToProteinGroupDictionary.TryGetValue(proteinGroupName, out pg))
-                ident.proteinGroup = pg;
-            else
+            foreach (var pgGroupName in proteinGroupNames)
             {
-                pg = new FlashLFQProteinGroup(proteinGroupName);
-                pepToProteinGroupDictionary.Add(proteinGroupName, pg);
-                ident.proteinGroup = pg;
+                FlashLFQProteinGroup pg;
+                if (pgNameToProteinGroup.TryGetValue(pgGroupName, out pg))
+                    ident.proteinGroups.Add(pg);
+                else
+                {
+                    pg = new FlashLFQProteinGroup(pgGroupName);
+                    pgNameToProteinGroup.Add(pgGroupName, pg);
+                    ident.proteinGroups.Add(pg);
+                }
             }
 
             allIdentifications.Add(ident);
@@ -1415,7 +1435,7 @@ namespace FlashLFQ
             }
         }
 
-        public List<FlashLFQSummedFeatureGroup> SumFeatures(IEnumerable<FlashLFQFeature> features, string sumByThisType)
+        public List<FlashLFQSummedFeatureGroup> SumFeatures(IEnumerable<FlashLFQFeature> features, bool sumPeptideIntensitiesRegardlessOfModifications)
         {
             List<FlashLFQSummedFeatureGroup> returnList = new List<FlashLFQSummedFeatureGroup>();
 
@@ -1428,12 +1448,10 @@ namespace FlashLFQ
             foreach (var feature in features)
             {
                 IEnumerable<IGrouping<string, FlashLFQIdentification>> seqs;
-                if (sumByThisType.Equals("BaseSequence"))
+                if (sumPeptideIntensitiesRegardlessOfModifications)
                     seqs = feature.identifyingScans.GroupBy(p => p.BaseSequence);
-                else if (sumByThisType.Equals("FullSequence"))
-                    seqs = feature.identifyingScans.GroupBy(p => p.FullSequence);
                 else
-                    return returnList;
+                    seqs = feature.identifyingScans.GroupBy(p => p.FullSequence);
 
                 foreach (var seq in seqs)
                 {
@@ -1485,7 +1503,10 @@ namespace FlashLFQ
                         identificationType[i] = "";
                 }
 
-                returnList.Add(new FlashLFQSummedFeatureGroup(sequence.Key, sequence.Value.First().identifyingScans.First().proteinGroup.proteinGroupName, intensitiesByFile, identificationType));
+                if(sumPeptideIntensitiesRegardlessOfModifications)
+                    returnList.Add(new FlashLFQSummedFeatureGroup(sequence.Key, string.Join(";", sequence.Value.SelectMany(p => p.identifyingScans).Where(p => p.BaseSequence.Equals(sequence.Key)).First().proteinGroups.Select(p => p.proteinGroupName)), intensitiesByFile, identificationType));
+                else
+                    returnList.Add(new FlashLFQSummedFeatureGroup(sequence.Key, string.Join(";", sequence.Value.SelectMany(p => p.identifyingScans).Where(p => p.FullSequence.Equals(sequence.Key)).First().proteinGroups.Select(p => p.proteinGroupName)), intensitiesByFile, identificationType));
             }
 
             return returnList.OrderBy(p => p.BaseSequence).ToList();

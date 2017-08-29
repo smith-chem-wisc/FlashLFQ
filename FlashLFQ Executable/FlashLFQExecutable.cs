@@ -34,9 +34,7 @@ namespace FlashLFQExecutable
 
             if (engine.mbr)
                 engine.RetentionTimeCalibrationAndErrorCheckMatchedFeatures();
-
-            engine.QuantifyProteins();
-
+            
             if (!engine.WriteResults("_FlashLFQ_", true, true, true))
                 return;
 

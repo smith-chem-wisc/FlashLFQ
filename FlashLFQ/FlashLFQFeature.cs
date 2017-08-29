@@ -37,6 +37,7 @@ namespace FlashLFQ
                 sb.Append("File Name" + "\t");
                 sb.Append("Base Sequence" + "\t");
                 sb.Append("Full Sequence" + "\t");
+                sb.Append("Protein Group" + "\t");
                 sb.Append("Peptide Monoisotopic Mass" + "\t");
                 sb.Append("MS2 Retention Time" + "\t");
                 sb.Append("Precursor Charge" + "\t");
@@ -98,8 +99,18 @@ namespace FlashLFQ
             sb.Append(fileName + "\t");
             sb.Append(string.Join("|", identifyingScans.Select(p => p.BaseSequence).Distinct()) + '\t');
             sb.Append(string.Join("|", identifyingScans.Select(p => p.FullSequence).Distinct()) + '\t');
+
+            var t = identifyingScans.SelectMany(p => p.proteinGroups).Distinct().Select(p => p.proteinGroupName).OrderBy(p => p);
+            if (t.Any())
+                sb.Append(string.Join(";", t) + '\t');
+            else
+                sb.Append("" + '\t');
+
             sb.Append("" + identifyingScans.First().monoisotopicMass + '\t');
-            sb.Append("" + identifyingScans.First().ms2RetentionTime + '\t');
+            if (!isMbrFeature)
+                sb.Append("" + identifyingScans.First().ms2RetentionTime + '\t');
+            else
+                sb.Append("" + '\t');
             sb.Append("" + identifyingScans.First().chargeState + '\t');
             sb.Append("" + ClassExtensions.ToMz(identifyingScans.First().monoisotopicMass, identifyingScans.First().chargeState) + '\t');
             sb.Append("" + intensity + "\t");
