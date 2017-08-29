@@ -10,6 +10,7 @@ namespace FlashLFQ
     {
         public readonly string proteinGroupName;
         public double[] intensitiesByFile;
+        public string[] peptidesByFile;
 
         public FlashLFQProteinGroup(string name)
         {
@@ -22,6 +23,11 @@ namespace FlashLFQ
 
             sb.Append("" + proteinGroupName + '\t');
             sb.Append(string.Join("\t", intensitiesByFile));
+            if (peptidesByFile != null)
+            {
+                sb.Append("\t");
+                sb.Append(string.Join("\t", peptidesByFile));
+            }
 
             return sb.ToString();
         }
