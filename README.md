@@ -2,10 +2,10 @@
 FlashLFQ is an ultrafast label-free quantification algorithm for mass-spectrometry proteomics. 
 
 # Requirements
-Input is a tab-separated value (TSV) text file of MS/MS identifications, in addition to one or more raw data files. Currently, .mzml and .raw files are supported. [ThermoMSFileReader](https://thermo.flexnetoperations.com/control/thmo/login?nextURL=%2Fcontrol%2Fthmo%2Fsearch%3Fquery%3DMSFileReader) (v3.0 SP2 is recommended) is required to read .raw files. A 64-bit machine running Microsoft Windows is also required to run FlashLFQ.
+Input is a tab-separated value (TSV) text file of MS/MS identifications, in addition to one or more raw data files. Currently, .mzML and .raw files are supported. [Thermo MSFileReader](https://thermo.flexnetoperations.com/control/thmo/search?query=MSFileReader+3.0+SP2) (v3.0 SP2 is recommended) is required to read Thermo .raw files. A 64-bit machine running Microsoft Windows is also required to run FlashLFQ.
 
 # Download
-To download the latest standalone version of FlashLFQ, go [here](https://github.com/smith-chem-wisc/FlashLFQ/releases/latest). Click the .zip file (e.g. FlashLFQ.v0.1.*.zip) and extract the contents to a desired location on your computer. 
+To download the latest standalone version of FlashLFQ, go [here](https://github.com/smith-chem-wisc/FlashLFQ/releases/latest). Click the FlashLFQ.zip file and extract the contents to a desired location on your computer. 
 
 Alternatively, FlashLFQ is bundled into MetaMorpheus, which can be downloaded [here](https://github.com/smith-chem-wisc/MetaMorpheus). MetaMorpheus is a full-featured GUI proteomics software suite that features mass-calibration, PTM-discovery, search algorithms, and FlashLFQ built in.
 
@@ -20,7 +20,7 @@ Preferably, when specifying a filepath, use the absolute file path inside of quo
 
     --idt [string | identification file path (TSV format)]
     
-    --raw [string | MS data file (.raw or .mzml)]
+    --raw [string | MS data file (.raw or .mzML)]
     
     --rep [string | repository containing MS data files]
     
@@ -46,12 +46,12 @@ Preferably, when specifying a filepath, use the absolute file path inside of quo
 
 **Tab-Delimited Identification Text File**
 
-The first line should contain column headers identifying what each column is. Note that MetaMorpheus (.psmtsv), Morpheus, MaxQuant (msms.txt), and TDPortal tab-delimited column headers are supported  natively and such files can be read without modification. For search software that lists decoys and PSMs above 1% FDR (e.g., MetaMorpheus), you may want to remove these prior to FlashLFQ analysis. FlashLFQ will probably crash if ambiguous PSMs are passed into it (e.g., a PSM with more than 2 peptides listed in one line).
+The first line of the text file should contain column headers identifying what each column is. Note that MetaMorpheus (.psmtsv), Morpheus, MaxQuant (msms.txt), and TDPortal tab-delimited column headers are supported  natively and such files can be read without modification. For search software that lists decoys and PSMs above 1% FDR (e.g., MetaMorpheus), you may want to remove these prior to FlashLFQ analysis. FlashLFQ will probably crash if ambiguous PSMs are passed into it (e.g., a PSM with more than 2 peptides listed in one line).
 
 The following headers are required in the list of MS/MS identifications:
 
     File Name - File extensions should be tolerated, but no extension is tested more extensively 
-				(e.g. use MyFile and not MyFile.mzml)
+				(e.g. use MyFile and not MyFile.mzML)
     
     Base Sequence - Should only contain amino acid sequences, or it will likely result in a crash
     
@@ -66,7 +66,7 @@ The following headers are required in the list of MS/MS identifications:
     
     Protein Accession - Protein accession(s) for the peptide; protein quantification is still preliminary
 
-As of v.0.1.69, a sample MS/MS identification file, a sample .mzML, and a sample .bat are included with FlashLFQ. You may modify the .bat file (e.g., with Notepad) to point to the directory containing the .psmtsv and .mzml files and simply double-click the bat to run FlashLFQ.
+As of v.0.1.69, a sample MS/MS identification file, a sample .mzML, and a sample .bat are included with FlashLFQ. You may modify the .bat file (e.g., with Notepad) to point to the directory containing the .psmtsv and .mzML files and simply double-click the bat to run FlashLFQ.
 
 # Output
 FlashLFQ outputs several text files, described here. The .tsv files are convenient to view with Microsoft Excel.
