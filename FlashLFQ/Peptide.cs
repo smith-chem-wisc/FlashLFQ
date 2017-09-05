@@ -2,17 +2,17 @@
 
 namespace FlashLFQ
 {
-    public class FlashLFQSummedFeatureGroup
+    public class Peptide
     {
-        public readonly string BaseSequence;
+        public readonly string Sequence;
         public readonly string ProteinGroup;
         public readonly double[] intensitiesByFile;
         public readonly string[] detectionType;
         public static string[] files;
 
-        public FlashLFQSummedFeatureGroup(string baseSeq, string proteinGroup, double[] intensitiesByFile, string[] detectionType)
+        public Peptide(string baseSeq, string proteinGroup, double[] intensitiesByFile, string[] detectionType)
         {
-            BaseSequence = baseSeq;
+            Sequence = baseSeq;
             ProteinGroup = proteinGroup;
             this.intensitiesByFile = intensitiesByFile;
             this.detectionType = detectionType;
@@ -23,7 +23,7 @@ namespace FlashLFQ
             get
             {
                 var sb = new StringBuilder();
-                sb.Append("Base Sequence" + "\t");
+                sb.Append("Sequence" + "\t");
                 sb.Append("Protein Group" + "\t");
                 for (int i = 0; i < files.Length; i++)
                     sb.Append("Intensity_" + files[i] + "\t");
@@ -37,7 +37,7 @@ namespace FlashLFQ
         {
             StringBuilder sb = new StringBuilder();
             
-            sb.Append("" + BaseSequence + '\t');
+            sb.Append("" + Sequence + '\t');
             sb.Append("" + ProteinGroup + '\t');
             for (int i = 0; i < intensitiesByFile.Length; i++)
             {

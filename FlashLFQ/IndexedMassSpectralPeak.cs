@@ -2,16 +2,16 @@
 
 namespace FlashLFQ
 {
-    public class FlashLFQMzBinElement
+    public class IndexedMassSpectralPeak
     {
-        public readonly IMzPeak mainPeak;
+        public readonly MassSpectralPeak mainPeak;
         public IMsDataScan<IMzSpectrum<IMzPeak>> scan { get; private set; }
         public readonly int zeroBasedIndexOfPeakInScan;
         public readonly double massSpectralPeakIntensity;
         public readonly double retentionTime;
         public readonly int oneBasedScanNumber;
 
-        public FlashLFQMzBinElement(IMzPeak peak, IMsDataScan<IMzSpectrum<IMzPeak>> scan, int index)
+        public IndexedMassSpectralPeak(MassSpectralPeak peak, IMsDataScan<IMzSpectrum<IMzPeak>> scan, int index)
         {
             mainPeak = peak;
             this.scan = scan;

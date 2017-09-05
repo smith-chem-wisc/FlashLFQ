@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace FlashLFQ
 {
-    public class FlashLFQProteinGroup
+    public class ProteinGroup
     {
         public readonly string proteinGroupName;
         public double[] intensitiesByFile;
         public string[] peptidesByFile;
 
-        public FlashLFQProteinGroup(string name)
+        public ProteinGroup(string name)
         {
             proteinGroupName = name;
         }
