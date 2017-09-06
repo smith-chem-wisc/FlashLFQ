@@ -79,20 +79,25 @@ namespace FlashLFQ
         {
             var thisFeaturesPeaks = this.isotopeClusters.Select(p => p.peakWithScan);
 
-            foreach (var feature in otherFeatures)
+            foreach (var otherFeature in otherFeatures)
             {
-                if (feature != this)
+                if (otherFeature != this)
                 {
-                    this.identifyingScans = this.identifyingScans.Union(feature.identifyingScans).Distinct().ToList();
-                    this.numIdentificationsByBaseSeq = identifyingScans.Select(v => v.BaseSequence).Distinct().Count();
-                    this.numIdentificationsByFullSeq = identifyingScans.Select(v => v.FullSequence).Distinct().Count();
-                    this.isotopeClusters.AddRange(feature.isotopeClusters.Where(p => !thisFeaturesPeaks.Contains(p.peakWithScan)));
-                    feature.intensity = -1;
+                    this.identifyingScans = this.identifyingScans.Union(otherFeature.identifyingScans).Distinct().ToList();
+                    ResolveIdentifications();
+                    this.isotopeClusters.AddRange(otherFeature.isotopeClusters.Where(p => !thisFeaturesPeaks.Contains(p.peakWithScan)));
+                    otherFeature.intensity = -1;
                 }
             }
             this.CalculateIntensityForThisFeature(integrate);
         }
-        
+
+        public void ResolveIdentifications()
+        {
+            this.numIdentificationsByBaseSeq = identifyingScans.Select(v => v.BaseSequence).Distinct().Count();
+            this.numIdentificationsByFullSeq = identifyingScans.Select(v => v.FullSequence).Distinct().Count();
+        }
+
         override public string ToString()
         {
             StringBuilder sb = new StringBuilder();

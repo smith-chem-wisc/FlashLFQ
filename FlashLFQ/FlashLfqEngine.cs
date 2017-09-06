@@ -797,10 +797,10 @@ namespace FlashLFQ
                                 if (!double.IsNaN(rtShift))
                                     mbrFeature.isotopeClusters = mbrFeature.isotopeClusters.Where(p => Math.Abs(p.peakWithScan.retentionTime - theoreticalRt) < rtToleranceHere).ToList();
                                 else
-                                    mbrFeature.isotopeClusters = new List<FlashLFQIsotopeCluster>();
+                                    mbrFeature.isotopeClusters = new List<IsotopeCluster>();
                             }
                             else
-                                mbrFeature.isotopeClusters = new List<FlashLFQIsotopeCluster>();
+                                mbrFeature.isotopeClusters = new List<IsotopeCluster>();
                         }
                     }
                     
