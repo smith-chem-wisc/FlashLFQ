@@ -6,27 +6,27 @@ using System.Text;
 
 namespace FlashLFQ
 {
-    public class FlashLFQFeature
+    public class ChromatographicPeak
     {
         public double intensity;
-        public FlashLFQIsotopeCluster apexPeak;
+        public IsotopeCluster apexPeak;
         public bool isMbrFeature;
         public string fileName = "";
-        public List<FlashLFQIdentification> identifyingScans;
-        public List<FlashLFQIsotopeCluster> isotopeClusters;
+        public List<Identification> identifyingScans;
+        public List<IsotopeCluster> isotopeClusters;
         public int numIdentificationsByBaseSeq { get; private set; }
         public int numIdentificationsByFullSeq { get; private set; }
         public double splitRT;
         public double massError { get; private set; }
         
-        public FlashLFQFeature()
+        public ChromatographicPeak()
         {
             splitRT = 0;
             massError = double.NaN;
             numIdentificationsByBaseSeq = 1;
             numIdentificationsByFullSeq = 1;
-            identifyingScans = new List<FlashLFQIdentification>();
-            isotopeClusters = new List<FlashLFQIsotopeCluster>();
+            identifyingScans = new List<Identification>();
+            isotopeClusters = new List<IsotopeCluster>();
         }
 
         public static string TabSeparatedHeader
@@ -75,7 +75,7 @@ namespace FlashLFQ
                 apexPeak = null;
         }
 
-        public void MergeFeatureWith(IEnumerable<FlashLFQFeature> otherFeatures, bool integrate)
+        public void MergeFeatureWith(IEnumerable<ChromatographicPeak> otherFeatures, bool integrate)
         {
             var thisFeaturesPeaks = this.isotopeClusters.Select(p => p.peakWithScan);
 
