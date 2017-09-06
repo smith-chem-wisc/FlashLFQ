@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/5mue0eiapbb6gk0u?svg=true)](https://ci.appveyor.com/project/robertmillikin/flashlfq)
+
 # About
 FlashLFQ is an ultrafast label-free quantification algorithm for mass-spectrometry proteomics. 
 
