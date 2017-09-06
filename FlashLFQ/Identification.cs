@@ -2,18 +2,18 @@
 
 namespace FlashLFQ
 {
-    public class FlashLFQIdentification
+    public class Identification
     {
         public readonly string BaseSequence;
         public readonly string FullSequence;
         public readonly double ms2RetentionTime;
         public readonly double monoisotopicMass;
         public int chargeState;
-        public List<FlashLFQProteinGroup> proteinGroups;
+        public List<ProteinGroup> proteinGroups;
         public double massToLookFor;
         public string fileName = "";
 
-        public FlashLFQIdentification(string fileName, string BaseSequence, string FullSequence, double monoisotopicMass, double ms2RetentionTime, int chargeState)
+        public Identification(string fileName, string BaseSequence, string FullSequence, double monoisotopicMass, double ms2RetentionTime, int chargeState)
         {
             this.fileName = fileName;
             this.BaseSequence = BaseSequence;
@@ -21,7 +21,7 @@ namespace FlashLFQ
             this.monoisotopicMass = monoisotopicMass;
             this.ms2RetentionTime = ms2RetentionTime;
             this.chargeState = chargeState;
-            this.proteinGroups = new List<FlashLFQProteinGroup>();
+            this.proteinGroups = new List<ProteinGroup>();
         }
 
         public override string ToString()
