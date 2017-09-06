@@ -471,7 +471,7 @@ namespace FlashLFQ
 
             // fill bins with peaks from the raw file
             var ms1ScanNumbers = FillBinsWithPeaks(localBins, currentDataFile);
-
+            
             // quantify features using this file's IDs first
             allFeaturesByFile[i] = MainFileSearch(Path.GetFileNameWithoutExtension(filePath), localBins, ms1ScanNumbers, currentDataFile);
 
@@ -650,13 +650,13 @@ namespace FlashLFQ
 
                     foreach (var kvp in pepToBestFeatureForOtherFile)
                         rtCalPoints.Add(kvp.Key, new Tuple<double, double>(pepToBestFeatureForThisFile[kvp.Key].apexPeak.peakWithScan.retentionTime, kvp.Value.apexPeak.peakWithScan.retentionTime));
-
+                    
                     var someDoubles = rtCalPoints.Select(p => (p.Value.Item1 - p.Value.Item2));
                     double average = someDoubles.Average();
                     double sumOfSquaresOfDifferences = someDoubles.Select(val => (val - average) * (val - average)).Sum();
                     double sd = Math.Sqrt(sumOfSquaresOfDifferences / (someDoubles.Count() - 1));
 
-
+                    
                     // remove extreme outliers
                     if (sd > 1.0)
                     {
@@ -669,8 +669,8 @@ namespace FlashLFQ
                         sumOfSquaresOfDifferences = someDoubles.Select(val => (val - average) * (val - average)).Sum();
                         sd = Math.Sqrt(sumOfSquaresOfDifferences / (someDoubles.Count() - 1));
                     }
-
-
+                    
+                    
                     // find rt differences between files
                     List<Tuple<double, double>> rtCalPoints2 = rtCalPoints.Values.OrderBy(p => p.Item1).ToList();
 
@@ -740,6 +740,8 @@ namespace FlashLFQ
 
                             for (int j = i; j >= minRt; j--)
                             {
+                                if (j < i - 3)
+                                    break;
                                 if (!double.IsNaN(rtCalRunningSpline[j]))
                                 {
                                     prevCalPoint = new KeyValuePair<int, double>(j, rtCalRunningSpline[j]);
@@ -748,6 +750,8 @@ namespace FlashLFQ
                             }
                             for (int j = i; j <= maxRt; j++)
                             {
+                                if (j > i + 3)
+                                    break;
                                 if (!double.IsNaN(rtCalRunningSpline[j]))
                                 {
                                     nextCalPoint = new KeyValuePair<int, double>(j, rtCalRunningSpline[j]);
@@ -764,10 +768,6 @@ namespace FlashLFQ
                                 rtCalRunningSpline[i] = interpolatedRtCalPoint;
                                 stdevRunningSpline[i] = stdevRunningSpline[i] = mbrRtWindow / 2.0;
                             }
-                            else
-                            {
-
-                            }
                         }
                     }
 
@@ -783,23 +783,27 @@ namespace FlashLFQ
                     // filter peak candidates with rt cal to get apex peak
                     foreach (var mbrFeature in allMatchedFeaturesToLookForNow)
                     {
-                        // shift = thisFileRt - otherFileRt
-                        int rtSplineLookupTime = (int)Math.Round(mbrFeature.identifyingScans.First().ms2RetentionTime);
-
-                        if (rtSplineLookupTime < rtCalRunningSpline.Length)
+                        if (mbrFeature.isotopeClusters.Any())
                         {
-                            double rtShift = rtCalRunningSpline[rtSplineLookupTime];
-                            double rtToleranceHere = stdevRunningSpline[rtSplineLookupTime];
-                            double theoreticalRt = mbrFeature.identifyingScans.First().ms2RetentionTime + rtShift;
+                            // shift = thisFileRt - otherFileRt
+                            int rtSplineLookupTime = (int)Math.Round(mbrFeature.identifyingScans.First().ms2RetentionTime);
 
-                            mbrFeature.isotopeClusters = mbrFeature.isotopeClusters.Where(p => Math.Abs(p.peakWithScan.retentionTime - theoreticalRt) < rtToleranceHere).ToList();
+                            if (rtSplineLookupTime < rtCalRunningSpline.Length)
+                            {
+                                double rtShift = rtCalRunningSpline[rtSplineLookupTime];
+                                double rtToleranceHere = stdevRunningSpline[rtSplineLookupTime];
+                                double theoreticalRt = mbrFeature.identifyingScans.First().ms2RetentionTime + rtShift;
+
+                                if (!double.IsNaN(rtShift))
+                                    mbrFeature.isotopeClusters = mbrFeature.isotopeClusters.Where(p => Math.Abs(p.peakWithScan.retentionTime - theoreticalRt) < rtToleranceHere).ToList();
+                                else
+                                    mbrFeature.isotopeClusters = new List<FlashLFQIsotopeCluster>();
+                            }
+                            else
+                                mbrFeature.isotopeClusters = new List<FlashLFQIsotopeCluster>();
                         }
-                        else
-                            mbrFeature.isotopeClusters = new List<FlashLFQIsotopeCluster>();
                     }
-
-                    // peak crawl to find other time points
-                    var goodMbrFeatures = allMatchedFeaturesToLookForNow.Where(p => p.isotopeClusters.Any());
+                    
                     output = new List<string>();
                     foreach (var feature in allMatchedFeaturesToLookForNow)
                     {
@@ -1423,11 +1427,14 @@ namespace FlashLFQ
 
                     if (!msmsIdentsForThisFile.Any())
                     {
+                        // mbr matched more than one identification to this peak - cannot resolve
                         ambiguousFeature.intensity = -1;
                     }
                     else
                     {
+                        // msms identifications take precident over mbr features
                         ambiguousFeature.identifyingScans = msmsIdentsForThisFile.ToList();
+                        ambiguousFeature.ResolveIdentifications();
                     }
                 }
 
