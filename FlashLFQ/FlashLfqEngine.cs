@@ -27,7 +27,7 @@ namespace FlashLFQ
         // structures used in the FlashLFQ program
         private List<Identification> allIdentifications;
         public List<ChromatographicPeak>[] allFeaturesByFile { get; private set; }
-        public Dictionary<double, List<IndexedMassSpectralPeak>> mzBinsTemplate { get; private set; }
+        public HashSet<double> observedMzsToUseForIndex { get; private set; }
         public Dictionary<string, List<KeyValuePair<double, double>>> baseSequenceToIsotopicDistribution { get; private set; }
         private Dictionary<string, ProteinGroup> pgNameToProteinGroup;
         private string[] header;
@@ -457,7 +457,7 @@ namespace FlashLFQ
             fileLocalStopwatch.Restart();
 
             // construct bins
-            var localBins = ConstructLocalBins();
+            var indexedMassSpectralPeaks = ConstructEmptyIndexForFile();
 
             // open raw file
             int i = Array.IndexOf(filePaths, filePath);
@@ -470,14 +470,14 @@ namespace FlashLFQ
                 return false;
 
             // fill bins with peaks from the raw file
-            var ms1ScanNumbers = FillBinsWithPeaks(localBins, currentDataFile);
+            var ms1ScanNumbers = IndexMassSpectralPeaks(indexedMassSpectralPeaks, currentDataFile);
             
             // quantify features using this file's IDs first
-            allFeaturesByFile[i] = MainFileSearch(Path.GetFileNameWithoutExtension(filePath), localBins, ms1ScanNumbers, currentDataFile);
+            allFeaturesByFile[i] = MainFileSearch(Path.GetFileNameWithoutExtension(filePath), indexedMassSpectralPeaks, ms1ScanNumbers, currentDataFile);
 
             // find unidentified features based on other files' identification results (MBR)
             if (mbr)
-                MatchBetweenRuns(Path.GetFileNameWithoutExtension(filePath), localBins, allFeaturesByFile[i]);
+                MatchBetweenRuns(Path.GetFileNameWithoutExtension(filePath), indexedMassSpectralPeaks, allFeaturesByFile[i]);
 
             // error checking function
             // handles features with multiple identifying scans, and
@@ -959,9 +959,9 @@ namespace FlashLFQ
             return file;
         }
 
-        public void ConstructBinsFromIdentifications()
+        public void ConstructIndexTemplateFromIdentifications()
         {
-            mzBinsTemplate = new Dictionary<double, List<IndexedMassSpectralPeak>>();
+            observedMzsToUseForIndex = new HashSet<double>();
 
             var peptideGroups = allIdentifications.GroupBy(p => p.FullSequence).ToList();
             var peptideBaseSeqs = new HashSet<string>(allIdentifications.Select(p => p.BaseSequence));
@@ -1033,10 +1033,10 @@ namespace FlashLFQ
                     double floorMz = Math.Floor(t * 100) / 100;
                     double ceilingMz = Math.Ceiling(t * 100) / 100;
 
-                    if (!mzBinsTemplate.ContainsKey(floorMz))
-                        mzBinsTemplate.Add(floorMz, new List<IndexedMassSpectralPeak>());
-                    if (!mzBinsTemplate.ContainsKey(ceilingMz))
-                        mzBinsTemplate.Add(ceilingMz, new List<IndexedMassSpectralPeak>());
+                    if (!observedMzsToUseForIndex.Contains(floorMz))
+                        observedMzsToUseForIndex.Add(floorMz);
+                    if (!observedMzsToUseForIndex.Contains(ceilingMz))
+                        observedMzsToUseForIndex.Add(ceilingMz);
                 }
             }
         }
@@ -1046,12 +1046,12 @@ namespace FlashLFQ
             this.maxThreads = maxDegreesOfParallelism;
         }
 
-        private Dictionary<double, List<IndexedMassSpectralPeak>> ConstructLocalBins()
+        private Dictionary<double, List<IndexedMassSpectralPeak>> ConstructEmptyIndexForFile()
         {
-            return mzBinsTemplate.ToDictionary(v => v.Key, v => new List<IndexedMassSpectralPeak>());
+            return observedMzsToUseForIndex.ToDictionary(v => v, v => new List<IndexedMassSpectralPeak>());
         }
 
-        private List<KeyValuePair<int, double>> FillBinsWithPeaks(Dictionary<double, List<IndexedMassSpectralPeak>> mzBins, IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file)
+        private List<KeyValuePair<int, double>> IndexMassSpectralPeaks(Dictionary<double, List<IndexedMassSpectralPeak>> mzBins, IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file)
         {
             var allMs1Scans = new List<IMsDataScan<IMzSpectrum<IMzPeak>>>();
             var ms1ScanNumbersWithRetentionTimes = new List<KeyValuePair<int, double>>();

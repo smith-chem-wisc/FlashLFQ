@@ -20,7 +20,7 @@ namespace FlashLFQExecutable
             if (!engine.ReadIdentificationsFromTSV())
                 return;
 
-            engine.ConstructBinsFromIdentifications();
+            engine.ConstructIndexTemplateFromIdentifications();
 
             Parallel.For(0, engine.filePaths.Length,
                 new ParallelOptions { MaxDegreeOfParallelism = 1 },

@@ -45,9 +45,9 @@ namespace Test
             Console.WriteLine("UNIT TEST - About to read TSV file");
             Assert.That(engine.ReadIdentificationsFromTSV());
             Console.WriteLine("UNIT TEST - Finished reading TSV");
-            engine.ConstructBinsFromIdentifications();
+            engine.ConstructIndexTemplateFromIdentifications();
             Console.WriteLine("UNIT TEST - Finished constructing bins");
-            Assert.That(engine.mzBinsTemplate.Count > 0);
+            Assert.That(engine.observedMzsToUseForIndex.Count > 0);
             Assert.That(engine.baseSequenceToIsotopicDistribution.Count > 0);
             Console.WriteLine("UNIT TEST - Bins are OK");
 
@@ -123,9 +123,9 @@ namespace Test
             }
             Console.WriteLine("UNIT TEST - Finished adding IDs");
 
-            engine.ConstructBinsFromIdentifications();
+            engine.ConstructIndexTemplateFromIdentifications();
             Console.WriteLine("UNIT TEST - Finished constructing bins");
-            Assert.That(engine.mzBinsTemplate.Count > 0);
+            Assert.That(engine.observedMzsToUseForIndex.Count > 0);
             Assert.That(engine.baseSequenceToIsotopicDistribution.Count > 0);
             Console.WriteLine("UNIT TEST - Bins are OK");
 
@@ -200,9 +200,9 @@ namespace Test
             }
             Console.WriteLine("UNIT TEST - Finished adding IDs");
 
-            engine.ConstructBinsFromIdentifications();
+            engine.ConstructIndexTemplateFromIdentifications();
             Console.WriteLine("UNIT TEST - Finished constructing bins");
-            Assert.That(engine.mzBinsTemplate.Count > 0);
+            Assert.That(engine.observedMzsToUseForIndex.Count > 0);
             Assert.That(engine.baseSequenceToIsotopicDistribution.Count > 0);
             Console.WriteLine("UNIT TEST - Bins are OK");
 
