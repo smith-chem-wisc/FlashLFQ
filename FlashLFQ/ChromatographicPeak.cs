@@ -18,10 +18,12 @@ namespace FlashLFQ
         public int numIdentificationsByFullSeq { get; private set; }
         public double splitRT;
         public double massError { get; private set; }
+        public int numChargeStatesObserved;
         
         public ChromatographicPeak()
         {
             splitRT = 0;
+            numChargeStatesObserved = 0;
             massError = double.NaN;
             numIdentificationsByBaseSeq = 1;
             numIdentificationsByFullSeq = 1;
@@ -48,6 +50,7 @@ namespace FlashLFQ
                 sb.Append("Peak RT End" + "\t");
                 sb.Append("Peak MZ" + "\t");
                 sb.Append("Peak Charge" + "\t");
+                sb.Append("Num Charge States Observed" + "\t");
                 sb.Append("Peak Detection Type" + "\t");
                 sb.Append("PSMs Mapped" + "\t");
                 sb.Append("Base Sequences Mapped" + "\t");
@@ -70,6 +73,7 @@ namespace FlashLFQ
                     intensity = apexPeak.isotopeClusterIntensity;
 
                 massError = ((ClassExtensions.ToMass(apexPeak.peakWithScan.mainPeak.Mz, apexPeak.chargeState) - identifyingScans.First().monoisotopicMass) / identifyingScans.First().monoisotopicMass) * 1e6;
+                numChargeStatesObserved = isotopeClusters.Select(p => p.chargeState).Distinct().Count();
             }
             else
                 apexPeak = null;
@@ -138,7 +142,9 @@ namespace FlashLFQ
                 sb.Append("" + "-" + "\t");
                 sb.Append("" + "-" + "\t");
             }
-            
+
+            sb.Append("" + numChargeStatesObserved + "\t");
+
             if (isMbrFeature)
                 sb.Append("" + "MBR" + "\t");
             else

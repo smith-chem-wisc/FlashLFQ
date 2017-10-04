@@ -10,7 +10,7 @@
         {
             this.peakWithScan = monoisotopicPeak;
             this.chargeState = chargeState;
-            this.isotopeClusterIntensity = intensity;
+            this.isotopeClusterIntensity = intensity / chargeState;
         }
 
         public override string ToString()
