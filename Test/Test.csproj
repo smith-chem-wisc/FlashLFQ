@@ -156,8 +156,11 @@
     <Error Condition="!Exists('..\packages\mzLib.1.0.243\build\net461\mzLib.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\mzLib.1.0.243\build\net461\mzLib.targets'))" />
   </Target>
   <Import Project="..\packages\mzLib.1.0.243\build\net461\mzLib.targets" Condition="Exists('..\packages\mzLib.1.0.243\build\net461\mzLib.targets')" />
-    <PropertyGroup>
+  <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>xcopy /y /d  "$(SolutionDir)packages\mzLib.1.0.243\build\net461\UnmanagedThermoHelperLayer.dll" "$(ProjectDir)$(OutDir)"</PreBuildEvent>
   </PropertyGroup>
 </Project>

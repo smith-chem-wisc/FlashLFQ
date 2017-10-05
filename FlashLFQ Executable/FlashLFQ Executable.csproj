@@ -139,4 +139,7 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
   </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>xcopy /y /d  "$(SolutionDir)packages\mzLib.1.0.243\build\net461\UnmanagedThermoHelperLayer.dll" "$(ProjectDir)$(OutDir)"</PreBuildEvent>
+  </PropertyGroup>
 </Project>
