@@ -135,4 +135,8 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\mzLib.1.0.243\build\net461\mzLib.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\mzLib.1.0.243\build\net461\mzLib.targets'))" />
   </Target>
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+  </PropertyGroup>
 </Project>
