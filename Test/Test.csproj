@@ -156,9 +156,4 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
   </PropertyGroup>
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-  </PropertyGroup>
-  <Import Project="..\packages\mzLib.1.0.244\build\net461\mzLib.targets" Condition="Exists('..\packages\mzLib.1.0.244\build\net461\mzLib.targets')" />
-</Project>
+  </Project>
