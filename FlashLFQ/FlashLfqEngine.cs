@@ -1,6 +1,12 @@
 ﻿using Chemistry;
 using IO.MzML;
+#if ONLYNETSTANDARD
+#else
+
 using IO.Thermo;
+
+#endif
+
 using MassSpectrometry;
 using Proteomics;
 using System;
@@ -915,6 +921,10 @@ namespace FlashLFQ
                 Console.WriteLine("Opening " + filePaths[fileIndex] + " (" + (fileIndex + 1) + "/" + filePaths.Length + ")");
             if (massSpecFileFormat == ".RAW")
             {
+#if ONLYNETSTANDARD
+                return null;
+#else
+                
                 try
                 {
                     file = ThermoDynamicData.InitiateDynamicConnection(filePaths[fileIndex]);
@@ -928,6 +938,9 @@ namespace FlashLFQ
                     }
                     return file;
                 }
+
+#endif
+
             }
             else if (massSpecFileFormat == ".MZML")
             {
@@ -1057,6 +1070,10 @@ namespace FlashLFQ
             var ms1ScanNumbersWithRetentionTimes = new List<KeyValuePair<int, double>>();
 
             // thermo files read differently than mzml
+#if ONLYNETSTANDARD    
+                allMs1Scans = file.Where(s => s.MsnOrder == 1).ToList();
+#else
+            
             var thermoFile = file as ThermoDynamicData;
             if (thermoFile != null)
             {
@@ -1067,6 +1084,8 @@ namespace FlashLFQ
             }
             else
                 allMs1Scans = file.Where(s => s.MsnOrder == 1).ToList();
+#endif
+
 
             foreach (var scan in allMs1Scans)
                 ms1ScanNumbersWithRetentionTimes.Add(new KeyValuePair<int, double>(scan.OneBasedScanNumber, scan.RetentionTime));
