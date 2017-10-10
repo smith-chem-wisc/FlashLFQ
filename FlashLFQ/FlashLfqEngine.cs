@@ -913,7 +913,7 @@ namespace FlashLFQ
 
         private IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> OpenDataFile(int fileIndex)
         {
-            var massSpecFileFormat = filePaths[fileIndex].Substring(filePaths[fileIndex].IndexOf('.')).ToUpper();
+            var massSpecFileFormat = Path.GetExtension(filePaths[fileIndex]).ToUpperInvariant();
             IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> file = null;
 
             // read mass spec file
