@@ -919,7 +919,7 @@ namespace FlashLFQ
             // read mass spec file
             if (!silent)
                 Console.WriteLine("Opening " + filePaths[fileIndex] + " (" + (fileIndex + 1) + "/" + filePaths.Length + ")");
-            if (massSpecFileFormat == ".RAW")
+            if (massSpecFileFormat == "RAW")
             {
 #if ONLYNETSTANDARD
                 return null;
@@ -942,7 +942,7 @@ namespace FlashLFQ
 #endif
 
             }
-            else if (massSpecFileFormat == ".MZML")
+            else if (massSpecFileFormat == "MZML")
             {
                 try
                 {
