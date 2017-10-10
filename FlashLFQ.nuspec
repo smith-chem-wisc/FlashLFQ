@@ -13,7 +13,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <tags>Mass Spectrometry Proteomics Quantification</tags>
     <dependencies>
-      <dependency id="mzLib" version="1.0.243"/>
+      <dependency id="mzLib" version="1.0.246"/>
     </dependencies>
   </metadata>
   <files>
