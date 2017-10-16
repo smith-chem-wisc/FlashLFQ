@@ -13,19 +13,11 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <tags>Mass Spectrometry Proteomics Quantification</tags>
     <dependencies>
-      <dependency id="mzLib" version="1.0.174"/>
+      <dependency id="mzLib" version="1.0.246"/>
     </dependencies>
   </metadata>
-    <files>
-    <file src="packages\mzLib.1.0.174\lib\Chemistry.dll" target="lib" /> 
-    <file src="packages\mzLib.1.0.174\lib\ManagedThermoHelperLayer.dll" target="lib" /> 
-    <file src="packages\mzLib.1.0.174\lib\MassSpectrometry.dll" target="lib" /> 
-    <file src="packages\mzLib.1.0.174\lib\mzIdentML.dll" target="lib" /> 
-    <file src="packages\mzLib.1.0.174\lib\MzLibUtil.dll" target="lib" /> 
-    <file src="packages\mzLib.1.0.174\lib\MzML.dll" target="lib" /> 
-    <file src="packages\mzLib.1.0.174\lib\Proteomics.dll" target="lib" /> 
-    <file src="packages\mzLib.1.0.174\lib\Spectra.dll" target="lib" /> 
-    <file src="packages\mzLib.1.0.174\lib\Thermo.dll" target="lib" /> 
-    <file src="packages\mzLib.1.0.174\lib\UsefulProteomicsDatabases.dll" target="lib" /> 
-  </files>
+  <files>
+    <file src="FlashLFQ\bin\Release\netstandard2.0\FlashLFQ.dll" target="lib\netstandard2.0" /> 
+    <file src="FlashLFQ\bin\Release\net461\FlashLFQ.dll" target="lib\net461" /> 
+</files>
 </package>
