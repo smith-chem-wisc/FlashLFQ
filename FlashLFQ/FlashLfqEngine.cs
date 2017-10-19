@@ -59,6 +59,7 @@ namespace FlashLFQ
         public bool mbr { get; private set; }
         public bool idSpecificChargeState { get; private set; }
         public double qValueCutoff { get; private set; }
+        public bool requireMonoisotopicMass { get; private set; }
         public IdentificationFileType identificationFileType { get; private set; }
 
         public FlashLFQEngine()
@@ -87,6 +88,7 @@ namespace FlashLFQ
             maxThreads = -1;
             idSpecificChargeState = false;
             qValueCutoff = 0.01;
+            requireMonoisotopicMass = true;
         }
 
         public bool ParseArgs(string[] args)
@@ -101,7 +103,8 @@ namespace FlashLFQ
                 "--pau [bool|pause at end of run]",
                 "--int [bool|integrate features]",
                 "--mbr [bool|match between runs]",
-                "--chg [bool|use only precursor charge state]"
+                "--chg [bool|use only precursor charge state]",
+                "--rmm [bool|require observed monoisotopic mass peak"
             };
             var newargs = string.Join("", args).Split(new[] { "--" }, StringSplitOptions.None);
 
@@ -142,6 +145,7 @@ namespace FlashLFQ
                         case ("mbr"): mbr = Boolean.Parse(arg.Substring(3)); break;
                         case ("chg"): idSpecificChargeState = Boolean.Parse(arg.Substring(3)); break;
                         case ("nis"): numIsotopesRequired = int.Parse(arg.Substring(3)); break;
+                        case ("rmm"): requireMonoisotopicMass = Boolean.Parse(arg.Substring(3)); break;
                         default:
                             if (!silent)
                             {
@@ -1035,8 +1039,7 @@ namespace FlashLFQ
 
                 foreach (var pep in pepGroup)
                 {
-                    //pep.massToLookFor = thisPeptidesMostAbundantMass;
-                    pep.massToLookFor = pepGroup.First().monoisotopicMass;
+                    pep.massToLookFor = requireMonoisotopicMass? pepGroup.First().monoisotopicMass: thisPeptidesMostAbundantMass;
                     //pep.massToLookFor = thisPeptidesLowestCommonMass;
                 }
 
@@ -1550,9 +1553,15 @@ namespace FlashLFQ
             {
                 // calculate theoretical isotopes
                 var theorIsotopeMzs = new double[isotopeMassShifts.Count];
+                int isotopicPeakUnitOfPeakZeroIsMono = Convert.ToInt32(thisPeakWithScan.mainPeak.Mz.ToMass(chargeState) - identification.monoisotopicMass);
                 var mainpeakMz = thisPeakWithScan.mainPeak.Mz;
-                for (int i = 0; i < isotopeMassShifts.Count; i++)
+                //left of main peak 
+                for (int i = 0; i < isotopicPeakUnitOfPeakZeroIsMono; i++)
                     theorIsotopeMzs[i] = mainpeakMz + (isotopeMassShifts[i].Key / chargeState);
+                //main peak and right of main peak
+                for (int i = isotopicPeakUnitOfPeakZeroIsMono; i < isotopeMassShifts.Count; i++)
+                    theorIsotopeMzs[i] = mainpeakMz + (isotopeMassShifts[i].Key / chargeState);
+
                 theorIsotopeMzs = theorIsotopeMzs.OrderBy(p => p).ToArray();
 
                 var lowestMzIsotopePossible = theorIsotopeMzs.First();
