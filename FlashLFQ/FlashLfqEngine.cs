@@ -1554,9 +1554,14 @@ namespace FlashLFQ
                 // calculate theoretical isotopes
                 var theorIsotopeMzs = new double[isotopeMassShifts.Count];
                 int isotopicPeakUnitOfPeakZeroIsMono = Convert.ToInt32(thisPeakWithScan.mainPeak.Mz.ToMass(chargeState) - identification.monoisotopicMass);
-                var monoisotopicMz = isotopeMassShifts[0].Key.ToMz(chargeState) + thisPeakWithScan.mainPeak.Mz - isotopeMassShifts[isotopicPeakUnitOfPeakZeroIsMono].Key.ToMz(chargeState);
-                for (int i = 0; i < isotopeMassShifts.Count; i++)
-                    theorIsotopeMzs[i] = monoisotopicMz + (isotopeMassShifts[i].Key / chargeState);
+                var mainpeakMz = thisPeakWithScan.mainPeak.Mz;
+                //left of main peak 
+                for (int i = 0; i < isotopicPeakUnitOfPeakZeroIsMono; i++)
+                    theorIsotopeMzs[i] = mainpeakMz + (isotopeMassShifts[i].Key / chargeState);
+                //main peak and right of main peak
+                for (int i = isotopicPeakUnitOfPeakZeroIsMono; i < isotopeMassShifts.Count; i++)
+                    theorIsotopeMzs[i] = mainpeakMz + (isotopeMassShifts[i].Key / chargeState);
+
                 theorIsotopeMzs = theorIsotopeMzs.OrderBy(p => p).ToArray();
 
                 var lowestMzIsotopePossible = theorIsotopeMzs.First();
