@@ -1587,7 +1587,7 @@ namespace FlashLFQ
                 {
                     bool badPeak = false;
                     double tol = (isotopePpmTolerance / 1e6) * theorIsotopeMz;
-                    double prevIsotopePeakMz = (monoisotopicMz - (1.003322 / chargeState));
+                    double prevIsotopePeakMz = (mainpeakMz - (1.003322 / chargeState));
 
                     for (int i = thisPeakWithScan.zeroBasedIndexOfPeakInScan; i > 0; i--)
                     {
