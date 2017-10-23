@@ -72,7 +72,7 @@ namespace FlashLFQ
                 else
                     intensity = apexPeak.isotopeClusterIntensity;
 
-                massError = ((ClassExtensions.ToMass(apexPeak.peakWithScan.mainPeak.Mz, apexPeak.chargeState) - identifyingScans.First().monoisotopicMass) / identifyingScans.First().monoisotopicMass) * 1e6;
+                massError = ((ClassExtensions.ToMass(apexPeak.peakWithScan.mainPeak.Mz, apexPeak.chargeState) - identifyingScans.First().massToLookFor) / identifyingScans.First().massToLookFor) * 1e6;
                 numChargeStatesObserved = isotopeClusters.Select(p => p.chargeState).Distinct().Count();
             }
             else
