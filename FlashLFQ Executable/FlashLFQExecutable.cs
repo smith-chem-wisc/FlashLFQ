@@ -16,26 +16,37 @@ namespace FlashLFQExecutable
 
             if (!engine.ParseArgs(args))
                 return;
-
+            if (!engine.ReadCBFTKey())
+                return;
             if (!engine.ReadIdentificationsFromTSV())
                 return;
 
             engine.ConstructIndexTemplateFromIdentifications();
 
-            Parallel.For(0, engine.filePaths.Length,
+            Parallel.For(0, engine.rawFileInfos.Count,
                 new ParallelOptions { MaxDegreeOfParallelism = 1 },
                 fileNumber =>
                 {
-                    if (!engine.Quantify(null, engine.filePaths[fileNumber]) && !engine.silent)
-                        Console.WriteLine("Error quantifying file " + engine.filePaths[fileNumber]);
+                    if (!engine.Quantify(null, engine.rawFileInfos[fileNumber].fullFilePath) && !engine.silent)
+                        Console.WriteLine("Error quantifying file " + engine.rawFileInfos[fileNumber].fullFilePath);
                     GC.Collect();
                 }
             );
 
             if (engine.mbr)
                 engine.RetentionTimeCalibrationAndErrorCheckMatchedFeatures();
-            
+
+
+
             if (!engine.WriteResults("_FlashLFQ_", true, true, true))
+                return;
+
+            if (!engine.normalize)
+                return;
+
+            if (!engine.WriteNormalizedResults("_FlashLFQ_Normalized", true))
+                return;
+            if (!engine.WriteNormalizedResults("_FlashLFQ_Normalized", false))
                 return;
 
             if (!engine.silent)

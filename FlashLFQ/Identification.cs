@@ -15,7 +15,7 @@ namespace FlashLFQ
 
         public Identification(string fileName, string BaseSequence, string FullSequence, double monoisotopicMass, double ms2RetentionTime, int chargeState)
         {
-            this.fileName = fileName;
+            this.fileName = System.IO.Path.GetFileNameWithoutExtension(fileName);
             this.BaseSequence = BaseSequence;
             this.FullSequence = FullSequence;
             this.monoisotopicMass = monoisotopicMass;

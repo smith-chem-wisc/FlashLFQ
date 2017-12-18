@@ -22,12 +22,12 @@ namespace FlashLFQ
             StringBuilder sb = new StringBuilder();
 
             sb.Append("" + proteinGroupName + '\t');
-            sb.Append(string.Join("\t", intensitiesByFile));
-            if (peptidesByFile != null)
-            {
-                sb.Append("\t");
-                sb.Append(string.Join("\t", peptidesByFile));
-            }
+            //sb.Append(string.Join("\t", intensitiesByFile));
+            //if (peptidesByFile != null)
+            //{
+            //    sb.Append("\t");
+            //    sb.Append(string.Join("\t", peptidesByFile));
+            //}
 
             return sb.ToString();
         }
