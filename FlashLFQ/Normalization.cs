@@ -5,7 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 
 //using Accord.Math;
+
+#if NET461
 using LpSolveDotNet;
+#else
+#endif
+
 
 
 namespace FlashLFQ
@@ -81,7 +86,11 @@ namespace FlashLFQ
 
                     double[] myCoefficients = new double[combo.Count * fractions.Count + featureCount * combo.Count];
 
+#if NET461
                     myCoefficients = SolveWithLpSolve(a, featureCount, combo.Count, fractions.Count);
+#else
+                    Console.WriteLine("Hey, you can't normalize in linux cuz we don't have the right math library.");
+#endif
 
                     int counter = 0;
                     for (int b = 0; b < combo.Count; b++)
@@ -131,6 +140,8 @@ namespace FlashLFQ
             return nF;
         }
 
+
+#if NET461
         private static double[] SolveWithLpSolve(double[,,] a, int numP, int numB, int numF)
         {
             LpSolve.Init();
@@ -210,8 +221,8 @@ namespace FlashLFQ
             
             return vars;
         }
-
-
+#else
+#endif
         //private static double[] SolveWithLinearEquations(double[,,] a, int numP, int numB, int numF)
         //{
         //    // Need one extra row, to anchor the solutions in one biorep(the first one) to be equal to 1 when summed.
