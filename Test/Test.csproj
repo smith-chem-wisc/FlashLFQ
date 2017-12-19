@@ -55,37 +55,37 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Chemistry, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\mzLib.1.0.246\lib\net45\Chemistry.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.266\lib\net45\Chemistry.dll</HintPath>
     </Reference>
-    <Reference Include="ManagedThermoHelperLayer, Version=1.0.246.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\mzLib.1.0.246\lib\net45\ManagedThermoHelperLayer.dll</HintPath>
+    <Reference Include="ManagedThermoHelperLayer, Version=1.0.266.0, Culture=neutral, processorArchitecture=AMD64">
+      <HintPath>..\packages\mzLib.1.0.266\lib\net45\ManagedThermoHelperLayer.dll</HintPath>
     </Reference>
     <Reference Include="MassSpectrometry, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\mzLib.1.0.246\lib\net45\MassSpectrometry.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.266\lib\net45\MassSpectrometry.dll</HintPath>
     </Reference>
     <Reference Include="MathNet.Numerics, Version=3.20.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MathNet.Numerics.3.20.0\lib\net40\MathNet.Numerics.dll</HintPath>
     </Reference>
     <Reference Include="mzIdentML, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\mzLib.1.0.246\lib\net45\mzIdentML.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.266\lib\net45\mzIdentML.dll</HintPath>
     </Reference>
     <Reference Include="MzLibUtil, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\mzLib.1.0.246\lib\net45\MzLibUtil.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.266\lib\net45\MzLibUtil.dll</HintPath>
     </Reference>
     <Reference Include="MzML, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\mzLib.1.0.246\lib\net45\MzML.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.266\lib\net45\MzML.dll</HintPath>
     </Reference>
     <Reference Include="nunit.framework, Version=3.8.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
       <HintPath>..\packages\NUnit.3.8.1\lib\net45\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="pepXML, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\mzLib.1.0.246\lib\net45\pepXML.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.266\lib\net45\pepXML.dll</HintPath>
     </Reference>
     <Reference Include="Proteomics, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\mzLib.1.0.246\lib\net45\Proteomics.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.266\lib\net45\Proteomics.dll</HintPath>
     </Reference>
     <Reference Include="Spectra, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\mzLib.1.0.246\lib\net45\Spectra.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.266\lib\net45\Spectra.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -94,11 +94,11 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="Thermo, Version=1.0.246.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\mzLib.1.0.246\lib\net45\Thermo.dll</HintPath>
+    <Reference Include="Thermo, Version=1.0.266.0, Culture=neutral, processorArchitecture=AMD64">
+      <HintPath>..\packages\mzLib.1.0.266\lib\net45\Thermo.dll</HintPath>
     </Reference>
     <Reference Include="UsefulProteomicsDatabases, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\mzLib.1.0.246\lib\net45\UsefulProteomicsDatabases.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.266\lib\net45\UsefulProteomicsDatabases.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -145,9 +145,15 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-    <PropertyGroup>
+  <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
   </PropertyGroup>
-  <Import Project="..\packages\mzLib.1.0.246\build\net45\mzLib.targets" Condition="Exists('..\packages\mzLib.1.0.246\build\net45\mzLib.targets')" />
+  <Import Project="..\packages\mzLib.1.0.266\build\net45\mzLib.targets" Condition="Exists('..\packages\mzLib.1.0.266\build\net45\mzLib.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\mzLib.1.0.266\build\net45\mzLib.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\mzLib.1.0.266\build\net45\mzLib.targets'))" />
+  </Target>
 </Project>
