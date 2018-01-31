@@ -1,6 +1,10 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using FlashLFQ;
+using IO.MzML;
+using IO.Thermo;
+using MassSpectrometry;
 
 namespace FlashLFQExecutable
 {
@@ -10,10 +14,7 @@ namespace FlashLFQExecutable
         {
             FlashLFQEngine engine = new FlashLFQEngine();
             engine.globalStopwatch.Start();
-
-            if (!engine.ReadPeriodicTable(null))
-                return;
-
+            
             if (!engine.ParseArgs(args))
                 return;
 
@@ -26,7 +27,12 @@ namespace FlashLFQExecutable
                 new ParallelOptions { MaxDegreeOfParallelism = 1 },
                 fileNumber =>
                 {
-                    if (!engine.Quantify(null, engine.filePaths[fileNumber]) && !engine.silent)
+                    IMsDataFile<IMsDataScan<IMzSpectrum<IMzPeak>>> dataFile;
+                    if (Path.GetExtension(engine.filePaths[fileNumber]).Equals(".mzML", StringComparison.OrdinalIgnoreCase))
+                        dataFile = Mzml.LoadAllStaticData(engine.filePaths[fileNumber]);
+                    else
+                        dataFile = ThermoDynamicData.InitiateDynamicConnection(engine.filePaths[fileNumber]);
+                    if (!engine.Quantify(dataFile, engine.filePaths[fileNumber]) && !engine.silent)
                         Console.WriteLine("Error quantifying file " + engine.filePaths[fileNumber]);
                     GC.Collect();
                 }
