@@ -86,6 +86,8 @@ namespace FlashLFQExecutable
 
                 if (ids.Any())
                 {
+                    if (!p.Object.silent)
+                        Console.WriteLine("Setup is OK - running FlashLFQ engine");
                     // make engine with desired settings
                     FlashLFQEngine engine = new FlashLFQEngine(ids, p.Object.ppmTolerance,
                         p.Object.isotopePpmTolerance, p.Object.mbr, p.Object.mbrppmTolerance,

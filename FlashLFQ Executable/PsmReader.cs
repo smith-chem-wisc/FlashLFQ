@@ -172,6 +172,8 @@ namespace FlashLFQExecutable
 
             reader.Close();
 
+            if (!silent)
+                Console.WriteLine("Done reading PSMs");
             return ids;
         }
 
