@@ -92,7 +92,7 @@ namespace FlashLFQExecutable
                     FlashLFQEngine engine = new FlashLFQEngine(ids, p.Object.ppmTolerance,
                         p.Object.isotopePpmTolerance, p.Object.mbr, p.Object.mbrppmTolerance,
                         p.Object.integrate, p.Object.numIsotopesRequired, p.Object.idSpecificChargeState,
-                        p.Object.requireMonoisotopicMass, p.Object.silent);
+                        p.Object.requireMonoisotopicMass, p.Object.silent, null, p.Object.mbrRtWindow);
 
                     // run
                     var results = engine.Run();
