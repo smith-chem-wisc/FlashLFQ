@@ -7,9 +7,9 @@ using FlashLFQ;
 
 namespace FlashLFQExecutable
 {
-    class FlashLFQExecutable
+    public class FlashLFQExecutable
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             // parameters
             List<string> acceptedSpectrumFileFormats = new List<string>() { ".RAW", ".MZML" };
@@ -75,6 +75,20 @@ namespace FlashLFQExecutable
             // args are OK - run FlashLFQ
             if (p.Parse(args).HasErrors == false && p.Object.psmInputPath != null)
             {
+                if(!File.Exists(p.Object.psmInputPath))
+                {
+                    if (!p.Object.silent)
+                        Console.WriteLine("Could not locate identification file " + p.Object.psmInputPath);
+                    return;
+                }
+
+                if (!Directory.Exists(p.Object.rawFilesPath))
+                {
+                    if (!p.Object.silent)
+                        Console.WriteLine("Could not locate folder " + p.Object.rawFilesPath);
+                    return;
+                }
+
                 // set up raw file info
                 List<RawFileInfo> rawFileInfo = new List<RawFileInfo>();
                 var files = Directory.GetFiles(p.Object.rawFilesPath).Where(f => acceptedSpectrumFileFormats.Contains(Path.GetExtension(f).ToUpperInvariant()));
@@ -87,7 +101,7 @@ namespace FlashLFQExecutable
                 if (ids.Any())
                 {
                     if (!p.Object.silent)
-                        Console.WriteLine("Setup is OK - running FlashLFQ engine");
+                        Console.WriteLine("Setup is OK; read in " + ids.Count + " identifications; starting FlashLFQ engine");
                     // make engine with desired settings
                     FlashLFQEngine engine = new FlashLFQEngine(ids, p.Object.ppmTolerance,
                         p.Object.isotopePpmTolerance, p.Object.mbr, p.Object.mbrppmTolerance,
