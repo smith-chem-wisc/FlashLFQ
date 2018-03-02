@@ -4,7 +4,7 @@
 FlashLFQ is an ultrafast label-free quantification algorithm for mass-spectrometry proteomics. 
 
 # Requirements
-Input is a tab-separated value (TSV) text file of MS/MS identifications, in addition to one or more raw data files. Currently, .mzML and .raw files are supported. [Thermo MSFileReader](https://thermo.flexnetoperations.com/control/thmo/search?query=MSFileReader+3.0+SP4) (v3.0 SP4 is recommended) is required to read Thermo .raw files. A 64-bit machine running Microsoft Windows is also required to run FlashLFQ.
+Input is a tab-separated value (TSV) text file of MS/MS identifications, in addition to one or more raw data files. Currently, .mzML and .raw files are supported. [Thermo MSFileReader](https://thermo.flexnetoperations.com/control/thmo/search?query=MSFileReader+3.0+SP2) (v3.0 SP2 is recommended) is required to read Thermo .raw files. A 64-bit machine running Microsoft Windows is also required to run FlashLFQ.
 
 # Download
 To download the latest standalone version of FlashLFQ, go [here](https://github.com/smith-chem-wisc/FlashLFQ/releases/latest). Click the FlashLFQ.zip file and extract the contents to a desired location on your computer. 
@@ -14,16 +14,14 @@ Alternatively, FlashLFQ is bundled into MetaMorpheus, which can be downloaded [h
 # Usage
 FlashLFQ is currently a command-line program, though it is also built into the MetaMorpheus GUI (see [MetaMorpheus](https://github.com/smith-chem-wisc/MetaMorpheus)).
 
-To use the FlashLFQ standalone version, run the "FlashLFQExecutable" program with command-line arguments. At minimum, the --idt (the identification file) and either the --raw or --rep (the raw file(s)) must be specified.
+To use the FlashLFQ standalone version, run the "FlashLFQExecutable.exe" program with command-line arguments. At minimum, the --idt (the identification file) and --rep (the raw file repository) must be specified.
 
 Preferably, when specifying a filepath, use the absolute file path inside of quotes. Examples are listed below.
 
 **Accepted command-line arguments:**
 
     --idt [string | identification file path (TSV format)]
-    
-    --raw [string | MS data file (.raw or .mzML)]
-    
+   
     --rep [string | repository containing MS data files]
     
     --ppm [double | monoisotopic ppm tolerance] (default = 10)
@@ -48,7 +46,7 @@ Preferably, when specifying a filepath, use the absolute file path inside of quo
 
 **Tab-Delimited Identification Text File**
 
-The first line of the text file should contain column headers identifying what each column is. Note that MetaMorpheus (.psmtsv), Morpheus, MaxQuant (msms.txt), and TDPortal tab-delimited column headers are supported  natively and such files can be read without modification. For search software that lists decoys and PSMs above 1% FDR (e.g., MetaMorpheus), you may want to remove these prior to FlashLFQ analysis. FlashLFQ will probably crash if ambiguous PSMs are passed into it (e.g., a PSM with more than 2 peptides listed in one line).
+The first line of the text file should contain column headers identifying what each column is. Note that MetaMorpheus (.psmtsv), Morpheus, Peptide Shaker (.tab), and MaxQuant (msms.txt) tab-delimited column headers are supported natively and such files can be read without editing. For search software that lists decoys and PSMs above 1% FDR, you may want to remove these prior to FlashLFQ analysis. FlashLFQ will probably crash if ambiguous PSMs are passed into it (e.g., a PSM with more than 2 peptides listed in one line).
 
 The following headers are required in the list of MS/MS identifications:
 
@@ -68,12 +66,8 @@ The following headers are required in the list of MS/MS identifications:
     
     Protein Accession - Protein accession(s) for the peptide; protein quantification is still preliminary
 
-As of v.0.1.69, a sample MS/MS identification file, a sample .mzML, and a sample .bat are included with FlashLFQ. You may modify the .bat file (e.g., with Notepad) to point to the directory containing the .psmtsv and .mzML files and simply double-click the bat to run FlashLFQ.
-
 # Output
 FlashLFQ outputs several text files, described here. The .tsv files are convenient to view with Microsoft Excel.
-
-*Log.txt* - Log of the FlashLFQ run. Includes timestamps and quantification time for each file, total analysis time, directories used, and settings.
 
 *QuantifiedPeaks.tsv* - Each chromatographic peak is shown here, even peaks that were not quantifiable (peak intensity = 0). Details about each peak, such as number of PSMs mapped, start/apex/end retention times, ppm error, etc are contained in this file. A peptide can have multiple peaks over the course of a run (e.g., oxidized peptidoforms elute at different times, etc). Ambiguous peaks are displayed with a | (pipe) delimiter to indicate more than one peptide mapped to that peak. 
 
@@ -84,8 +78,7 @@ FlashLFQ outputs several text files, described here. The .tsv files are convenie
 # Development Status
     To do: 
 
-    - Retention time calibration/matching between runs (currently in an early state)
-    - Improved peak picking
+    - Improved retention time calibration/matching between runs (currently in an early state)
     - Intensity normalization (especially between technical replicates, biological replicates, and fractions)
-    - Protein quantification
+    - Improved protein quantification
     
