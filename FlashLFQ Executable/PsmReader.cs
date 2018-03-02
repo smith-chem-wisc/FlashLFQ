@@ -68,7 +68,7 @@ namespace FlashLFQExecutable
                         // base sequence
                         string BaseSequence = param[baseSequCol];
                         // skip ambiguous sequence in MetaMorpheus output
-                        if (fileType == PsmFileType.MetaMorpheus && BaseSequence.Contains(" or "))
+                        if (fileType == PsmFileType.MetaMorpheus && (BaseSequence.Contains(" or ") || BaseSequence.Contains("|")))
                         {
                             lineNum++;
                             continue;
@@ -78,6 +78,12 @@ namespace FlashLFQExecutable
                         string ModSequence = param[fullSequCol];
                         if (fileType == PsmFileType.TDPortal)
                             ModSequence = BaseSequence + ModSequence;
+                        // skip ambiguous sequence in MetaMorpheus output
+                        if (fileType == PsmFileType.MetaMorpheus && (ModSequence.Contains(" or ") || ModSequence.Contains("|")))
+                        {
+                            lineNum++;
+                            continue;
+                        }
 
                         // monoisotopic mass
                         double monoisotopicMass = double.Parse(param[monoMassCol]);
