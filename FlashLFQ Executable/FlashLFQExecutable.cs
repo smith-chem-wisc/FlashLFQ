@@ -118,7 +118,7 @@ namespace FlashLFQExecutable
                 else
                 {
                     if (!p.Object.silent)
-                        Console.WriteLine("No valid peptide IDs found! Check to make sure the raw file names match between the ID file and the raw file repository");
+                        Console.WriteLine("No peptide IDs for the specified raw files were found! Check to make sure the raw file names match between the ID file and the raw file repository");
                 }
             }
             else if (p.Parse(args).HasErrors == false && p.Object.psmInputPath == null)
