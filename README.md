@@ -4,7 +4,7 @@
 FlashLFQ is an ultrafast label-free quantification algorithm for mass-spectrometry proteomics. 
 
 # Requirements
-Input is a tab-separated value (TSV) text file of MS/MS identifications, in addition to one or more raw data files. Currently, .mzML and .raw files are supported. [Thermo MSFileReader](https://thermo.flexnetoperations.com/control/thmo/search?query=MSFileReader+3.0+SP2) (v3.0 SP2 is recommended) is required to read Thermo .raw files. A 64-bit machine running Microsoft Windows is also required to run FlashLFQ.
+Input is a tab-separated value (TSV) text file of MS/MS identifications, in addition to one or more raw data files. Currently, .mzML and .raw files are supported. [Thermo MSFileReader](https://thermo.flexnetoperations.com/control/thmo/search?query=MSFileReader+3.0+SP2) is required to read Thermo .raw files. The version of MSFileReader that we recommend installing is v3.0 SP2. A 64-bit machine running Microsoft Windows is also required to run the standalone version of FlashLFQ.
 
 # Download
 To download the latest standalone version of FlashLFQ, go [here](https://github.com/smith-chem-wisc/FlashLFQ/releases/latest). Click the FlashLFQ.zip file and extract the contents to a desired location on your computer. 
@@ -20,9 +20,11 @@ Preferably, when specifying a filepath, use the absolute file path inside of quo
 
 **Accepted command-line arguments:**
 
-    --idt [string | identification file path (TSV format)]
+    --idt [string | identification file path (TSV format); REQUIRED]
    
-    --rep [string | repository containing MS data files]
+    --rep [string | repository containing MS data files; REQUIRED]
+    
+    --out [string | directory to output files to (default = identification folder)]
     
     --ppm [double | monoisotopic ppm tolerance] (default = 10)
     
@@ -30,19 +32,15 @@ Preferably, when specifying a filepath, use the absolute file path inside of quo
     
     --sil [boolean | silent mode; no console output] (default = false)
     
-    --pau [boolean | pause at end of run] (default = true)
-    
     --int [boolean | integrate chromatographic peak intensity instead of using 
 	  the apex intensity] (default = false)
     
     --chg [boolean | use only precursor charge state; when set to false, FlashLFQ looks 
 	  for all charge states detected in the MS/MS identification file for each peptide] (default = false)
 
-**Command-Line Examples:**
+**Command-Line Example:**
 
-*FlashLFQExecutable --idt "C:\MyFolder\msms.txt" --rep "C:\MyFolder" --ppm 5*
-
-*FlashLFQExecutable --idt "C:\MyFolder\msms.txt" --raw "C:\MyFolder\MyRawFile.raw" --ppm 5 --iso 3 --sil true --pau false --int true --chg false*
+*FlashLFQExecutable --idt "C:\MyFolder\msms.txt" --rep "C:\MyFolder" --ppm 5 --chg false*
 
 **Tab-Delimited Identification Text File**
 
