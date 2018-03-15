@@ -6,7 +6,7 @@ using FlashLFQ;
 
 namespace FlashLFQExecutable
 {
-    enum PsmFileType { MetaMorpheus, Morpheus, MaxQuant, PeptideShaker, TDPortal, Unknown }
+    enum PsmFileType { MetaMorpheus, Morpheus, MaxQuant, PeptideShaker, TDPortal, Generic, Unknown }
 
     public class PsmReader
     {
@@ -68,7 +68,7 @@ namespace FlashLFQExecutable
                         // base sequence
                         string BaseSequence = param[baseSequCol];
                         // skip ambiguous sequence in MetaMorpheus output
-                        if (fileType == PsmFileType.MetaMorpheus && BaseSequence.Contains(" or "))
+                        if (fileType == PsmFileType.MetaMorpheus && (BaseSequence.Contains(" or ") || BaseSequence.Contains("|")))
                         {
                             lineNum++;
                             continue;
@@ -78,6 +78,12 @@ namespace FlashLFQExecutable
                         string ModSequence = param[fullSequCol];
                         if (fileType == PsmFileType.TDPortal)
                             ModSequence = BaseSequence + ModSequence;
+                        // skip ambiguous sequence in MetaMorpheus output
+                        if (fileType == PsmFileType.MetaMorpheus && (ModSequence.Contains(" or ") || ModSequence.Contains("|")))
+                        {
+                            lineNum++;
+                            continue;
+                        }
 
                         // monoisotopic mass
                         double monoisotopicMass = double.Parse(param[monoMassCol]);
@@ -94,10 +100,10 @@ namespace FlashLFQExecutable
                         else if (fileType == PsmFileType.PeptideShaker)
                         {
                             string charge = new String(param[chargeStCol].Where(Char.IsDigit).ToArray());
-                            chargeState = (int)double.Parse(charge);
+                            chargeState = int.Parse(charge);
                         }
                         else
-                            chargeState = (int)double.Parse(param[chargeStCol]);
+                            chargeState = int.Parse(param[chargeStCol]);
 
                         // protein groups
                         List<string> proteinGroups = new List<string>();
@@ -133,6 +139,10 @@ namespace FlashLFQExecutable
                         {
                             // TDPortal - use base sequence as protein group
                             proteinGroups.Add(BaseSequence);
+                        }
+                        else
+                        {
+                            proteinGroups.Add(param[protNameCol]);
                         }
 
                         // construct id
@@ -289,7 +299,27 @@ namespace FlashLFQExecutable
 
                 return PsmFileType.TDPortal;
             }
-            
+
+            // Generic MS/MS input
+            if (split.Contains("File Name")
+                        && split.Contains("Base Sequence")
+                        && split.Contains("Full Sequence")
+                        && split.Contains("Peptide Monoisotopic Mass")
+                        && split.Contains("Scan Retention Time")
+                        && split.Contains("Precursor Charge")
+                        && split.Contains("Protein Accession"))
+            {
+                fileNameCol = Array.IndexOf(split, "File Name");
+                baseSequCol = Array.IndexOf(split, "Base Sequence");
+                fullSequCol = Array.IndexOf(split, "Full Sequence");
+                monoMassCol = Array.IndexOf(split, "Peptide Monoisotopic Mass");
+                msmsRetnCol = Array.IndexOf(split, "Scan Retention Time");
+                chargeStCol = Array.IndexOf(split, "Precursor Charge");
+                protNameCol = Array.IndexOf(split, "Protein Accession");
+
+                return PsmFileType.Generic;
+            }
+
             return type;
         }
     }
