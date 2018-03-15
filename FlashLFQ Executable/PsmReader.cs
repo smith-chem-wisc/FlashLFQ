@@ -19,9 +19,11 @@ namespace FlashLFQExecutable
         private static int protNameCol;
         private static int decoyCol;
         private static int qValueCol;
+        private static Dictionary<string, double> modSequenceToMonoMass;
         
         public static List<Identification> ReadPsms(string filepath, bool silent, List<RawFileInfo> rawfiles)
         {
+            modSequenceToMonoMass = new Dictionary<string, double>();
             List<Identification> ids = new List<Identification>();
             PsmFileType fileType = PsmFileType.Unknown;
             string[] delim = new string[] { ";", ",", " or ", "\"" };
@@ -84,9 +86,25 @@ namespace FlashLFQExecutable
                             lineNum++;
                             continue;
                         }
-
+                        
                         // monoisotopic mass
                         double monoisotopicMass = double.Parse(param[monoMassCol]);
+
+                        if (modSequenceToMonoMass.TryGetValue(ModSequence, out double storedMonoisotopicMass))
+                        {
+                            if(storedMonoisotopicMass != monoisotopicMass)
+                            {
+                                if (!silent)
+                                    Console.WriteLine("Caution! PSM with sequence " + ModSequence + " at line " + lineNum + " could not be read; " +
+                                        "a peptide with the same modified sequence but a different monoisotopic mass has already been added");
+                                lineNum++;
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            modSequenceToMonoMass.Add(ModSequence, monoisotopicMass);
+                        }
 
                         // retention time
                         double ms2RetentionTime = double.Parse(param[msmsRetnCol]);
