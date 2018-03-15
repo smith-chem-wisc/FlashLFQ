@@ -13,6 +13,11 @@ namespace FlashLFQExecutable
                 outputPath = Path.GetDirectoryName(inputPath);
             string inputFileName = Path.GetFileNameWithoutExtension(inputPath);
 
+            if(!Directory.Exists(outputPath))
+            {
+                Directory.CreateDirectory(outputPath);
+            }
+
             // peak output
             List<string> output = new List<string>() { ChromatographicPeak.TabSeparatedHeader };
             foreach (var peak in results.peaks.SelectMany(p => p.Value).OrderBy(p => p.rawFileInfo.filenameWithoutExtension))
