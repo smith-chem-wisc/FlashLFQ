@@ -13,13 +13,13 @@ namespace FlashLFQExecutable
         {
             // parameters
             List<string> acceptedSpectrumFileFormats = new List<string>() { ".RAW", ".MZML" };
-            
+
             // setup parameters
             var p = new FluentCommandLineParser<ApplicationArguments>();
 
             p.SetupHelp("?", "help")
              .Callback(text => Console.WriteLine(
-                "Valid arguments:\n" + 
+                "Valid arguments:\n" +
                 "--idt [string|identification file path (TSV format)]\n" +
                 "--rep [string|directory containing spectrum data files]\n" +
                 "--out [string|output directory]\n" +
@@ -62,7 +62,7 @@ namespace FlashLFQExecutable
 
             p.Setup(arg => arg.mbrRtWindow) // maximum match-between-runs window in minutes
              .As("mrt");
-            
+
             p.Setup(arg => arg.idSpecificChargeState) // only use PSM-identified charge states
              .As("chg");
 
@@ -75,7 +75,7 @@ namespace FlashLFQExecutable
             // args are OK - run FlashLFQ
             if (p.Parse(args).HasErrors == false && p.Object.psmInputPath != null)
             {
-                if(!File.Exists(p.Object.psmInputPath))
+                if (!File.Exists(p.Object.psmInputPath))
                 {
                     if (!p.Object.silent)
                         Console.WriteLine("Could not locate identification file " + p.Object.psmInputPath);
@@ -102,6 +102,7 @@ namespace FlashLFQExecutable
                 {
                     if (!p.Object.silent)
                         Console.WriteLine("Setup is OK; read in " + ids.Count + " identifications; starting FlashLFQ engine");
+                    
                     // make engine with desired settings
                     FlashLFQEngine engine = new FlashLFQEngine(ids, p.Object.ppmTolerance,
                         p.Object.isotopePpmTolerance, p.Object.mbr, p.Object.mbrppmTolerance,
@@ -113,6 +114,11 @@ namespace FlashLFQExecutable
 
                     // output
                     OutputWriter.WriteOutput(p.Object.psmInputPath, results, p.Object.outputPath);
+                }
+                else
+                {
+                    if (!p.Object.silent)
+                        Console.WriteLine("No peptide IDs for the specified raw files were found! Check to make sure the raw file names match between the ID file and the raw file repository");
                 }
             }
             else if (p.Parse(args).HasErrors == false && p.Object.psmInputPath == null)
