@@ -26,6 +26,8 @@ namespace Test
             };
 
             FlashLFQExecutable.FlashLFQExecutable.Main(myargs);
+
+            Assert.That(File.Exists(Path.Combine(myDirectory, "aggregatePSMs_5ppmAroundZero_FlashLFQ_QuantifiedPeaks.tsv")));
         }
     }
 }
