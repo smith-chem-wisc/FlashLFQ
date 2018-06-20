@@ -20,8 +20,8 @@ namespace FlashLFQExecutable
         private static int decoyCol;
         private static int qValueCol;
         private static Dictionary<string, double> modSequenceToMonoMass;
-        
-        public static List<Identification> ReadPsms(string filepath, bool silent, List<RawFileInfo> rawfiles)
+
+        public static List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles)
         {
             modSequenceToMonoMass = new Dictionary<string, double>();
             List<Identification> ids = new List<Identification>();
@@ -36,7 +36,7 @@ namespace FlashLFQExecutable
             {
                 reader = new StreamReader(filepath);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 if (!silent)
                     Console.WriteLine("Error reading file " + filepath + "\n" + e.Message);
@@ -86,13 +86,13 @@ namespace FlashLFQExecutable
                             lineNum++;
                             continue;
                         }
-                        
+
                         // monoisotopic mass
                         double monoisotopicMass = double.Parse(param[monoMassCol]);
 
                         if (modSequenceToMonoMass.TryGetValue(ModSequence, out double storedMonoisotopicMass))
                         {
-                            if(storedMonoisotopicMass != monoisotopicMass)
+                            if (storedMonoisotopicMass != monoisotopicMass)
                             {
                                 if (!silent)
                                     Console.WriteLine("Caution! PSM with sequence " + ModSequence + " at line " + lineNum + " could not be read; " +
@@ -121,7 +121,7 @@ namespace FlashLFQExecutable
                             chargeState = int.Parse(charge);
                         }
                         else
-                            chargeState = int.Parse(param[chargeStCol]);
+                            chargeState = (int)double.Parse(param[chargeStCol]);
 
                         // protein groups
                         List<string> proteinGroups = new List<string>();
@@ -173,7 +173,7 @@ namespace FlashLFQExecutable
                             continue;
                         }
 
-                        var ident = new Identification(rawFileInfoToUse, BaseSequence, ModSequence, monoisotopicMass, ms2RetentionTime, chargeState, proteinGroups);
+                        var ident = new Identification(rawFileInfoToUse, BaseSequence, ModSequence, monoisotopicMass, ms2RetentionTime, chargeState, new List<ProteinGroup>());
                         ids.Add(ident);
                     }
                     else
@@ -183,19 +183,19 @@ namespace FlashLFQExecutable
 
                     lineNum++;
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     if (!silent)
+                    {
                         Console.WriteLine("Problem reading line " + lineNum + " of the identification file");
+                    }
                     return new List<Identification>();
                 }
             }
 
             if (fileType == PsmFileType.Unknown)
             {
-                if (!silent)
-                    Console.WriteLine("Unknown PSM file type " + filepath);
-                return new List<Identification>();
+                throw new Exception("Could not interpret PSM header labels from file: " + filepath);
             }
 
             reader.Close();
