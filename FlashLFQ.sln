@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlashLFQ Executable", "FlashLFQ Executable\FlashLFQ Executable.csproj", "{7AF2532B-0108-403B-A05A-1CC60F2A7407}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CMD", "FlashLFQ Executable\CMD.csproj", "{7AF2532B-0108-403B-A05A-1CC60F2A7407}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{ABD3FF3F-8602-4011-A669-C9F120B18A9A}"
 	ProjectSection(ProjectDependencies) = postProject
