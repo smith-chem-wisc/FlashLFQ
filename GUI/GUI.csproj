@@ -171,13 +171,13 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\FlashLFQ Executable\CMD.csproj">
+    <Resource Include="FlashLFQ_Icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CMD\CMD.csproj">
       <Project>{7af2532b-0108-403b-a05a-1cc60f2a7407}</Project>
       <Name>CMD</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="FlashLFQ_Icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\mzLib.1.0.318\build\net471\mzLib.targets" Condition="Exists('..\packages\mzLib.1.0.318\build\net471\mzLib.targets')" />

@@ -5,7 +5,7 @@ using System.Linq;
 using Fclp;
 using FlashLFQ;
 
-namespace FlashLFQExecutable
+namespace CMD
 {
     public class FlashLFQExecutable
     {
