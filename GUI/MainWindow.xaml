@@ -1,0 +1,75 @@
+﻿<Window x:Class="GUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GUI"
+        mc:Ignorable="d"
+        Title="FlashLFQ" Drop="Window_Drop" AllowDrop="true" Height="600" Width="500" WindowStartupLocation="CenterScreen" Icon="FlashLFQ_Icon.ico" >
+    <DockPanel>
+        <Menu x:Name="menu" DockPanel.Dock="Top">
+            <MenuItem Header="Settings">
+                <MenuItem Name="changeSettingsMenuItem" Header="Open FlashLFQ Settings" Click="changeSettingsMenuItem_Click" />
+            </MenuItem>
+        </Menu>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="36" />
+                <RowDefinition Height="50" />
+                <RowDefinition Height="150" />
+            </Grid.RowDefinitions>
+            <GroupBox Header="Identification Files" Name="proteinDatabasesGroupBox" Grid.Row="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="20" />
+                    </Grid.RowDefinitions>
+                    <DataGrid x:Name="identFilesDataGrid" ItemsSource="{Binding}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="1">
+                        <Button x:Name="AddIdentFile" Content="Add" Click="AddIdentFile_Click" />
+                        <Button x:Name="ClearIdentFiles" Content="Clear" Click="ClearIdentFiles_Click" />
+                    </StackPanel>
+                </Grid>
+            </GroupBox>
+            <GridSplitter
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Stretch"
+                        Background="Silver"
+                        Height="5"
+                        Grid.Row="1"
+                        ResizeDirection="Rows" />
+            <GroupBox Header="Mass Spectra Files" Grid.Row="2" Name="datafilesGroupBox">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="20" />
+                    </Grid.RowDefinitions>
+                    <DataGrid x:Name="dataGridSpectraFiles" ItemsSource="{Binding}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="1">
+                        <Button x:Name="AddSpectra" Content="Add" Click="AddSpectra_Click" />
+                        <Button x:Name="ClearSpectra" Content="Clear" Click="ClearSpectra_Click" />
+                        <Button x:Name="SetExperDesign" Content="Experimental Design" Click="SetExperDesign_Click"/>
+                    </StackPanel>
+                </Grid>
+            </GroupBox>
+            <DockPanel Margin="5" Grid.Row="3" LastChildFill="True">
+                <Button x:Name="OpenOutputFolderButton" Content="Open" Width="40" DockPanel.Dock="Right" Click="OpenOutputFolderButton_Click"></Button>
+                <Label Content="Output Folder:" />
+                <TextBox x:Name="OutputFolderTextBox" ToolTip="$DATETIME is automatically replaced by the current date and time" />
+            </DockPanel>
+            <Button x:Name="Run" Content="Run FlashLFQ" Click="Run_Click" FontSize="24" Grid.Row="4" Margin="5" />
+            <GroupBox Header="Notifications" Grid.Row="5">
+                <RichTextBox x:Name="notificationsTextBox" VerticalScrollBarVisibility="Visible" IsReadOnly="True" TextChanged="notificationsTextBox_TextChanged">
+                    <RichTextBox.Resources>
+                        <Style TargetType="{x:Type Paragraph}">
+                            <Setter Property="Margin" Value="0" />
+                        </Style>
+                    </RichTextBox.Resources>
+                </RichTextBox>
+            </GroupBox>
+        </Grid>
+    </DockPanel>
+</Window>

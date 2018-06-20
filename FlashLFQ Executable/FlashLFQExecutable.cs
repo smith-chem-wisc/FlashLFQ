@@ -90,24 +90,44 @@ namespace FlashLFQExecutable
                 }
 
                 // set up raw file info
-                List<RawFileInfo> rawFileInfo = new List<RawFileInfo>();
+                List<SpectraFileInfo> rawFileInfo = new List<SpectraFileInfo>();
                 var files = Directory.GetFiles(p.Object.rawFilesPath).Where(f => acceptedSpectrumFileFormats.Contains(Path.GetExtension(f).ToUpperInvariant()));
                 foreach (var file in files)
-                    rawFileInfo.Add(new RawFileInfo(file));
+                    rawFileInfo.Add(new SpectraFileInfo(file, "", 0, 0, 0));
 
                 // set up IDs
-                var ids = PsmReader.ReadPsms(p.Object.psmInputPath, p.Object.silent, rawFileInfo);
+                var ids = new List<Identification>();
+                try
+                {
+                    PsmReader.ReadPsms(p.Object.psmInputPath, p.Object.silent, rawFileInfo);
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine("Problem reading PSMs: " + e.Message);
+                    return;
+                }
 
                 if (ids.Any())
                 {
                     if (!p.Object.silent)
+                    {
                         Console.WriteLine("Setup is OK; read in " + ids.Count + " identifications; starting FlashLFQ engine");
-                    
+                    }
+
                     // make engine with desired settings
-                    FlashLFQEngine engine = new FlashLFQEngine(ids, p.Object.ppmTolerance,
-                        p.Object.isotopePpmTolerance, p.Object.mbr, p.Object.mbrppmTolerance,
-                        p.Object.integrate, p.Object.numIsotopesRequired, p.Object.idSpecificChargeState,
-                        p.Object.requireMonoisotopicMass, p.Object.silent, null, p.Object.mbrRtWindow);
+                    FlashLFQEngine engine = new FlashLFQEngine(ids,
+                        normalize: false,
+                        ppmTolerance: p.Object.ppmTolerance,
+                        isotopeTolerancePpm: p.Object.isotopePpmTolerance,
+                        matchBetweenRuns: p.Object.mbr,
+                        matchBetweenRunsPpmTolerance: p.Object.mbrppmTolerance,
+                        integrate: p.Object.integrate,
+                        numIsotopesRequired: p.Object.numIsotopesRequired,
+                        idSpecificChargeState: p.Object.idSpecificChargeState,
+                        requireMonoisotopicMass: p.Object.requireMonoisotopicMass,
+                        silent: p.Object.silent,
+                        optionalPeriodicTablePath: null,
+                        maxMbrWindow: p.Object.mbrRtWindow);
 
                     // run
                     var results = engine.Run();
@@ -118,7 +138,9 @@ namespace FlashLFQExecutable
                 else
                 {
                     if (!p.Object.silent)
+                    {
                         Console.WriteLine("No peptide IDs for the specified raw files were found! Check to make sure the raw file names match between the ID file and the raw file repository");
+                    }
                 }
             }
             else if (p.Parse(args).HasErrors == false && p.Object.psmInputPath == null)
@@ -126,7 +148,9 @@ namespace FlashLFQExecutable
                 // no errors - just requesting help?
             }
             else
+            {
                 Console.WriteLine("Invalid arguments - type \"--help\" for valid arguments");
+            }
         }
 
         internal class ApplicationArguments
