@@ -93,13 +93,15 @@ namespace FlashLFQExecutable
                 List<SpectraFileInfo> rawFileInfo = new List<SpectraFileInfo>();
                 var files = Directory.GetFiles(p.Object.rawFilesPath).Where(f => acceptedSpectrumFileFormats.Contains(Path.GetExtension(f).ToUpperInvariant()));
                 foreach (var file in files)
+                {
                     rawFileInfo.Add(new SpectraFileInfo(file, "", 0, 0, 0));
+                }
 
                 // set up IDs
                 var ids = new List<Identification>();
                 try
                 {
-                    PsmReader.ReadPsms(p.Object.psmInputPath, p.Object.silent, rawFileInfo);
+                    ids = PsmReader.ReadPsms(p.Object.psmInputPath, p.Object.silent, rawFileInfo);
                 }
                 catch(Exception e)
                 {
@@ -139,7 +141,7 @@ namespace FlashLFQExecutable
                 {
                     if (!p.Object.silent)
                     {
-                        Console.WriteLine("No peptide IDs for the specified raw files were found! Check to make sure the raw file names match between the ID file and the raw file repository");
+                        Console.WriteLine("No peptide IDs for the specified spectra files were found! Check to make sure the spectra file names match between the ID file and the spectra files");
                     }
                 }
             }

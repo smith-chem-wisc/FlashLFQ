@@ -171,9 +171,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\FlashLFQ Executable\FlashLFQ Executable.csproj">
+    <ProjectReference Include="..\FlashLFQ Executable\CMD.csproj">
       <Project>{7af2532b-0108-403b-a05a-1cc60f2a7407}</Project>
-      <Name>FlashLFQ Executable</Name>
+      <Name>CMD</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

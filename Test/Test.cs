@@ -9,17 +9,20 @@ namespace Test
         [Test]
         public static void TestFlashLfqExecutable()
         {
-            var myDirectory = TestContext.CurrentContext.TestDirectory;
-            var pathOfIdentificationFile = Path.Combine(myDirectory, @"SampleFiles\aggregatePSMs_5ppmAroundZero.psmtsv");
-            var pathOfMzml = Path.Combine(myDirectory, @"SampleFiles\sliced-mzml.mzML");
+            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
+            var pathOfIdentificationFile = Path.Combine(myDirectory, @"aggregatePSMs_5ppmAroundZero.psmtsv");
+            var pathOfMzml = Path.Combine(myDirectory, @"sliced-mzml.mzML");
             Assert.That(File.Exists(pathOfIdentificationFile));
             Assert.That(File.Exists(pathOfMzml));
 
             string[] myargs = new string[]
             {
-                "--rep " + pathOfIdentificationFile,
-                "--idt " + pathOfIdentificationFile,
-                "--ppm 5"
+                "--rep",
+                myDirectory,
+                "--idt",
+                pathOfIdentificationFile,
+                "--ppm",
+                "5"
             };
 
             FlashLFQExecutable.FlashLFQExecutable.Main(myargs);
