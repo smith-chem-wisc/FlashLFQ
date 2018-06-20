@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using FlashLFQ;
 
-namespace FlashLFQExecutable
+namespace CMD
 {
     public class OutputWriter
     {

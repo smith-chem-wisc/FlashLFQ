@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using FlashLFQ;
 
-namespace FlashLFQExecutable
+namespace CMD
 {
     enum PsmFileType { MetaMorpheus, Morpheus, MaxQuant, PeptideShaker, TDPortal, Generic, Unknown }
 
