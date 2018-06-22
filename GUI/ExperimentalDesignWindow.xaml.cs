@@ -113,7 +113,7 @@ namespace GUI
                 }
                 else
                 {
-                    ExperimentalDesignForDataGrid file = spectraFilesQuantSets.Where(p => p.FileName == split[typeToIndex["FileName"]]).FirstOrDefault();
+                    ExperimentalDesignForDataGrid file = spectraFilesQuantSets.Where(p => Path.GetFileNameWithoutExtension(p.FileName) == split[typeToIndex["FileName"]]).FirstOrDefault();
 
                     if (file == null)
                     {
