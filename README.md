@@ -42,10 +42,11 @@ Preferably, when specifying a filepath, use the absolute file path inside of quo
 
 *FlashLFQExecutable --idt "C:\MyFolder\msms.txt" --rep "C:\MyFolder" --ppm 5 --chg false*
 
-**Graphical User Interface (GUI)**
+**Graphical User Interface (GUI):**
+
 The GUI can be used by opening GUI.exe. The identification files and spectra files can be added by drag-and-drop or by clicking the "Add" button in the respective area. Settings can be changed by going to Settings -> Open FlashLFQ Settings. The Experimental Design (required for normalization) is specified by clicking the "Experimental Design" button under the mass spectra files area.
 
-**Tab-Delimited Identification Input Text File**
+**Tab-Delimited Identification Input Text File:**
 
 The first line of the text file should contain column headers identifying what each column is. Note that MetaMorpheus (.psmtsv), Morpheus, Peptide Shaker (.tab), and MaxQuant (msms.txt) tab-delimited column headers are supported natively and such files can be read without editing. For search software that lists decoys and PSMs above 1% FDR, you may want to remove these prior to FlashLFQ analysis. FlashLFQ will probably crash if ambiguous PSMs are passed into it (e.g., a PSM with more than 2 peptides listed in one line).
 
