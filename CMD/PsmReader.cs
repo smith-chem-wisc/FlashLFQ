@@ -23,6 +23,7 @@ namespace CMD
 
         public static List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles)
         {
+            Dictionary<string, ProteinGroup> allProteinGroups = new Dictionary<string, ProteinGroup>();
             modSequenceToMonoMass = new Dictionary<string, double>();
             List<Identification> ids = new List<Identification>();
             PsmFileType fileType = PsmFileType.Unknown;
@@ -124,26 +125,26 @@ namespace CMD
                             chargeState = (int)double.Parse(param[chargeStCol]);
 
                         // protein groups
-                        List<string> proteinGroups = new List<string>();
+                        List<string> proteinGroupStrings = new List<string>();
                         if (fileType == PsmFileType.MetaMorpheus)
                         {
                             // MetaMorpheus - use all proteins listed
                             var g = param[protNameCol].Split(delim, StringSplitOptions.RemoveEmptyEntries);
                             if (g.Any())
                                 foreach (var pg in g)
-                                    proteinGroups.Add(pg.Trim());
+                                    proteinGroupStrings.Add(pg.Trim());
                         }
                         else if (fileType == PsmFileType.Morpheus)
                         {
                             // Morpheus - only one protein listed, use it
-                            proteinGroups.Add(param[protNameCol].Trim());
+                            proteinGroupStrings.Add(param[protNameCol].Trim());
                         }
                         else if (fileType == PsmFileType.MaxQuant)
                         {
                             // MaxQuant - use the first protein listed
                             var g = param[protNameCol].Split(delim, StringSplitOptions.RemoveEmptyEntries);
                             if (g.Any())
-                                proteinGroups.Add(g.First().Trim());
+                                proteinGroupStrings.Add(g.First().Trim());
                         }
                         else if (fileType == PsmFileType.PeptideShaker)
                         {
@@ -151,16 +152,31 @@ namespace CMD
                             var g = param[protNameCol].Split(delim, StringSplitOptions.RemoveEmptyEntries);
                             if (g.Any())
                                 foreach (var pg in g)
-                                    proteinGroups.Add(pg.Trim());
+                                    proteinGroupStrings.Add(pg.Trim());
                         }
                         else if (fileType == PsmFileType.TDPortal)
                         {
                             // TDPortal - use base sequence as protein group
-                            proteinGroups.Add(BaseSequence);
+                            proteinGroupStrings.Add(BaseSequence);
                         }
                         else
                         {
-                            proteinGroups.Add(param[protNameCol]);
+                            proteinGroupStrings.Add(param[protNameCol]);
+                        }
+
+                        List<ProteinGroup> proteinGroups = new List<ProteinGroup>();
+                        foreach(var proteinGroupName in proteinGroupStrings)
+                        {
+                            if(allProteinGroups.TryGetValue(proteinGroupName, out ProteinGroup pg))
+                            {
+                                proteinGroups.Add(pg);
+                            }
+                            else
+                            {
+                                ProteinGroup newPg = new ProteinGroup(proteinGroupName, "", "");
+                                allProteinGroups.Add(proteinGroupName, newPg);
+                                proteinGroups.Add(newPg);
+                            }
                         }
 
                         // construct id
@@ -173,7 +189,7 @@ namespace CMD
                             continue;
                         }
 
-                        var ident = new Identification(rawFileInfoToUse, BaseSequence, ModSequence, monoisotopicMass, ms2RetentionTime, chargeState, new List<ProteinGroup>());
+                        var ident = new Identification(rawFileInfoToUse, BaseSequence, ModSequence, monoisotopicMass, ms2RetentionTime, chargeState, proteinGroups);
                         ids.Add(ident);
                     }
                     else
