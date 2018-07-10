@@ -43,7 +43,7 @@ Preferably, when specifying a filepath, use the absolute file path inside of quo
 *FlashLFQExecutable --idt "C:\MyFolder\msms.txt" --rep "C:\MyFolder" --ppm 5 --chg false*
 
 **Graphical User Interface (GUI)**
-The identification file and spectra files can be added by drag-and-drop or by clicking the "Add" button in the respective area. Settings can be changed by going to Settings -> Open FlashLFQ Settings. The Experimental Design (required for normalization) is specified by clicking the "Experimental Design" button under the mass spectra files area.
+The GUI can be used by opening GUI.exe. The identification files and spectra files can be added by drag-and-drop or by clicking the "Add" button in the respective area. Settings can be changed by going to Settings -> Open FlashLFQ Settings. The Experimental Design (required for normalization) is specified by clicking the "Experimental Design" button under the mass spectra files area.
 
 **Tab-Delimited Identification Input Text File**
 
