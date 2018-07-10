@@ -250,8 +250,6 @@ namespace GUI
                 outputFolderPath = outputFolder;
 
                 worker.RunWorkerAsync();
-
-                AddNotification("All done");
             }
         }
 
