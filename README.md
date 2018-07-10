@@ -12,9 +12,9 @@ To download the latest standalone version of FlashLFQ, go [here](https://github.
 Alternatively, FlashLFQ is bundled into MetaMorpheus, which can be downloaded [here](https://github.com/smith-chem-wisc/MetaMorpheus). MetaMorpheus is a full-featured GUI proteomics software suite that features mass-calibration, PTM-discovery, search algorithms, and FlashLFQ built in.
 
 # Usage
-FlashLFQ is currently a command-line program, though it is also built into the MetaMorpheus GUI (see [MetaMorpheus](https://github.com/smith-chem-wisc/MetaMorpheus)).
+FlashLFQ can be used as a command-line program or in a graphical user interface (GUI). It is also built into the MetaMorpheus GUI (see [MetaMorpheus](https://github.com/smith-chem-wisc/MetaMorpheus)).
 
-To use the FlashLFQ standalone version, run the "FlashLFQExecutable.exe" program with command-line arguments. At minimum, the --idt (the identification file) and --rep (the raw file repository) must be specified.
+To use the FlashLFQ standalone command-line version, run the "CMD.exe" program with command-line arguments. At minimum, the --idt (the identification file) and --rep (the spectra file repository) must be specified.
 
 Preferably, when specifying a filepath, use the absolute file path inside of quotes. Examples are listed below.
 
@@ -42,7 +42,10 @@ Preferably, when specifying a filepath, use the absolute file path inside of quo
 
 *FlashLFQExecutable --idt "C:\MyFolder\msms.txt" --rep "C:\MyFolder" --ppm 5 --chg false*
 
-**Tab-Delimited Identification Text File**
+**Graphical User Interface (GUI)**
+The identification file and spectra files can be added by drag-and-drop or by clicking the "Add" button in the respective area. Settings can be changed by going to Settings -> Open FlashLFQ Settings. The Experimental Design (required for normalization) is specified by clicking the "Experimental Design" button under the mass spectra files area.
+
+**Tab-Delimited Identification Input Text File**
 
 The first line of the text file should contain column headers identifying what each column is. Note that MetaMorpheus (.psmtsv), Morpheus, Peptide Shaker (.tab), and MaxQuant (msms.txt) tab-delimited column headers are supported natively and such files can be read without editing. For search software that lists decoys and PSMs above 1% FDR, you may want to remove these prior to FlashLFQ analysis. FlashLFQ will probably crash if ambiguous PSMs are passed into it (e.g., a PSM with more than 2 peptides listed in one line).
 
@@ -77,6 +80,5 @@ FlashLFQ outputs several text files, described here. The .tsv files are convenie
     To do: 
 
     - Improved retention time calibration/matching between runs (currently in an early state)
-    - Intensity normalization (especially between technical replicates, biological replicates, and fractions)
     - Improved protein quantification
     
