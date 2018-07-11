@@ -65,6 +65,10 @@ namespace CMD
                         else if (fileType == PsmFileType.Morpheus && double.Parse(param[qValueCol]) > 1.00)
                             break;
 
+                        // skip decoys
+                        if ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus) && param[decoyCol].Contains("D"))
+                            continue;
+
                         // spectrum file name
                         string fileName = param[fileNameCol];
 
