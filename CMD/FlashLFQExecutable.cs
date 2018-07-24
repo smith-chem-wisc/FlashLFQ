@@ -31,79 +31,125 @@ namespace CMD
                 "--mrt [double|maximum MBR window in minutes]\n" +
                 "--chg [bool|use only precursor charge state]\n" +
                 "--rmm [bool|require observed monoisotopic mass peak]\n" +
-                "--nis [int|number of isotopes required to be observed]\n"
+                "--nis [int|number of isotopes required to be observed]\n" +
+                "--nor [bool|normalize intensity results]\n" +
+                "--exp [string|experimental design file path]\n" +
+                "--pro [bool|advanced protein quantification]\n"
             ));
 
-            p.Setup(arg => arg.psmInputPath) // PSMs file
+            p.Setup(arg => arg.PsmInputPath) // PSMs file
              .As("idt").
              Required();
 
-            p.Setup(arg => arg.rawFilesPath) // spectrum files
+            p.Setup(arg => arg.RawFilesPath) // spectrum files
              .As("rep").
              Required();
 
-            p.Setup(arg => arg.outputPath) // output path
+            p.Setup(arg => arg.OutputPath) // output path
              .As("out");
 
-            p.Setup(arg => arg.ppmTolerance) // ppm tolerance
+            p.Setup(arg => arg.PpmTolerance) // ppm tolerance
              .As("ppm");
 
-            p.Setup(arg => arg.isotopePpmTolerance) // isotope ppm tolerance
+            p.Setup(arg => arg.IsotopePpmTolerance) // isotope ppm tolerance
              .As("iso");
 
-            p.Setup(arg => arg.silent) // do not display output messages
+            p.Setup(arg => arg.Silent) // do not display output messages
              .As("sil");
 
-            p.Setup(arg => arg.integrate) // integrate
+            p.Setup(arg => arg.Integrate) // integrate
              .As("int");
 
-            p.Setup(arg => arg.mbr) // match between runs
+            p.Setup(arg => arg.MatchBetweenRuns) // match between runs
              .As("mbr");
 
-            p.Setup(arg => arg.mbrRtWindow) // maximum match-between-runs window in minutes
+            p.Setup(arg => arg.MbrRtWindow) // maximum match-between-runs window in minutes
              .As("mrt");
 
-            p.Setup(arg => arg.idSpecificChargeState) // only use PSM-identified charge states
+            p.Setup(arg => arg.IdSpecificChargeState) // only use PSM-identified charge states
              .As("chg");
 
-            p.Setup(arg => arg.requireMonoisotopicMass) // require observation of monoisotopic peak
+            p.Setup(arg => arg.RequireMonoisotopicMass) // require observation of monoisotopic peak
              .As("rmm");
 
-            p.Setup(arg => arg.numIsotopesRequired) // num of isotopes required
+            p.Setup(arg => arg.NumIsotopesRequired) // num of isotopes required
              .As("nis");
 
+            p.Setup(arg => arg.Normalize) // normalize
+             .As("nor");
+
+            p.Setup(arg => arg.AdvancedProteinQuant) // advanced protein quant
+             .As("pro");
+
             // args are OK - run FlashLFQ
-            if (p.Parse(args).HasErrors == false && p.Object.psmInputPath != null)
+            if (p.Parse(args).HasErrors == false && p.Object.PsmInputPath != null)
             {
-                if (!File.Exists(p.Object.psmInputPath))
+                if (!File.Exists(p.Object.PsmInputPath))
                 {
-                    if (!p.Object.silent)
-                        Console.WriteLine("Could not locate identification file " + p.Object.psmInputPath);
+                    if (!p.Object.Silent)
+                        Console.WriteLine("Could not locate identification file " + p.Object.PsmInputPath);
                     return;
                 }
 
-                if (!Directory.Exists(p.Object.rawFilesPath))
+                if (!Directory.Exists(p.Object.RawFilesPath))
                 {
-                    if (!p.Object.silent)
-                        Console.WriteLine("Could not locate folder " + p.Object.rawFilesPath);
+                    if (!p.Object.Silent)
+                        Console.WriteLine("Could not locate folder " + p.Object.RawFilesPath);
                     return;
                 }
 
-                // set up raw file info
-                List<SpectraFileInfo> rawFileInfo = new List<SpectraFileInfo>();
-                var files = Directory.GetFiles(p.Object.rawFilesPath).Where(f => acceptedSpectrumFileFormats.Contains(Path.GetExtension(f).ToUpperInvariant()));
-                foreach (var file in files)
+                string assumedPathToExpDesign = Path.Combine(p.Object.RawFilesPath, "ExperimentalDesign.tsv");
+                if (p.Object.Normalize && !File.Exists(assumedPathToExpDesign))
                 {
-                    rawFileInfo.Add(new SpectraFileInfo(file, "", 0, 0, 0));
+                    if (!p.Object.Silent)
+                        Console.WriteLine("Could not find experimental design file (required for normalization): " + assumedPathToExpDesign);
+                    return;
+                }
+
+                // set up spectra file info
+                // get experimental design info for normalization
+                List<SpectraFileInfo> spectraFileInfos = new List<SpectraFileInfo>();
+                IEnumerable<string> files = Directory.GetFiles(p.Object.RawFilesPath).Where(f => acceptedSpectrumFileFormats.Contains(Path.GetExtension(f).ToUpperInvariant()));
+                if (p.Object.Normalize)
+                {
+                    var experimentalDesign = File.ReadAllLines(assumedPathToExpDesign)
+                        .ToDictionary(v => v.Split('\t')[0], v => v);
+
+                    foreach (var file in files)
+                    {
+                        string filename = Path.GetFileNameWithoutExtension(file);
+
+                        var expDesignForThisFile = experimentalDesign[filename];
+                        var split = expDesignForThisFile.Split('\t');
+
+                        string condition = split[1];
+                        int biorep = int.Parse(split[2]);
+                        int fraction = int.Parse(split[3]);
+                        int techrep = int.Parse(split[4]);
+
+                        // experimental design info passed in here for each spectra file
+                        spectraFileInfos.Add(new SpectraFileInfo(fullFilePathWithExtension: file,
+                            condition: condition,
+                            biorep: biorep - 1,
+                            fraction: fraction - 1,
+                            techrep: techrep - 1));
+                    }
+                }
+                else
+                {
+                    foreach (var file in files)
+                    {
+                        spectraFileInfos.Add(new SpectraFileInfo(fullFilePathWithExtension: file, condition: "", biorep: 0, fraction: 0, techrep: 0));
+                    }
                 }
 
                 // set up IDs
                 var ids = new List<Identification>();
                 try
                 {
-                    ids = PsmReader.ReadPsms(p.Object.psmInputPath, p.Object.silent, rawFileInfo);
+                    ids = PsmReader.ReadPsms(p.Object.PsmInputPath, p.Object.Silent, spectraFileInfos);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     Console.WriteLine("Problem reading PSMs: " + e.Message);
                     return;
@@ -111,41 +157,42 @@ namespace CMD
 
                 if (ids.Any())
                 {
-                    if (!p.Object.silent)
+                    if (!p.Object.Silent)
                     {
                         Console.WriteLine("Setup is OK; read in " + ids.Count + " identifications; starting FlashLFQ engine");
                     }
 
                     // make engine with desired settings
                     FlashLFQEngine engine = new FlashLFQEngine(ids,
-                        normalize: false,
-                        ppmTolerance: p.Object.ppmTolerance,
-                        isotopeTolerancePpm: p.Object.isotopePpmTolerance,
-                        matchBetweenRuns: p.Object.mbr,
-                        matchBetweenRunsPpmTolerance: p.Object.mbrppmTolerance,
-                        integrate: p.Object.integrate,
-                        numIsotopesRequired: p.Object.numIsotopesRequired,
-                        idSpecificChargeState: p.Object.idSpecificChargeState,
-                        requireMonoisotopicMass: p.Object.requireMonoisotopicMass,
-                        silent: p.Object.silent,
+                        normalize: p.Object.Normalize,
+                        ppmTolerance: p.Object.PpmTolerance,
+                        isotopeTolerancePpm: p.Object.IsotopePpmTolerance,
+                        matchBetweenRuns: p.Object.MatchBetweenRuns,
+                        matchBetweenRunsPpmTolerance: p.Object.MbrPpmTolerance,
+                        integrate: p.Object.Integrate,
+                        numIsotopesRequired: p.Object.NumIsotopesRequired,
+                        idSpecificChargeState: p.Object.IdSpecificChargeState,
+                        requireMonoisotopicMass: p.Object.RequireMonoisotopicMass,
+                        silent: p.Object.Silent,
                         optionalPeriodicTablePath: null,
-                        maxMbrWindow: p.Object.mbrRtWindow);
+                        maxMbrWindow: p.Object.MbrRtWindow,
+                        advancedProteinQuant: p.Object.AdvancedProteinQuant);
 
                     // run
                     var results = engine.Run();
 
                     // output
-                    OutputWriter.WriteOutput(p.Object.psmInputPath, results, p.Object.outputPath);
+                    OutputWriter.WriteOutput(p.Object.PsmInputPath, results, p.Object.OutputPath);
                 }
                 else
                 {
-                    if (!p.Object.silent)
+                    if (!p.Object.Silent)
                     {
                         Console.WriteLine("No peptide IDs for the specified spectra files were found! Check to make sure the spectra file names match between the ID file and the spectra files");
                     }
                 }
             }
-            else if (p.Parse(args).HasErrors == false && p.Object.psmInputPath == null)
+            else if (p.Parse(args).HasErrors == false && p.Object.PsmInputPath == null)
             {
                 // no errors - just requesting help?
             }
@@ -157,24 +204,22 @@ namespace CMD
 
         internal class ApplicationArguments
         {
-            #region Public Properties
-
             // settings
-            public string psmInputPath { get; private set; }
-            public string outputPath { get; private set; } = null;
-            public string rawFilesPath { get; private set; }
-            public double ppmTolerance { get; private set; } = 10.0;
-            public double isotopePpmTolerance { get; private set; } = 5.0;
-            public bool mbr { get; private set; } = false;
-            public double mbrppmTolerance { get; private set; } = 5.0;
-            public bool integrate { get; private set; } = false;
-            public int numIsotopesRequired { get; private set; } = 2;
-            public bool silent { get; private set; } = false;
-            public bool idSpecificChargeState { get; private set; } = false;
-            public bool requireMonoisotopicMass { get; private set; } = true;
-            public double mbrRtWindow { get; private set; } = 1.5;
-
-            #endregion Public Properties
+            public string PsmInputPath { get; private set; }
+            public string OutputPath { get; private set; }
+            public string RawFilesPath { get; private set; }
+            public double PpmTolerance { get; private set; }
+            public double IsotopePpmTolerance { get; private set; }
+            public bool MatchBetweenRuns { get; private set; }
+            public double MbrPpmTolerance { get; private set; }
+            public bool Integrate { get; private set; }
+            public int NumIsotopesRequired { get; private set; }
+            public bool Silent { get; private set; }
+            public bool IdSpecificChargeState { get; private set; }
+            public bool RequireMonoisotopicMass { get; private set; }
+            public double MbrRtWindow { get; private set; }
+            public bool Normalize { get; private set; }
+            public bool AdvancedProteinQuant { get; private set; }
         }
     }
 }

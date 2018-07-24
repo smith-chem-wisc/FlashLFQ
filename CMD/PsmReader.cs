@@ -185,7 +185,7 @@ namespace CMD
 
                         // construct id
                         var fileNameNoExt = Path.GetFileNameWithoutExtension(fileName);
-                        var rawFileInfoToUse = rawfiles.Where(p => p.filenameWithoutExtension.Equals(fileNameNoExt)).FirstOrDefault();
+                        var rawFileInfoToUse = rawfiles.Where(p => p.FilenameWithoutExtension.Equals(fileNameNoExt)).FirstOrDefault();
                         if (rawFileInfoToUse == null)
                         {
                             // skip PSMs for files with no spectrum data input

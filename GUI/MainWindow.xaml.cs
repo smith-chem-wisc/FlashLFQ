@@ -304,9 +304,20 @@ namespace GUI
             // run FlashLFQ engine
             try
             {
-                flashLfqEngine = new FlashLFQEngine(ids, flashLfqEngine.normalize, flashLfqEngine.ppmTolerance, flashLfqEngine.isotopePpmTolerance, flashLfqEngine.mbr,
-                    flashLfqEngine.mbrppmTolerance, flashLfqEngine.integrate, flashLfqEngine.numIsotopesRequired, flashLfqEngine.idSpecificChargeState,
-                    flashLfqEngine.requireMonoisotopicMass, false, null, flashLfqEngine.mbrRtWindow);
+                flashLfqEngine = new FlashLFQEngine(
+                    allIdentifications: ids, 
+                    normalize: flashLfqEngine.Normalize, 
+                    ppmTolerance: flashLfqEngine.PpmTolerance, 
+                    isotopeTolerancePpm: flashLfqEngine.IsotopePpmTolerance, 
+                    matchBetweenRuns: flashLfqEngine.MatchBetweenRuns,
+                    matchBetweenRunsPpmTolerance: flashLfqEngine.MbrPpmTolerance, 
+                    integrate: flashLfqEngine.Integrate, 
+                    numIsotopesRequired: flashLfqEngine.NumIsotopesRequired, 
+                    idSpecificChargeState: flashLfqEngine.IdSpecificChargeState,
+                    requireMonoisotopicMass: flashLfqEngine.RequireMonoisotopicMass, 
+                    silent: false, 
+                    optionalPeriodicTablePath: null, 
+                    maxMbrWindow: flashLfqEngine.MbrRtWindow);
 
                 results = flashLfqEngine.Run();
             }
@@ -318,7 +329,7 @@ namespace GUI
             // write output
             try
             {
-                OutputWriter.WriteOutput(Directory.GetParent(spectraFileInfo.First().fullFilePathWithExtension).FullName, results, outputFolderPath);
+                OutputWriter.WriteOutput(Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName, results, outputFolderPath);
             }
             catch (Exception ex)
             {
@@ -339,7 +350,7 @@ namespace GUI
 
         private void SetupSpectraFileInfo()
         {
-            if (flashLfqEngine.normalize)
+            if (flashLfqEngine.Normalize)
             {
                 string assumedExperimentalDesignPath = Directory.GetParent(spectraFilesForDataGrid.First().FilePath).FullName;
                 assumedExperimentalDesignPath = Path.Combine(assumedExperimentalDesignPath, "ExperimentalDesign.tsv");
