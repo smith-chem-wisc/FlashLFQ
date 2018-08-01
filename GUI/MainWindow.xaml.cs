@@ -37,7 +37,7 @@ namespace GUI
             worker = new BackgroundWorker();
             worker.DoWork += new DoWorkEventHandler(RunProgram);
 
-            flashLfqEngine = new FlashLFQEngine(new List<Identification>(), normalize: false);
+            flashLfqEngine = new FlashLFQEngine(new List<Identification>());
             spectraFileInfo = new List<SpectraFileInfo>();
 
             identFilesDataGrid.DataContext = identFilesForDataGrid;
@@ -167,7 +167,7 @@ namespace GUI
 
                 case ".mzml":
                     SpectraFileForDataGrid spectraFile = new SpectraFileForDataGrid(filePath);
-                    if (!spectraFilesForDataGrid.Contains(spectraFile))
+                    if (!spectraFilesForDataGrid.Select(f => f.FilePath).Contains(spectraFile.FilePath))
                     {
                         spectraFilesForDataGrid.Add(spectraFile);
                     }
@@ -182,7 +182,7 @@ namespace GUI
                 case ".tsv":
                 case ".psmtsv":
                     IdentificationFileForDataGrid identFile = new IdentificationFileForDataGrid(filePath);
-                    if (!identFilesForDataGrid.Contains(identFile) && !identFile.FileName.Equals("ExperimentalDesign.tsv"))
+                    if (!identFilesForDataGrid.Select(f => f.FilePath).Contains(identFile.FilePath) && !identFile.FileName.Equals("ExperimentalDesign.tsv"))
                     {
                         identFilesForDataGrid.Add(identFile);
                     }
@@ -305,19 +305,20 @@ namespace GUI
             try
             {
                 flashLfqEngine = new FlashLFQEngine(
-                    allIdentifications: ids, 
-                    normalize: flashLfqEngine.Normalize, 
-                    ppmTolerance: flashLfqEngine.PpmTolerance, 
-                    isotopeTolerancePpm: flashLfqEngine.IsotopePpmTolerance, 
+                    allIdentifications: ids,
+                    normalize: flashLfqEngine.Normalize,
+                    ppmTolerance: flashLfqEngine.PpmTolerance,
+                    isotopeTolerancePpm: flashLfqEngine.IsotopePpmTolerance,
                     matchBetweenRuns: flashLfqEngine.MatchBetweenRuns,
-                    matchBetweenRunsPpmTolerance: flashLfqEngine.MbrPpmTolerance, 
-                    integrate: flashLfqEngine.Integrate, 
-                    numIsotopesRequired: flashLfqEngine.NumIsotopesRequired, 
+                    matchBetweenRunsPpmTolerance: flashLfqEngine.MbrPpmTolerance,
+                    integrate: flashLfqEngine.Integrate,
+                    numIsotopesRequired: flashLfqEngine.NumIsotopesRequired,
                     idSpecificChargeState: flashLfqEngine.IdSpecificChargeState,
-                    requireMonoisotopicMass: flashLfqEngine.RequireMonoisotopicMass, 
-                    silent: false, 
-                    optionalPeriodicTablePath: null, 
-                    maxMbrWindow: flashLfqEngine.MbrRtWindow);
+                    requireMonoisotopicMass: flashLfqEngine.RequireMonoisotopicMass,
+                    silent: false,
+                    optionalPeriodicTablePath: null,
+                    maxMbrWindow: flashLfqEngine.MbrRtWindow,
+                    advancedProteinQuant: flashLfqEngine.AdvancedProteinQuant);
 
                 results = flashLfqEngine.Run();
             }
@@ -350,43 +351,45 @@ namespace GUI
 
         private void SetupSpectraFileInfo()
         {
-            if (flashLfqEngine.Normalize)
+            string assumedExperimentalDesignPath = Directory.GetParent(spectraFilesForDataGrid.First().FilePath).FullName;
+            assumedExperimentalDesignPath = Path.Combine(assumedExperimentalDesignPath, "ExperimentalDesign.tsv");
+
+            if (File.Exists(assumedExperimentalDesignPath))
             {
-                string assumedExperimentalDesignPath = Directory.GetParent(spectraFilesForDataGrid.First().FilePath).FullName;
-                assumedExperimentalDesignPath = Path.Combine(assumedExperimentalDesignPath, "ExperimentalDesign.tsv");
+                var experimentalDesign = File.ReadAllLines(assumedExperimentalDesignPath)
+                    .ToDictionary(p => p.Split('\t')[0], p => p);
 
-                if (File.Exists(assumedExperimentalDesignPath))
+                foreach (var file in spectraFilesForDataGrid)
                 {
-                    var experimentalDesign = File.ReadAllLines(assumedExperimentalDesignPath)
-                        .ToDictionary(p => p.Split('\t')[0], p => p);
+                    string filename = Path.GetFileNameWithoutExtension(file.FileName);
 
-                    foreach (var file in spectraFilesForDataGrid)
+                    if (!experimentalDesign.ContainsKey(filename))
                     {
-                        string filename = Path.GetFileNameWithoutExtension(file.FileName);
-
-                        var expDesignForThisFile = experimentalDesign[filename];
-                        var split = expDesignForThisFile.Split('\t');
-
-                        string condition = split[1];
-                        int biorep = int.Parse(split[2]);
-                        int fraction = int.Parse(split[3]);
-                        int techrep = int.Parse(split[4]);
-
-                        // experimental design info passed in here for each spectra file
-                        spectraFileInfo.Add(new SpectraFileInfo(fullFilePathWithExtension: file.FilePath,
-                            condition: condition,
-                            biorep: biorep - 1,
-                            fraction: fraction - 1,
-                            techrep: techrep - 1));
+                        throw new Exception(filename + " is not defined in the Experimental Design!");
                     }
-                }
-                else
-                {
-                    throw new Exception("Could not find experimental design file!\nYou need to define this if you want to normalize");
+                    var expDesignForThisFile = experimentalDesign[filename];
+                    var split = expDesignForThisFile.Split('\t');
+
+                    string condition = split[1];
+                    int biorep = int.Parse(split[2]);
+                    int fraction = int.Parse(split[3]);
+                    int techrep = int.Parse(split[4]);
+
+                    // experimental design info passed in here for each spectra file
+                    spectraFileInfo.Add(new SpectraFileInfo(fullFilePathWithExtension: file.FilePath,
+                        condition: condition,
+                        biorep: biorep - 1,
+                        fraction: fraction - 1,
+                        techrep: techrep - 1));
                 }
             }
             else
             {
+                if (flashLfqEngine.Normalize)
+                {
+                    throw new Exception("Could not find experimental design file!\nYou need to define this if you want to normalize");
+                }
+
                 foreach (var file in spectraFilesForDataGrid)
                 {
                     // experimental design info passed in here for each spectra file

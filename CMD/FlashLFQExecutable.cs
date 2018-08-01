@@ -33,7 +33,6 @@ namespace CMD
                 "--rmm [bool|require observed monoisotopic mass peak]\n" +
                 "--nis [int|number of isotopes required to be observed]\n" +
                 "--nor [bool|normalize intensity results]\n" +
-                "--exp [string|experimental design file path]\n" +
                 "--pro [bool|advanced protein quantification]\n"
             ));
 
