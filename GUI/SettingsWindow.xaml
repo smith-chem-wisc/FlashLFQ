@@ -21,6 +21,10 @@
             <CheckBox Name="mbr" ToolTip="" VerticalAlignment="Center" />
             <Label Content="Match-between-runs"></Label>
         </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+            <CheckBox Name="advancedProteinQuant" ToolTip="" VerticalAlignment="Center" />
+            <Label Content="Advanced protein quantification"></Label>
+        </StackPanel>
         
         <!--Advanced Settings-->
         <GroupBox Header="Advanced Settings" DockPanel.Dock="Top" Margin="0,30,0,0">

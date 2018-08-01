@@ -29,22 +29,28 @@ namespace GUI
 
         public void PopulateSettings(FlashLFQEngine engine)
         {
-            normalize.IsChecked = engine.normalize;
-            ppmTolerance.Text = engine.ppmTolerance.ToString();
-            mbr.IsChecked = engine.mbr;
-            integrate.IsChecked = engine.integrate;
-            precursorChargeOnly.IsChecked = engine.idSpecificChargeState;
-            requireMonoisotopicPeak.IsChecked = engine.requireMonoisotopicMass;
-            isotopeTolerance.Text = engine.isotopePpmTolerance.ToString();
-            numIsotopePeak.Text = engine.numIsotopesRequired.ToString();
-            maxMbrWindow.Text = engine.mbrRtWindow.ToString();
+            normalize.IsChecked = engine.Normalize;
+            ppmTolerance.Text = engine.PpmTolerance.ToString();
+            mbr.IsChecked = engine.MatchBetweenRuns;
+            advancedProteinQuant.IsChecked = engine.AdvancedProteinQuant;
+
+            integrate.IsChecked = engine.Integrate;
+            precursorChargeOnly.IsChecked = engine.IdSpecificChargeState;
+            requireMonoisotopicPeak.IsChecked = engine.RequireMonoisotopicMass;
+            isotopeTolerance.Text = engine.IsotopePpmTolerance.ToString();
+            numIsotopePeak.Text = engine.NumIsotopesRequired.ToString();
+            maxMbrWindow.Text = engine.MbrRtWindow.ToString();
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-            CheckForValidEntries();
+            if(!CheckForValidEntries())
+            {
+                return;
+            }
 
             tempFlashLfqEngine = new FlashLFQEngine(new List<Identification>(), 
+                advancedProteinQuant: advancedProteinQuant.IsChecked.Value,
                 normalize: normalize.IsChecked.Value, 
                 ppmTolerance: double.Parse(ppmTolerance.Text),
                 matchBetweenRuns: mbr.IsChecked.Value, 
@@ -63,31 +69,33 @@ namespace GUI
             DialogResult = false;
         }
 
-        private void CheckForValidEntries()
+        private bool CheckForValidEntries()
         {
             if(!double.TryParse(ppmTolerance.Text, out double ppmTol) || ppmTol < 0)
             {
                 MessageBox.Show("PPM tolerance must be >= 0", "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
-                return;
+                return false;
             }
 
             if (!double.TryParse(isotopeTolerance.Text, out double isotopePpmTol) || isotopePpmTol < 0)
             {
                 MessageBox.Show("Isotope PPM tolerance must be >= 0", "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
-                return;
+                return false;
             }
 
             if (!double.TryParse(maxMbrWindow.Text, out double maxMbr) || maxMbr < 0)
             {
                 MessageBox.Show("Max MBR window must be >= 0", "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
-                return;
+                return false;
             }
 
             if (!int.TryParse(numIsotopePeak.Text, out int numIsotopesRequired) || numIsotopesRequired < 1)
             {
                 MessageBox.Show("Num isotope peaks must be >= 1", "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
-                return;
+                return false;
             }
+
+            return true;
         }
     }
 }

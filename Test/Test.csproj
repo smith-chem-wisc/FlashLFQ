@@ -63,6 +63,9 @@
     <None Include="SampleFiles\aggregatePSMs_5ppmAroundZero.psmtsv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="SampleFiles\ExperimentalDesign.tsv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="SampleFiles\sliced-mzml.mzML">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
