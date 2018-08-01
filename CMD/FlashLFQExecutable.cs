@@ -86,14 +86,18 @@ namespace CMD
                 if (!File.Exists(p.Object.PsmInputPath))
                 {
                     if (!p.Object.Silent)
+                    {
                         Console.WriteLine("Could not locate identification file " + p.Object.PsmInputPath);
+                    }
                     return;
                 }
 
                 if (!Directory.Exists(p.Object.RawFilesPath))
                 {
                     if (!p.Object.Silent)
+                    {
                         Console.WriteLine("Could not locate folder " + p.Object.RawFilesPath);
+                    }
                     return;
                 }
 
@@ -101,14 +105,18 @@ namespace CMD
                 if (p.Object.Normalize && !File.Exists(assumedPathToExpDesign))
                 {
                     if (!p.Object.Silent)
+                    {
                         Console.WriteLine("Could not find experimental design file (required for normalization): " + assumedPathToExpDesign);
+                    }
                     return;
                 }
 
                 // set up spectra file info
                 // get experimental design info for normalization
                 List<SpectraFileInfo> spectraFileInfos = new List<SpectraFileInfo>();
-                IEnumerable<string> files = Directory.GetFiles(p.Object.RawFilesPath).Where(f => acceptedSpectrumFileFormats.Contains(Path.GetExtension(f).ToUpperInvariant()));
+                IEnumerable<string> files = Directory.GetFiles(p.Object.RawFilesPath)
+                    .Where(f => acceptedSpectrumFileFormats.Contains(Path.GetExtension(f).ToUpperInvariant()));
+
                 if (p.Object.Normalize)
                 {
                     var experimentalDesign = File.ReadAllLines(assumedPathToExpDesign)
@@ -138,7 +146,11 @@ namespace CMD
                 {
                     foreach (var file in files)
                     {
-                        spectraFileInfos.Add(new SpectraFileInfo(fullFilePathWithExtension: file, condition: "", biorep: 0, fraction: 0, techrep: 0));
+                        spectraFileInfos.Add(new SpectraFileInfo(fullFilePathWithExtension: file, 
+                            condition: "", 
+                            biorep: 0, 
+                            fraction: 0, 
+                            techrep: 0));
                     }
                 }
 
@@ -187,7 +199,8 @@ namespace CMD
                 {
                     if (!p.Object.Silent)
                     {
-                        Console.WriteLine("No peptide IDs for the specified spectra files were found! Check to make sure the spectra file names match between the ID file and the spectra files");
+                        Console.WriteLine("No peptide IDs for the specified spectra files were found! " +
+                            "Check to make sure the spectra file names match between the ID file and the spectra files");
                     }
                 }
             }

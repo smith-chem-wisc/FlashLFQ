@@ -365,7 +365,7 @@ namespace GUI
 
                     if (!experimentalDesign.ContainsKey(filename))
                     {
-                        throw new Exception(filename + " is not defined in the Experimental Design!");
+                        throw new KeyNotFoundException(filename + " is not defined in the Experimental Design!");
                     }
                     var expDesignForThisFile = experimentalDesign[filename];
                     var split = expDesignForThisFile.Split('\t');
