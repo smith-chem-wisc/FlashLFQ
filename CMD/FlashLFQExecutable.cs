@@ -174,7 +174,8 @@ namespace CMD
                     }
 
                     // make engine with desired settings
-                    FlashLFQEngine engine = new FlashLFQEngine(ids,
+                    FlashLFQEngine engine = new FlashLFQEngine(
+                        allIdentifications: ids,
                         normalize: p.Object.Normalize,
                         ppmTolerance: p.Object.PpmTolerance,
                         isotopeTolerancePpm: p.Object.IsotopePpmTolerance,
@@ -217,21 +218,21 @@ namespace CMD
         internal class ApplicationArguments
         {
             // settings
-            public string PsmInputPath { get; private set; }
-            public string OutputPath { get; private set; }
-            public string RawFilesPath { get; private set; }
-            public double PpmTolerance { get; private set; }
-            public double IsotopePpmTolerance { get; private set; }
-            public bool MatchBetweenRuns { get; private set; }
-            public double MbrPpmTolerance { get; private set; }
-            public bool Integrate { get; private set; }
-            public int NumIsotopesRequired { get; private set; }
-            public bool Silent { get; private set; }
-            public bool IdSpecificChargeState { get; private set; }
-            public bool RequireMonoisotopicMass { get; private set; }
-            public double MbrRtWindow { get; private set; }
-            public bool Normalize { get; private set; }
-            public bool AdvancedProteinQuant { get; private set; }
+            public string PsmInputPath { get; private set; } = null;
+            public string OutputPath { get; private set; } = null;
+            public string RawFilesPath { get; private set; } = null;
+            public double PpmTolerance { get; private set; } = 10.0;
+            public double IsotopePpmTolerance { get; private set; } = 5.0;
+            public bool MatchBetweenRuns { get; private set; } = false;
+            public double MbrPpmTolerance { get; private set; } = 5.0;
+            public bool Integrate { get; private set; } = false;
+            public int NumIsotopesRequired { get; private set; } = 2;
+            public bool Silent { get; private set; } = false;
+            public bool IdSpecificChargeState { get; private set; } = false;
+            public bool RequireMonoisotopicMass { get; private set; } = true;
+            public double MbrRtWindow { get; private set; } = 1.5;
+            public bool Normalize { get; private set; } = false;
+            public bool AdvancedProteinQuant { get; private set; } = false;
         }
     }
 }

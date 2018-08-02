@@ -4,17 +4,21 @@
 FlashLFQ is an ultrafast label-free quantification algorithm for mass-spectrometry proteomics. 
 
 # Requirements
-Input is a tab-separated value (TSV) text file of MS/MS identifications, in addition to one or more raw data files. Currently, .mzML and .raw files are supported. [Thermo MSFileReader](https://thermo.flexnetoperations.com/control/thmo/search?query=MSFileReader+3.0+SP2) is required to read Thermo .raw files. The version of MSFileReader that we recommend installing is v3.0 SP2. A 64-bit machine running Microsoft Windows is also required to run the standalone version of FlashLFQ.
+Input is a tab-separated value (TSV) text file of MS/MS identifications, in addition to one or more bottom-up mass spectra files. Currently, .mzML and .raw file formats are supported. [Thermo MSFileReader](https://thermo.flexnetoperations.com/control/thmo/search?query=MSFileReader+3.0+SP2) is required to read Thermo .raw files. The version of MSFileReader that we recommend installing is v3.0 SP2. A 64-bit machine running Microsoft Windows is also required to run the standalone version of FlashLFQ.
 
 # Download
-To download the latest standalone version of FlashLFQ, go [here](https://github.com/smith-chem-wisc/FlashLFQ/releases/latest). Click the FlashLFQ.zip file and extract the contents to a desired location on your computer. 
+To download the latest standalone version of FlashLFQ, go [here](https://github.com/smith-chem-wisc/FlashLFQ/releases/latest). Click the FlashLFQ.zip file and extract the contents to a desired location on your computer. Run either the GUI.exe for the graphical interface, or the CMD.exe for the command-line version.
 
 Alternatively, FlashLFQ is bundled into MetaMorpheus, which can be downloaded [here](https://github.com/smith-chem-wisc/MetaMorpheus). MetaMorpheus is a full-featured GUI proteomics software suite that features mass-calibration, PTM-discovery, search algorithms, and FlashLFQ built in.
 
 # Usage
 FlashLFQ can be used as a command-line program or in a graphical user interface (GUI). It is also built into the MetaMorpheus GUI (see [MetaMorpheus](https://github.com/smith-chem-wisc/MetaMorpheus)).
 
+To use the GUI version, simply drag and drop identification file(s) and spectra file(s), edit your settings in the menu in the top left, define your experimental design if you are normalizing, and then click "Run FlashLFQ". See **Graphical User Interface (GUI)** section.
+
 To use the FlashLFQ standalone command-line version, run the "CMD.exe" program with command-line arguments. At minimum, the --idt (the identification file) and --rep (the spectra file repository) must be specified.
+
+If you want to normalize results using the command-line, you must create an experimental design TSV file and place it in the directory with your spectra files.
 
 Preferably, when specifying a filepath, use the absolute file path inside of quotes. Examples are listed below.
 
@@ -38,6 +42,10 @@ Preferably, when specifying a filepath, use the absolute file path inside of quo
     --chg [boolean | use only precursor charge state; when set to false, FlashLFQ looks 
 	  for all charge states detected in the MS/MS identification file for each peptide] (default = false)
 
+	--nor [boolean | normalize intensity results; experimental design needs to be defined to do this] (default = false)
+
+	--pro [bool | advanced protein quantification; can take a long time if you're on a single-threaded machine] (default = false)
+
 **Command-Line Example:**
 
 *FlashLFQExecutable --idt "C:\MyFolder\msms.txt" --rep "C:\MyFolder" --ppm 5 --chg false*
@@ -52,13 +60,11 @@ The first line of the text file should contain column headers identifying what e
 
 The following headers are required in the list of MS/MS identifications:
 
-    File Name - File extensions should be tolerated, but no extension is tested more extensively 
-				(e.g. use MyFile and not MyFile.mzML)
+    File Name - With or without file extension (e.g. MyFile or MyFile.mzML)
     
-    Base Sequence - Should only contain amino acid sequences, or it will likely result in a crash
+    Base Sequence - Should only contain an amino acid sequence (e.g., PEPTIDE and not PEPT[Phosphorylation]IDE
     
-    Full Sequence - Modified sequence. Can contain any letters, but must be consistent between the same 
-					peptidoform to get accurate results
+    Full Sequence - Modified sequence. Can contain any characters (e.g., PEPT[Phosphorylation]IDE is fine), but must be consistent between the same peptidoform to get accurate results
     
     Peptide Monoisotopic Mass - Theoretical monoisotopic mass, including modification mass
     
@@ -66,20 +72,21 @@ The following headers are required in the list of MS/MS identifications:
     
     Precursor Charge - Charge of the ion selected for MS/MS resulting in the identification
     
-    Protein Accession - Protein accession(s) for the peptide; protein quantification is still preliminary
+    Protein Accession - Protein accession(s) for the peptide
 
 # Output
 FlashLFQ outputs several text files, described here. The .tsv files are convenient to view with Microsoft Excel.
 
 *QuantifiedPeaks.tsv* - Each chromatographic peak is shown here, even peaks that were not quantifiable (peak intensity = 0). Details about each peak, such as number of PSMs mapped, start/apex/end retention times, ppm error, etc are contained in this file. A peptide can have multiple peaks over the course of a run (e.g., oxidized peptidoforms elute at different times, etc). Ambiguous peaks are displayed with a | (pipe) delimiter to indicate more than one peptide mapped to that peak. 
 
-*QuantifiedBaseSequences.tsv* - Peptide intensities are summed here within a run (including differently-modified forms of the same amino acid sequence) and displayed in a convenient format for comparing across runs. The identification type (MS/MS or MBR) is also indicated. A peptide with more than 30% of its intensity coming from ambiguous peak(s) is considered not quantifiable and is given an intensity of -1.
+*QuantifiedBaseSequences.tsv* - Peptide intensities are summed here within a run (including differently-modified forms of the same amino acid sequence) and displayed in a convenient format for comparing across runs. The identification type (MS/MS or MBR) is also indicated. A peptide with more than 30% of its intensity coming from ambiguous peak(s) is considered not quantifiable and is given an intensity of 0.
 
 *QuantifiedModifiedSequences.tsv* - Similar to QuantifiedBaseSequences, but instead of being summed by Base Sequence, peptide intensities are summed by modified sequence; this makes it convenient to compare modified peptidoform intensities across runs.
+
+*QuantifiedProteins.tsv* - Lists protein accession and in the future will include gene and organism if the TSV contains it. The intensity is either a) the sum of the 3 most intense peptides or b) (Advanced protein quant) a weighted-average of the intensities of the peptides assigned to the protein. The weights are determined by how well the peptide co-varies with the other peptides assigned to that protein. See [Diffacto](http://www.mcponline.org/content/16/5/936.full).
 
 # Development Status
     To do: 
 
     - Improved retention time calibration/matching between runs (currently in an early state)
-    - Improved protein quantification
     
