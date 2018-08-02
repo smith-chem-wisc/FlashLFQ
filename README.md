@@ -45,7 +45,7 @@ Preferably, when specifying a filepath, use the absolute file path inside of quo
     --nor [boolean | normalize intensity results; experimental design needs to be defined to do this] 
 	  (default = false)
 
-    --pro [bool | advanced protein quantification; can take a long time if you're on a single-threaded machine] 
+    --pro [boolean | advanced protein quantification; can take a long time if you're on a single-threaded machine] 
 	  (default = false)
 
 **Command-Line Example:**
