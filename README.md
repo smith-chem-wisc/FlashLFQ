@@ -88,6 +88,7 @@ FlashLFQ outputs several text files, described here. The .tsv files are convenie
 *QuantifiedProteins.tsv* - Lists protein accession and in the future will include gene and organism if the TSV contains it. The intensity is either a) the sum of the 3 most intense peptides or b) (Advanced protein quant) a weighted-average of the intensities of the peptides assigned to the protein. The weights are determined by how well the peptide co-varies with the other peptides assigned to that protein. See [Diffacto](http://www.mcponline.org/content/16/5/936.full).
 
 # Example Experimental Design File
+Note: You do not need to download this if you're using the graphical version of FlashLFQ. You only need to download this and edit it manually if you're running the command-line version.
 https://github.com/smith-chem-wisc/MetaMorpheus/files/2048804/ExperimentalDesign.zip
 
 # Development Status
