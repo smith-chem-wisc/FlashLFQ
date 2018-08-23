@@ -21,6 +21,7 @@ To use the FlashLFQ standalone command-line version, run the "CMD.exe" program w
 If you want to normalize results using the command-line, you must create an experimental design TSV file and place it in the directory with your spectra files.
 
 Preferably, when specifying a filepath, use the absolute file path inside of quotes. Examples are listed below.
+NOTE: On Linux, absolute file paths do not currently work. See Issue [#71](https://github.com/smith-chem-wisc/FlashLFQ/issues/71).
 
 **Accepted command-line arguments:**
 
