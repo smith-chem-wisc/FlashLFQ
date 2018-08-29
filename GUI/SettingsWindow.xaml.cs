@@ -1,16 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using FlashLFQ;
 
 namespace GUI
@@ -20,7 +10,7 @@ namespace GUI
     /// </summary>
     public partial class SettingsWindow : Window
     {
-        internal FlashLFQEngine tempFlashLfqEngine { get; private set; }
+        internal FlashLFQEngine TempFlashLfqEngine { get; private set; }
 
         public SettingsWindow()
         {
@@ -30,16 +20,16 @@ namespace GUI
         public void PopulateSettings(FlashLFQEngine engine)
         {
             normalize.IsChecked = engine.Normalize;
-            ppmTolerance.Text = engine.PpmTolerance.ToString();
+            ppmTolerance.Text = engine.PpmTolerance.ToString(CultureInfo.InvariantCulture);
             mbr.IsChecked = engine.MatchBetweenRuns;
             advancedProteinQuant.IsChecked = engine.AdvancedProteinQuant;
 
             integrate.IsChecked = engine.Integrate;
             precursorChargeOnly.IsChecked = engine.IdSpecificChargeState;
             requireMonoisotopicPeak.IsChecked = engine.RequireMonoisotopicMass;
-            isotopeTolerance.Text = engine.IsotopePpmTolerance.ToString();
+            isotopeTolerance.Text = engine.IsotopePpmTolerance.ToString(CultureInfo.InvariantCulture);
             numIsotopePeak.Text = engine.NumIsotopesRequired.ToString();
-            maxMbrWindow.Text = engine.MbrRtWindow.ToString();
+            maxMbrWindow.Text = engine.MbrRtWindow.ToString(CultureInfo.InvariantCulture);
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
@@ -49,7 +39,7 @@ namespace GUI
                 return;
             }
 
-            tempFlashLfqEngine = new FlashLFQEngine(new List<Identification>(), 
+            TempFlashLfqEngine = new FlashLFQEngine(new List<Identification>(), 
                 advancedProteinQuant: advancedProteinQuant.IsChecked.Value,
                 normalize: normalize.IsChecked.Value, 
                 ppmTolerance: double.Parse(ppmTolerance.Text),

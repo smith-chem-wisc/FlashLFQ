@@ -7,12 +7,12 @@ using FlashLFQ;
 
 namespace CMD
 {
-    public class FlashLFQExecutable
+    public class FlashLfqExecutable
     {
         public static void Main(string[] args)
         {
             // parameters
-            List<string> acceptedSpectrumFileFormats = new List<string>() { ".RAW", ".MZML" };
+            List<string> acceptedSpectrumFileFormats = new List<string> { ".RAW", ".MZML" };
 
             // setup parameters
             var p = new FluentCommandLineParser<ApplicationArguments>();
@@ -146,16 +146,16 @@ namespace CMD
                 {
                     foreach (var file in files)
                     {
-                        spectraFileInfos.Add(new SpectraFileInfo(fullFilePathWithExtension: file, 
-                            condition: "", 
-                            biorep: 0, 
-                            fraction: 0, 
+                        spectraFileInfos.Add(new SpectraFileInfo(fullFilePathWithExtension: file,
+                            condition: "",
+                            biorep: 0,
+                            fraction: 0,
                             techrep: 0));
                     }
                 }
 
                 // set up IDs
-                var ids = new List<Identification>();
+                List<Identification> ids;
                 try
                 {
                     ids = PsmReader.ReadPsms(p.Object.PsmInputPath, p.Object.Silent, spectraFileInfos);
@@ -218,21 +218,21 @@ namespace CMD
         internal class ApplicationArguments
         {
             // settings
-            public string PsmInputPath { get; private set; } = null;
-            public string OutputPath { get; private set; } = null;
-            public string RawFilesPath { get; private set; } = null;
-            public double PpmTolerance { get; private set; } = 10.0;
-            public double IsotopePpmTolerance { get; private set; } = 5.0;
-            public bool MatchBetweenRuns { get; private set; } = false;
-            public double MbrPpmTolerance { get; private set; } = 5.0;
-            public bool Integrate { get; private set; } = false;
-            public int NumIsotopesRequired { get; private set; } = 2;
-            public bool Silent { get; private set; } = false;
-            public bool IdSpecificChargeState { get; private set; } = false;
-            public bool RequireMonoisotopicMass { get; private set; } = true;
-            public double MbrRtWindow { get; private set; } = 1.5;
-            public bool Normalize { get; private set; } = false;
-            public bool AdvancedProteinQuant { get; private set; } = false;
+            public string PsmInputPath { get; } = null;
+            public string OutputPath { get; } = null;
+            public string RawFilesPath { get; } = null;
+            public double PpmTolerance { get; } = 10.0;
+            public double IsotopePpmTolerance { get; } = 5.0;
+            public bool MatchBetweenRuns { get; } = false;
+            public double MbrPpmTolerance { get; } = 5.0;
+            public bool Integrate { get; } = false;
+            public int NumIsotopesRequired { get; } = 2;
+            public bool Silent { get; } = false;
+            public bool IdSpecificChargeState { get; } = false;
+            public bool RequireMonoisotopicMass { get; } = true;
+            public double MbrRtWindow { get; } = 1.5;
+            public bool Normalize { get; } = false;
+            public bool AdvancedProteinQuant { get; } = false;
         }
     }
 }

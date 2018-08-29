@@ -25,7 +25,7 @@ namespace Test
                 "5"
             };
 
-            CMD.FlashLFQExecutable.Main(myargs);
+            CMD.FlashLfqExecutable.Main(myargs);
 
             Assert.That(File.Exists(Path.Combine(myDirectory, "aggregatePSMs_5ppmAroundZero_FlashLFQ_QuantifiedPeaks.tsv")));
         }
@@ -54,7 +54,7 @@ namespace Test
                 outputPath
             };
 
-            CMD.FlashLFQExecutable.Main(myargs);
+            CMD.FlashLfqExecutable.Main(myargs);
             
             Assert.That(File.Exists(Path.Combine(outputPath, "aggregatePSMs_5ppmAroundZero_FlashLFQ_QuantifiedPeaks.tsv")));
         }

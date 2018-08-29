@@ -1,21 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 
 namespace GUI.DataGridObjects
 {
     public class SpectraFileForDataGrid
     {
+        public string FileName { get; }
+        public string FilePath { get; }
+
         public SpectraFileForDataGrid(string filePath)
         {
             FileName = Path.GetFileName(filePath);
             FilePath = filePath;
         }
-
-        public string FileName { get; private set; }
-        public string FilePath { get; private set; }
     }
 }
