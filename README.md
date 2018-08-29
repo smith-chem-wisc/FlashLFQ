@@ -21,6 +21,7 @@ To use the FlashLFQ standalone command-line version, run the "CMD.exe" program w
 If you want to normalize results using the command-line, you must create an experimental design TSV file and place it in the directory with your spectra files.
 
 Preferably, when specifying a filepath, use the absolute file path inside of quotes. Examples are listed below.
+NOTE: On Linux, absolute file paths do not currently work. See Issue [#71](https://github.com/smith-chem-wisc/FlashLFQ/issues/71).
 
 **Accepted command-line arguments:**
 
@@ -86,6 +87,10 @@ FlashLFQ outputs several text files, described here. The .tsv files are convenie
 *QuantifiedModifiedSequences.tsv* - Similar to QuantifiedBaseSequences, but instead of being summed by Base Sequence, peptide intensities are summed by modified sequence; this makes it convenient to compare modified peptidoform intensities across runs.
 
 *QuantifiedProteins.tsv* - Lists protein accession and in the future will include gene and organism if the TSV contains it. The intensity is either a) the sum of the 3 most intense peptides or b) (Advanced protein quant) a weighted-average of the intensities of the peptides assigned to the protein. The weights are determined by how well the peptide co-varies with the other peptides assigned to that protein. See [Diffacto](http://www.mcponline.org/content/16/5/936.full).
+
+# Example Experimental Design File
+Note: You do not need to download this if you're using the graphical version of FlashLFQ. You only need to download this and edit it manually if you're running the command-line version.
+https://github.com/smith-chem-wisc/MetaMorpheus/files/2048804/ExperimentalDesign.zip
 
 # Development Status
     To do: 
