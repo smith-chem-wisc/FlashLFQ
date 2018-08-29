@@ -42,9 +42,11 @@ Preferably, when specifying a filepath, use the absolute file path inside of quo
     --chg [boolean | use only precursor charge state; when set to false, FlashLFQ looks 
 	  for all charge states detected in the MS/MS identification file for each peptide] (default = false)
 
-	--nor [boolean | normalize intensity results; experimental design needs to be defined to do this] (default = false)
+    --nor [boolean | normalize intensity results; experimental design needs to be defined to do this] 
+	  (default = false)
 
-	--pro [bool | advanced protein quantification; can take a long time if you're on a single-threaded machine] (default = false)
+    --pro [boolean | advanced protein quantification; can take a long time if you're on a single-threaded machine] 
+	  (default = false)
 
 **Command-Line Example:**
 
