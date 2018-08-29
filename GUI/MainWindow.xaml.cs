@@ -24,7 +24,7 @@ namespace GUI
         private ObservableCollection<IdentificationFileForDataGrid> identFilesForDataGrid;
         private BackgroundWorker worker;
         private FlashLFQEngine flashLfqEngine;
-        private FlashLFQResults results;
+        private FlashLfqResults results;
         private List<SpectraFileInfo> spectraFileInfo;
         private string outputFolderPath;
 
@@ -59,7 +59,7 @@ namespace GUI
 
             if (dialog.ShowDialog() == true)
             {
-                flashLfqEngine = dialog.tempFlashLfqEngine;
+                flashLfqEngine = dialog.TempFlashLfqEngine;
             }
         }
 

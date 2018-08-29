@@ -7,12 +7,12 @@ using FlashLFQ;
 
 namespace CMD
 {
-    public class FlashLFQExecutable
+    public class FlashLfqExecutable
     {
         public static void Main(string[] args)
         {
             // parameters
-            List<string> acceptedSpectrumFileFormats = new List<string>() { ".RAW", ".MZML" };
+            List<string> acceptedSpectrumFileFormats = new List<string> { ".RAW", ".MZML" };
 
             // setup parameters
             var p = new FluentCommandLineParser<ApplicationArguments>();
@@ -81,7 +81,7 @@ namespace CMD
              .As("pro");
 
             // args are OK - run FlashLFQ
-            if (p.Parse(args).HasErrors == false && p.Object.PsmInputPath != null)
+            if (!p.Parse(args).HasErrors && p.Object.PsmInputPath != null)
             {
                 if (!File.Exists(p.Object.PsmInputPath))
                 {
@@ -146,16 +146,16 @@ namespace CMD
                 {
                     foreach (var file in files)
                     {
-                        spectraFileInfos.Add(new SpectraFileInfo(fullFilePathWithExtension: file, 
-                            condition: "", 
-                            biorep: 0, 
-                            fraction: 0, 
+                        spectraFileInfos.Add(new SpectraFileInfo(fullFilePathWithExtension: file,
+                            condition: "",
+                            biorep: 0,
+                            fraction: 0,
                             techrep: 0));
                     }
                 }
 
                 // set up IDs
-                var ids = new List<Identification>();
+                List<Identification> ids;
                 try
                 {
                     ids = PsmReader.ReadPsms(p.Object.PsmInputPath, p.Object.Silent, spectraFileInfos);

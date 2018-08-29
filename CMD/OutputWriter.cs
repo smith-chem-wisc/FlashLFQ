@@ -7,7 +7,7 @@ namespace CMD
 {
     public class OutputWriter
     {
-        public static void WriteOutput(string inputPath, FlashLFQResults results, string outputPath = null)
+        public static void WriteOutput(string inputPath, FlashLfqResults results, string outputPath = null)
         {
             if (outputPath == null)
             {
@@ -16,7 +16,7 @@ namespace CMD
 
             string inputFileName = Path.GetFileNameWithoutExtension(inputPath);
 
-            if(!Directory.Exists(outputPath))
+            if (!Directory.Exists(outputPath))
             {
                 Directory.CreateDirectory(outputPath);
             }

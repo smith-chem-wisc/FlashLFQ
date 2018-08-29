@@ -40,7 +40,7 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
                         <CheckBox Name="requireMonoisotopicPeak" ToolTip="" VerticalAlignment="Center" />
-                        <Label Content="Require monisotopic peak" />
+                        <Label Content="Require monoisotopic peak" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
                         <TextBox Name="isotopeTolerance" ToolTip="" VerticalAlignment="Center" Width="30" Height="20" />
