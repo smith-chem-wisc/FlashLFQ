@@ -81,7 +81,7 @@ namespace CMD
              .As("pro");
 
             // args are OK - run FlashLFQ
-            if (p.Parse(args).HasErrors == false && p.Object.PsmInputPath != null)
+            if (!p.Parse(args).HasErrors && p.Object.PsmInputPath != null)
             {
                 if (!File.Exists(p.Object.PsmInputPath))
                 {
@@ -218,21 +218,21 @@ namespace CMD
         internal class ApplicationArguments
         {
             // settings
-            public string PsmInputPath { get; } = null;
-            public string OutputPath { get; } = null;
-            public string RawFilesPath { get; } = null;
-            public double PpmTolerance { get; } = 10.0;
-            public double IsotopePpmTolerance { get; } = 5.0;
-            public bool MatchBetweenRuns { get; } = false;
-            public double MbrPpmTolerance { get; } = 5.0;
-            public bool Integrate { get; } = false;
-            public int NumIsotopesRequired { get; } = 2;
-            public bool Silent { get; } = false;
-            public bool IdSpecificChargeState { get; } = false;
-            public bool RequireMonoisotopicMass { get; } = true;
-            public double MbrRtWindow { get; } = 1.5;
-            public bool Normalize { get; } = false;
-            public bool AdvancedProteinQuant { get; } = false;
+            public string PsmInputPath { get; private set; } = null;
+            public string OutputPath { get; private set; } = null;
+            public string RawFilesPath { get; private set; } = null;
+            public double PpmTolerance { get; private set; } = 10.0;
+            public double IsotopePpmTolerance { get; private set; } = 5.0;
+            public bool MatchBetweenRuns { get; private set; } = false;
+            public double MbrPpmTolerance { get; private set; } = 5.0;
+            public bool Integrate { get; private set; } = false;
+            public int NumIsotopesRequired { get; private set; } = 2;
+            public bool Silent { get; private set; } = false;
+            public bool IdSpecificChargeState { get; private set; } = false;
+            public bool RequireMonoisotopicMass { get; private set; } = true;
+            public double MbrRtWindow { get; private set; } = 1.5;
+            public bool Normalize { get; private set; } = false;
+            public bool AdvancedProteinQuant { get; private set; } = false;
         }
     }
 }
