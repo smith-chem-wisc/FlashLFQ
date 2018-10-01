@@ -174,7 +174,7 @@ namespace GUI
                     if (string.IsNullOrEmpty(OutputFolderTextBox.Text))
                     {
                         var pathOfFirstSpectraFile = Path.GetDirectoryName(spectraFilesForDataGrid.First().FilePath);
-                        OutputFolderTextBox.Text = Path.Combine(pathOfFirstSpectraFile, @"$DATETIME");
+                        OutputFolderTextBox.Text = Path.Combine(pathOfFirstSpectraFile, @"FlashLFQ_$DATETIME");
                     }
                     break;
 
@@ -230,10 +230,10 @@ namespace GUI
                 if (string.IsNullOrEmpty(OutputFolderTextBox.Text))
                 {
                     var pathOfFirstSpectraFile = Path.GetDirectoryName(spectraFilesForDataGrid.First().FilePath);
-                    OutputFolderTextBox.Text = Path.Combine(pathOfFirstSpectraFile, @"$DATETIME");
+                    OutputFolderTextBox.Text = Path.Combine(pathOfFirstSpectraFile, @"FlashLFQ_@$DATETIME");
                 }
 
-                var startTimeForAllFilenames = "FlashLFQ_" + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss", CultureInfo.InvariantCulture);
+                var startTimeForAllFilenames = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss", CultureInfo.InvariantCulture);
                 string outputFolder = OutputFolderTextBox.Text.Replace("$DATETIME", startTimeForAllFilenames);
                 OutputFolderTextBox.Text = outputFolder;
 
