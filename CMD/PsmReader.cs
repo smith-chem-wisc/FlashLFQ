@@ -267,7 +267,7 @@ namespace CMD
 
             if (!silent)
             {
-                Console.WriteLine("Done reading PSMs");
+                Console.WriteLine("Done reading PSMs; found " + ids.Count);
             }
 
             return ids;

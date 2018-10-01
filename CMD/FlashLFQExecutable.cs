@@ -174,27 +174,61 @@ namespace CMD
                     }
 
                     // make engine with desired settings
-                    FlashLFQEngine engine = new FlashLFQEngine(
-                        allIdentifications: ids,
-                        normalize: p.Object.Normalize,
-                        ppmTolerance: p.Object.PpmTolerance,
-                        isotopeTolerancePpm: p.Object.IsotopePpmTolerance,
-                        matchBetweenRuns: p.Object.MatchBetweenRuns,
-                        matchBetweenRunsPpmTolerance: p.Object.MbrPpmTolerance,
-                        integrate: p.Object.Integrate,
-                        numIsotopesRequired: p.Object.NumIsotopesRequired,
-                        idSpecificChargeState: p.Object.IdSpecificChargeState,
-                        requireMonoisotopicMass: p.Object.RequireMonoisotopicMass,
-                        silent: p.Object.Silent,
-                        optionalPeriodicTablePath: null,
-                        maxMbrWindow: p.Object.MbrRtWindow,
-                        advancedProteinQuant: p.Object.AdvancedProteinQuant);
+                    FlashLFQEngine engine = null;
+                    FlashLfqResults results = null;
+                    try
+                    {
+                        engine = new FlashLFQEngine(
+                            allIdentifications: ids,
+                            normalize: p.Object.Normalize,
+                            ppmTolerance: p.Object.PpmTolerance,
+                            isotopeTolerancePpm: p.Object.IsotopePpmTolerance,
+                            matchBetweenRuns: p.Object.MatchBetweenRuns,
+                            matchBetweenRunsPpmTolerance: p.Object.MbrPpmTolerance,
+                            integrate: p.Object.Integrate,
+                            numIsotopesRequired: p.Object.NumIsotopesRequired,
+                            idSpecificChargeState: p.Object.IdSpecificChargeState,
+                            requireMonoisotopicMass: p.Object.RequireMonoisotopicMass,
+                            silent: p.Object.Silent,
+                            optionalPeriodicTablePath: null,
+                            maxMbrWindow: p.Object.MbrRtWindow,
+                            advancedProteinQuant: p.Object.AdvancedProteinQuant);
 
-                    // run
-                    var results = engine.Run();
+                        // run
+                        results = engine.Run();
+                    }
+                    catch (Exception ex)
+                    {
+                        string errorReportPath = Directory.GetParent(files.First()).FullName;
+                        if (p.Object.OutputPath != null)
+                        {
+                            errorReportPath = p.Object.OutputPath;
+                        }
+
+                        if (!p.Object.Silent)
+                        {
+                            Console.WriteLine("FlashLFQ has crashed with the following error: " + ex.Message +
+                                ".\nError report written to " + errorReportPath);
+                        }
+
+                        OutputWriter.WriteErrorReport(ex, Directory.GetParent(files.First()).FullName, p.Object.OutputPath);
+                    }
 
                     // output
-                    OutputWriter.WriteOutput(p.Object.PsmInputPath, results, p.Object.OutputPath);
+                    if (results != null)
+                    {
+                        try
+                        {
+                            OutputWriter.WriteOutput(p.Object.PsmInputPath, results, p.Object.OutputPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            if (!p.Object.Silent)
+                            {
+                                Console.WriteLine("Could not write FlashLFQ output: " + ex.Message);
+                            }
+                        }
+                    }
                 }
                 else
                 {

@@ -104,7 +104,7 @@ namespace GUI
         {
             Microsoft.Win32.OpenFileDialog openPicker = new Microsoft.Win32.OpenFileDialog()
             {
-                Filter = "Identification Files|*.txt;*.tsv;*.psmtsv",
+                Filter = "Identification Files|*.txt;*.tsv;*.psmtsv;*.tabular",
                 FilterIndex = 1,
                 RestoreDirectory = true,
                 Multiselect = true
@@ -181,6 +181,7 @@ namespace GUI
                 case ".txt":
                 case ".tsv":
                 case ".psmtsv":
+                case ".tabular":
                     IdentificationFileForDataGrid identFile = new IdentificationFileForDataGrid(filePath);
                     if (!identFilesForDataGrid.Select(f => f.FilePath).Contains(identFile.FilePath) && !identFile.FileName.Equals("ExperimentalDesign.tsv"))
                     {
@@ -324,17 +325,31 @@ namespace GUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show("FlashLFQ has crashed with the following error: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                string errorReportPath = Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName;
+                if(outputFolderPath != null)
+                {
+                    errorReportPath = outputFolderPath;
+                }
+
+                MessageBox.Show("FlashLFQ has crashed with the following error: " + ex.Message + 
+                    ".\nError report written to " + errorReportPath, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+
+                OutputWriter.WriteErrorReport(ex, Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName, 
+                    outputFolderPath);
             }
 
             // write output
-            try
+            if (results != null)
             {
-                OutputWriter.WriteOutput(Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName, results, outputFolderPath);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Could not write FlashLFQ output: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                try
+                {
+                    OutputWriter.WriteOutput(Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName, results,
+                        outputFolderPath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Could not write FlashLFQ output: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                }
             }
         }
 
