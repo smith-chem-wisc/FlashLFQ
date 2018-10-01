@@ -23,11 +23,17 @@ namespace CMD
                 Directory.CreateDirectory(outputPath);
             }
 
+            string append = "_FlashLFQ_";
+            if (inputFileName.ToLowerInvariant().Contains("flashlfq"))
+            {
+                append = "_";
+            }
+
             results.WriteResults(
-                outputPath + Path.DirectorySeparatorChar + inputFileName + "_FlashLFQ_QuantifiedPeaks.tsv",
-                outputPath + Path.DirectorySeparatorChar + inputFileName + "_FlashLFQ_QuantifiedModifiedSequences.tsv",
-                outputPath + Path.DirectorySeparatorChar + inputFileName + "_FlashLFQ_QuantifiedBaseSequences.tsv",
-                outputPath + Path.DirectorySeparatorChar + inputFileName + "_FlashLFQ_QuantifiedProteins.tsv"
+                outputPath + Path.DirectorySeparatorChar + inputFileName + append + "QuantifiedPeaks.tsv",
+                outputPath + Path.DirectorySeparatorChar + inputFileName + append + "QuantifiedModifiedSequences.tsv",
+                outputPath + Path.DirectorySeparatorChar + inputFileName + append + "QuantifiedBaseSequences.tsv",
+                outputPath + Path.DirectorySeparatorChar + inputFileName + append + "QuantifiedProteins.tsv"
                 );
         }
 
