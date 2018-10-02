@@ -302,6 +302,13 @@ namespace GUI
                 ids = ids.Concat(PsmReader.ReadPsms(identFile.FilePath, false, spectraFileInfo)).ToList();
             }
 
+            if (!ids.Any())
+            {
+                MessageBox.Show("No peptide IDs for the specified spectra files were found! " +
+                    "Check to make sure the spectra file names match between the ID file and the spectra files", 
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+            }
+
             // run FlashLFQ engine
             try
             {
