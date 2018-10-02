@@ -126,8 +126,8 @@ namespace CMD
                                 if (!silent)
                                 {
                                     Console.WriteLine("Caution! PSM with sequence " + modSequence + " at line " +
-                                                      lineNum + " could not be read; " +
-                                                      "a peptide with the same modified sequence but a different monoisotopic mass has already been added");
+                                       lineNum + " could not be read; " +
+                                       "a peptide with the same modified sequence but a different monoisotopic mass has already been added");
                                 }
 
                                 lineNum++;
@@ -145,6 +145,18 @@ namespace CMD
                         {
                             // peptide shaker RT is in seconds - convert to minutes
                             ms2RetentionTime = ms2RetentionTime / 60.0;
+                        }
+
+                        if (ms2RetentionTime < 0)
+                        {
+                            if (!silent)
+                            {
+                                Console.WriteLine("Caution! PSM with sequence " + modSequence + " at line " +
+                                   lineNum + " could not be read; retention time was negative");
+                            }
+
+                            lineNum++;
+                            continue;
                         }
 
                         // charge state
