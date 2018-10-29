@@ -28,7 +28,7 @@ namespace CMD
             _modSequenceToMonoMass = new Dictionary<string, double>();
             List<Identification> ids = new List<Identification>();
             PsmFileType fileType = PsmFileType.Unknown;
-            string[] delim = new string[] { ";", ",", " or ", "\"" };
+            string[] delim = new string[] { ";", ",", " or ", "\"", "|" };
 
             if (!silent)
             {
@@ -110,7 +110,7 @@ namespace CMD
                         }
 
                         // skip ambiguous sequence in MetaMorpheus output
-                        if (fileType == PsmFileType.MetaMorpheus && (modSequence.Contains(" or ") || modSequence.Contains("|")))
+                        if (fileType == PsmFileType.MetaMorpheus && (modSequence.Contains(" or ") || modSequence.Contains("|") || modSequence.Contains("too long")))
                         {
                             lineNum++;
                             continue;

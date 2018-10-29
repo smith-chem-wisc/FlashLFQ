@@ -44,6 +44,9 @@
     <StartupObject>
     </StartupObject>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseDotNetCore|AnyCPU'">
+    <OutputPath>bin\ReleaseDotNetCore\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Accord, Version=3.8.0.0, Culture=neutral, PublicKeyToken=fa1a88e29555ccf7, processorArchitecture=MSIL">
       <HintPath>..\packages\Accord.3.8.0\lib\net462\Accord.dll</HintPath>

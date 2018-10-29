@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Configurations>Debug;Release;ReleaseDotNetCore</Configurations>
   </PropertyGroup>
   <PropertyGroup>
     <OutputType>Exe</OutputType>
