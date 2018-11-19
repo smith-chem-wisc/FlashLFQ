@@ -174,11 +174,11 @@ namespace CMD
                     }
 
                     // make engine with desired settings
-                    FlashLFQEngine engine = null;
+                    FlashLfqEngine engine = null;
                     FlashLfqResults results = null;
                     try
                     {
-                        engine = new FlashLFQEngine(
+                        engine = new FlashLfqEngine(
                             allIdentifications: ids,
                             normalize: p.Object.Normalize,
                             ppmTolerance: p.Object.PpmTolerance,

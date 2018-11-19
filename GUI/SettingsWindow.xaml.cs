@@ -10,14 +10,14 @@ namespace GUI
     /// </summary>
     public partial class SettingsWindow : Window
     {
-        internal FlashLFQEngine TempFlashLfqEngine { get; private set; }
+        internal FlashLfqEngine TempFlashLfqEngine { get; private set; }
 
         public SettingsWindow()
         {
             InitializeComponent();
         }
 
-        public void PopulateSettings(FlashLFQEngine engine)
+        public void PopulateSettings(FlashLfqEngine engine)
         {
             normalize.IsChecked = engine.Normalize;
             ppmTolerance.Text = engine.PpmTolerance.ToString(CultureInfo.InvariantCulture);
@@ -39,7 +39,7 @@ namespace GUI
                 return;
             }
 
-            TempFlashLfqEngine = new FlashLFQEngine(new List<Identification>(), 
+            TempFlashLfqEngine = new FlashLfqEngine(new List<Identification>(), 
                 advancedProteinQuant: advancedProteinQuant.IsChecked.Value,
                 normalize: normalize.IsChecked.Value, 
                 ppmTolerance: double.Parse(ppmTolerance.Text),

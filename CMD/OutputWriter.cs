@@ -32,7 +32,6 @@ namespace CMD
             results.WriteResults(
                 outputPath + Path.DirectorySeparatorChar + inputFileName + append + "QuantifiedPeaks.tsv",
                 outputPath + Path.DirectorySeparatorChar + inputFileName + append + "QuantifiedModifiedSequences.tsv",
-                outputPath + Path.DirectorySeparatorChar + inputFileName + append + "QuantifiedBaseSequences.tsv",
                 outputPath + Path.DirectorySeparatorChar + inputFileName + append + "QuantifiedProteins.tsv"
                 );
         }

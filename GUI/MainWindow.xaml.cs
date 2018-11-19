@@ -23,7 +23,7 @@ namespace GUI
         private ObservableCollection<SpectraFileForDataGrid> spectraFilesForDataGrid;
         private ObservableCollection<IdentificationFileForDataGrid> identFilesForDataGrid;
         private BackgroundWorker worker;
-        private FlashLFQEngine flashLfqEngine;
+        private FlashLfqEngine flashLfqEngine;
         private FlashLfqResults results;
         private List<SpectraFileInfo> spectraFileInfo;
         private string outputFolderPath;
@@ -37,7 +37,7 @@ namespace GUI
             worker = new BackgroundWorker();
             worker.DoWork += new DoWorkEventHandler(RunProgram);
 
-            flashLfqEngine = new FlashLFQEngine(new List<Identification>());
+            flashLfqEngine = new FlashLfqEngine(new List<Identification>());
             spectraFileInfo = new List<SpectraFileInfo>();
 
             identFilesDataGrid.DataContext = identFilesForDataGrid;
@@ -312,7 +312,7 @@ namespace GUI
             // run FlashLFQ engine
             try
             {
-                flashLfqEngine = new FlashLFQEngine(
+                flashLfqEngine = new FlashLfqEngine(
                     allIdentifications: ids,
                     normalize: flashLfqEngine.Normalize,
                     ppmTolerance: flashLfqEngine.PpmTolerance,
