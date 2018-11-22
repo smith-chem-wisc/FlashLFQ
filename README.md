@@ -51,7 +51,7 @@ NOTE: On Linux, absolute file paths do not currently work. See Issue [#71](https
 
 **Command-Line Example:**
 
-*FlashLFQExecutable --idt "C:\MyFolder\msms.txt" --rep "C:\MyFolder" --ppm 5 --chg false*
+*CMD.exe --idt "C:\MyFolder\msms.txt" --rep "C:\MyFolder" --ppm 5 --chg false*
 
 **Graphical User Interface (GUI):**
 
@@ -82,9 +82,7 @@ FlashLFQ outputs several text files, described here. The .tsv files are convenie
 
 *QuantifiedPeaks.tsv* - Each chromatographic peak is shown here, even peaks that were not quantifiable (peak intensity = 0). Details about each peak, such as number of PSMs mapped, start/apex/end retention times, ppm error, etc are contained in this file. A peptide can have multiple peaks over the course of a run (e.g., oxidized peptidoforms elute at different times, etc). Ambiguous peaks are displayed with a | (pipe) delimiter to indicate more than one peptide mapped to that peak. 
 
-*QuantifiedBaseSequences.tsv* - Peptide intensities are summed here within a run (including differently-modified forms of the same amino acid sequence) and displayed in a convenient format for comparing across runs. The identification type (MS/MS or MBR) is also indicated. A peptide with more than 30% of its intensity coming from ambiguous peak(s) is considered not quantifiable and is given an intensity of 0.
-
-*QuantifiedModifiedSequences.tsv* - Similar to QuantifiedBaseSequences, but instead of being summed by Base Sequence, peptide intensities are summed by modified sequence; this makes it convenient to compare modified peptidoform intensities across runs.
+*QuantifiedPeptides.tsv* - Peptide intensities are summed by modified sequence; this makes it convenient to compare modified peptidoform intensities across runs.
 
 *QuantifiedProteins.tsv* - Lists protein accession and in the future will include gene and organism if the TSV contains it. The intensity is either a) the sum of the 3 most intense peptides or b) (Advanced protein quant) a weighted-average of the intensities of the peptides assigned to the protein. The weights are determined by how well the peptide co-varies with the other peptides assigned to that protein. See [Diffacto](http://www.mcponline.org/content/16/5/936.full).
 
