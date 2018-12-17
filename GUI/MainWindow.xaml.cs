@@ -1,4 +1,8 @@
-﻿using System;
+﻿using CMD;
+using FlashLFQ;
+using GUI.DataGridObjects;
+using IO.Thermo;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -8,10 +12,6 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
-using FlashLFQ;
-using CMD;
-using GUI.DataGridObjects;
-using IO.Thermo;
 
 namespace GUI
 {
@@ -297,16 +297,48 @@ namespace GUI
         {
             // read IDs
             var ids = new List<Identification>();
-            foreach (var identFile in identFilesForDataGrid)
+
+            try
             {
-                ids = ids.Concat(PsmReader.ReadPsms(identFile.FilePath, false, spectraFileInfo)).ToList();
+                foreach (var identFile in identFilesForDataGrid)
+                {
+                    ids = ids.Concat(PsmReader.ReadPsms(identFile.FilePath, false, spectraFileInfo)).ToList();
+                }
+            }
+            catch (Exception e)
+            {
+                string errorReportPath = Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName;
+                if (outputFolderPath != null)
+                {
+                    errorReportPath = outputFolderPath;
+                }
+
+                try
+                {
+                    OutputWriter.WriteErrorReport(e, Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName,
+                        outputFolderPath);
+                }
+                catch (Exception ex2)
+                {
+                    MessageBox.Show("FlashLFQ has crashed with the following error: " + e.Message +
+                    ".\nThe error report could not be written: " + ex2.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+
+                    return;
+                }
+
+                MessageBox.Show("FlashLFQ could not read the PSM file: " + e.Message +
+                    ".\nError report written to " + errorReportPath, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+
+                return;
             }
 
             if (!ids.Any())
             {
                 MessageBox.Show("No peptide IDs for the specified spectra files were found! " +
-                    "Check to make sure the spectra file names match between the ID file and the spectra files", 
+                    "Check to make sure the spectra file names match between the ID file and the spectra files",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+
+                return;
             }
 
             // run FlashLFQ engine
@@ -333,16 +365,28 @@ namespace GUI
             catch (Exception ex)
             {
                 string errorReportPath = Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName;
-                if(outputFolderPath != null)
+                if (outputFolderPath != null)
                 {
                     errorReportPath = outputFolderPath;
                 }
 
-                MessageBox.Show("FlashLFQ has crashed with the following error: " + ex.Message + 
+                try
+                {
+                    OutputWriter.WriteErrorReport(ex, Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName,
+                        outputFolderPath);
+                }
+                catch (Exception ex2)
+                {
+                    MessageBox.Show("FlashLFQ has crashed with the following error: " + ex.Message +
+                    ".\nThe error report could not be written: " + ex2.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+
+                    return;
+                }
+
+                MessageBox.Show("FlashLFQ has crashed with the following error: " + ex.Message +
                     ".\nError report written to " + errorReportPath, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
 
-                OutputWriter.WriteErrorReport(ex, Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName, 
-                    outputFolderPath);
+                return;
             }
 
             // write output
@@ -356,6 +400,8 @@ namespace GUI
                 catch (Exception ex)
                 {
                     MessageBox.Show("Could not write FlashLFQ output: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+
+                    return;
                 }
             }
         }
