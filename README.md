@@ -3,6 +3,8 @@
 # About
 FlashLFQ is an ultrafast label-free quantification algorithm for mass-spectrometry proteomics. 
 
+This repository is for the stand-alone application of FlashLFQ. FlashLFQ is also bundled into [MetaMorpheus](https://github.com/smith-chem-wisc/MetaMorpheus).
+
 # Requirements
 Input is a tab-separated value (TSV) text file of MS/MS identifications, in addition to one or more bottom-up mass spectra files. Currently, .mzML and .raw file formats are supported. [Thermo MSFileReader](https://thermo.flexnetoperations.com/control/thmo/search?query=MSFileReader+3.0+SP2) is required to read Thermo .raw files. The version of MSFileReader that we recommend installing is v3.0 SP2. A 64-bit machine running Microsoft Windows is also required to run the standalone version of FlashLFQ.
 
