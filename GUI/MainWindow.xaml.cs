@@ -394,18 +394,8 @@ namespace GUI
             {
                 try
                 {
-                    if (!flashLfqEngine.Silent)
-                    {
-                        AddNotification("Writing output...");
-                    }
-
                     OutputWriter.WriteOutput(Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName, results,
                         outputFolderPath);
-
-                    if (!flashLfqEngine.Silent)
-                    {
-                        AddNotification("Finished writing output");
-                    }
                 }
                 catch (Exception ex)
                 {
