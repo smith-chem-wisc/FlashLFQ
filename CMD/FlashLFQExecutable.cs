@@ -112,12 +112,11 @@ namespace CMD
                 }
 
                 // set up spectra file info
-                // get experimental design info for normalization
                 List<SpectraFileInfo> spectraFileInfos = new List<SpectraFileInfo>();
                 IEnumerable<string> files = Directory.GetFiles(p.Object.RawFilesPath)
                     .Where(f => acceptedSpectrumFileFormats.Contains(Path.GetExtension(f).ToUpperInvariant()));
 
-                if (p.Object.Normalize)
+                if (File.Exists(assumedPathToExpDesign))
                 {
                     var experimentalDesign = File.ReadAllLines(assumedPathToExpDesign)
                         .ToDictionary(v => v.Split('\t')[0], v => v);
@@ -217,9 +216,19 @@ namespace CMD
                     // output
                     if (results != null)
                     {
+                        if (!p.Object.Silent)
+                        {
+                            Console.WriteLine("Writing output...");
+                        }
+
                         try
                         {
                             OutputWriter.WriteOutput(p.Object.PsmInputPath, results, p.Object.OutputPath);
+
+                            if (!p.Object.Silent)
+                            {
+                                Console.WriteLine("Finished writing output");
+                            }
                         }
                         catch (Exception ex)
                         {
