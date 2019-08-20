@@ -95,5 +95,4 @@ https://github.com/smith-chem-wisc/MetaMorpheus/files/2048804/ExperimentalDesign
 # Development Status
     To do: 
 
-    - Improved retention time calibration/matching between runs (currently in an early state)
     
