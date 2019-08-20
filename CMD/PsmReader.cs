@@ -1,12 +1,12 @@
-﻿using System;
+﻿using FlashLFQ;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using FlashLFQ;
 
 namespace CMD
 {
-    enum PsmFileType { MetaMorpheus, Morpheus, MaxQuant, PeptideShaker, TdPortal, Generic, Unknown }
+    enum PsmFileType { MetaMorpheus, Morpheus, MaxQuant, PeptideShaker, Generic, Unknown }
 
     public class PsmReader
     {
@@ -20,16 +20,29 @@ namespace CMD
         private static int _decoyCol;
         private static int _qValueCol;
         private static int _qValueNotchCol;
+
+        // optional columns
+        private static int _geneNameCol;
+        private static int _organismCol;
+
         private static Dictionary<string, double> _modSequenceToMonoMass;
 
+        private static readonly Dictionary<PsmFileType, string[]> delimiters = new Dictionary<PsmFileType, string[]>
+        {
+            { PsmFileType.MetaMorpheus, new string[] { "|", " or " } },
+            { PsmFileType.Morpheus, new string[] { ";" } },
+            { PsmFileType.MaxQuant, new string[] { ";" } },
+            { PsmFileType.Generic, new string[] { ";" } },
+            { PsmFileType.PeptideShaker, new string[] { ", " } },
+        };
+        
         public static List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles)
         {
             Dictionary<string, ProteinGroup> allProteinGroups = new Dictionary<string, ProteinGroup>();
             _modSequenceToMonoMass = new Dictionary<string, double>();
             List<Identification> ids = new List<Identification>();
             PsmFileType fileType = PsmFileType.Unknown;
-            string[] delim = new string[] { ";", ",", " or ", "\"", "|" };
-
+            
             if (!silent)
             {
                 Console.WriteLine("Opening PSM file " + filepath);
@@ -104,10 +117,6 @@ namespace CMD
 
                         // modified sequence
                         string modSequence = param[_fullSequCol];
-                        if (fileType == PsmFileType.TdPortal)
-                        {
-                            modSequence = baseSequence + modSequence;
-                        }
 
                         // skip ambiguous sequence in MetaMorpheus output
                         if (fileType == PsmFileType.MetaMorpheus && (modSequence.Contains(" or ") || modSequence.Contains("|") || modSequence.Contains("too long")))
@@ -161,11 +170,7 @@ namespace CMD
 
                         // charge state
                         int chargeState;
-                        if (fileType == PsmFileType.TdPortal)
-                        {
-                            chargeState = 1;
-                        }
-                        else if (fileType == PsmFileType.PeptideShaker)
+                        if (fileType == PsmFileType.PeptideShaker)
                         {
                             string charge = new String(param[_chargeStCol].Where(Char.IsDigit).ToArray());
                             chargeState = int.Parse(charge);
@@ -176,66 +181,60 @@ namespace CMD
                         }
 
                         // protein groups
-                        List<string> proteinGroupStrings = new List<string>();
-                        if (fileType == PsmFileType.MetaMorpheus)
+                        // use all proteins listed
+                        List<ProteinGroup> proteinGroups = new List<ProteinGroup>();
+                        var proteins = param[_protNameCol].Split(delimiters[fileType], StringSplitOptions.None);
+
+                        string[] genes = null;
+                        if (_geneNameCol >= 0)
                         {
-                            // MetaMorpheus - use all proteins listed
-                            var g = param[_protNameCol].Split(delim, StringSplitOptions.RemoveEmptyEntries);
-                            if (g.Any())
-                            {
-                                foreach (var pg in g)
-                                {
-                                    proteinGroupStrings.Add(pg.Trim());
-                                }
-                            }
-                        }
-                        else if (fileType == PsmFileType.Morpheus)
-                        {
-                            // Morpheus - only one protein listed, use it
-                            proteinGroupStrings.Add(param[_protNameCol].Trim());
-                        }
-                        else if (fileType == PsmFileType.MaxQuant)
-                        {
-                            // MaxQuant - use the first protein listed
-                            var g = param[_protNameCol].Split(delim, StringSplitOptions.RemoveEmptyEntries);
-                            if (g.Any())
-                            {
-                                proteinGroupStrings.Add(g.First().Trim());
-                            }
-                        }
-                        else if (fileType == PsmFileType.PeptideShaker)
-                        {
-                            // Peptide Shaker - use all proteins listed
-                            var g = param[_protNameCol].Split(delim, StringSplitOptions.RemoveEmptyEntries);
-                            if (g.Any())
-                            {
-                                foreach (var pg in g)
-                                {
-                                    proteinGroupStrings.Add(pg.Trim());
-                                }
-                            }
-                        }
-                        else if (fileType == PsmFileType.TdPortal)
-                        {
-                            // TDPortal - use base sequence as protein group
-                            proteinGroupStrings.Add(baseSequence);
-                        }
-                        else
-                        {
-                            proteinGroupStrings.Add(param[_protNameCol]);
+                            genes = param[_geneNameCol].Split(delimiters[fileType], StringSplitOptions.None);
                         }
 
-                        List<ProteinGroup> proteinGroups = new List<ProteinGroup>();
-                        foreach (var proteinGroupName in proteinGroupStrings)
+                        string[] organisms = null;
+                        if (_organismCol >= 0)
                         {
-                            if (allProteinGroups.TryGetValue(proteinGroupName, out ProteinGroup pg))
+                            organisms = param[_organismCol].Split(delimiters[fileType], StringSplitOptions.None);
+                        }
+
+                        for (int pr = 0; pr < proteins.Length; pr++)
+                        {
+                            string proteinName = proteins[pr];
+                            string gene = "";
+                            string organism = "";
+
+                            if (genes != null)
+                            {
+                                if (genes.Length == 1)
+                                {
+                                    gene = genes[0];
+                                }
+                                else if (genes.Length == proteins.Length)
+                                {
+                                    gene = genes[pr];
+                                }
+                            }
+
+                            if (organisms != null)
+                            {
+                                if (organisms.Length == 1)
+                                {
+                                    organism = organisms[0];
+                                }
+                                else if (organisms.Length == proteins.Length)
+                                {
+                                    organism = organisms[pr];
+                                }
+                            }
+
+                            if (allProteinGroups.TryGetValue(proteinName, out ProteinGroup pg))
                             {
                                 proteinGroups.Add(pg);
                             }
                             else
                             {
-                                ProteinGroup newPg = new ProteinGroup(proteinGroupName, "", "");
-                                allProteinGroups.Add(proteinGroupName, newPg);
+                                ProteinGroup newPg = new ProteinGroup(proteinName, gene, organism);
+                                allProteinGroups.Add(proteinName, newPg);
                                 proteinGroups.Add(newPg);
                             }
                         }
@@ -313,6 +312,8 @@ namespace CMD
                 _decoyCol = Array.IndexOf(split, "Decoy/Contaminant/Target");
                 _qValueCol = Array.IndexOf(split, "QValue");
                 _qValueNotchCol = Array.IndexOf(split, "QValue Notch");
+                _geneNameCol = Array.IndexOf(split, "Gene Name");
+                _organismCol = Array.IndexOf(split, "Organism Name");
 
                 return PsmFileType.MetaMorpheus;
             }
@@ -338,6 +339,9 @@ namespace CMD
                 _decoyCol = Array.IndexOf(split, "Decoy?");
                 _qValueCol = Array.IndexOf(split, "Q-Value (%)");
 
+                _geneNameCol = Array.IndexOf(split, "Gene Name"); // probably doesn't exist
+                _organismCol = Array.IndexOf(split, "Organism Name");
+
                 return PsmFileType.Morpheus;
             }
 
@@ -357,6 +361,9 @@ namespace CMD
                 _msmsRetnCol = Array.IndexOf(split, "Retention time");
                 _chargeStCol = Array.IndexOf(split, "Charge");
                 _protNameCol = Array.IndexOf(split, "Proteins");
+                _geneNameCol = Array.IndexOf(split, "Gene Names");
+
+                _organismCol = Array.IndexOf(split, "Organism Name");
 
                 return PsmFileType.MaxQuant;
             }
@@ -378,26 +385,10 @@ namespace CMD
                 _chargeStCol = Array.IndexOf(split, "Identification Charge");
                 _protNameCol = Array.IndexOf(split, "Protein(s)");
 
+                _geneNameCol = Array.IndexOf(split, "Gene Name"); // probably doesn't exist
+                _organismCol = Array.IndexOf(split, "Organism Name");
+
                 return PsmFileType.PeptideShaker;
-            }
-
-            // TDPortal Input
-            else if (split.Contains("File Name")
-                && split.Contains("Sequence")
-                && split.Contains("Modifications")
-                && split.Contains("Monoisotopic Mass")
-                && split.Contains("RetentionTime")
-                && split.Contains("Accession")
-                && split.Contains("% Cleavages"))
-            {
-                _fileNameCol = Array.IndexOf(split, "File Name");
-                _baseSequCol = Array.IndexOf(split, "Sequence");
-                _fullSequCol = Array.IndexOf(split, "Modifications");
-                _monoMassCol = Array.IndexOf(split, "Monoisotopic Mass");
-                _msmsRetnCol = Array.IndexOf(split, "RetentionTime");
-                _protNameCol = Array.IndexOf(split, "Accession");
-
-                return PsmFileType.TdPortal;
             }
 
             // Generic MS/MS input
@@ -416,6 +407,9 @@ namespace CMD
                 _msmsRetnCol = Array.IndexOf(split, "Scan Retention Time");
                 _chargeStCol = Array.IndexOf(split, "Precursor Charge");
                 _protNameCol = Array.IndexOf(split, "Protein Accession");
+
+                _geneNameCol = Array.IndexOf(split, "Gene Name"); // probably doesn't exist
+                _organismCol = Array.IndexOf(split, "Organism Name");
 
                 return PsmFileType.Generic;
             }

@@ -11,10 +11,10 @@
 
   <ItemGroup>
     <PackageReference Include="FluentCommandLineParser" Version="1.5.0.20-commands" />
-    <PackageReference Include="MathNet.Numerics" Version="4.5.1" />
-    <PackageReference Include="mzLib" Version="1.0.394" />
+    <PackageReference Include="MathNet.Numerics" Version="4.8.1" />
+    <PackageReference Include="mzLib" Version="1.0.449" />
     <PackageReference Include="NetSerializer" Version="4.1.0" />
-    <PackageReference Include="Nett" Version="0.8.0" />
+    <PackageReference Include="Nett" Version="0.13.0" />
     <PackageReference Include="SharpLearning.Common.Interfaces" Version="0.26.9" />
     <PackageReference Include="SharpLearning.Containers" Version="0.26.9" />
     <PackageReference Include="SharpLearning.CrossValidation" Version="0.26.9" />
@@ -24,6 +24,12 @@
     <PackageReference Include="SharpLearning.Metrics" Version="0.26.9" />
     <PackageReference Include="SharpLearning.Optimization" Version="0.26.9" />
     <PackageReference Include="SharpLearning.RandomForest" Version="0.26.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   
   <PropertyGroup>

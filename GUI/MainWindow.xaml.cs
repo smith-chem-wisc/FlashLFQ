@@ -1,7 +1,6 @@
 ﻿using CMD;
 using FlashLFQ;
 using GUI.DataGridObjects;
-using IO.Thermo;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,6 +10,9 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Media;
+using System.Windows.Navigation;
 using System.Windows.Threading;
 
 namespace GUI
@@ -20,61 +22,198 @@ namespace GUI
     /// </summary>
     public partial class MainWindow : Window
     {
-        private ObservableCollection<SpectraFileForDataGrid> spectraFilesForDataGrid;
-        private ObservableCollection<IdentificationFileForDataGrid> identFilesForDataGrid;
+        private ObservableCollection<SpectraFileForDataGrid> spectraFiles;
+        private ObservableCollection<IdentificationFileForDataGrid> idFiles;
         private BackgroundWorker worker;
         private FlashLfqEngine flashLfqEngine;
+        private FlashLfqSettings settings;
         private FlashLfqResults results;
-        private List<SpectraFileInfo> spectraFileInfo;
         private string outputFolderPath;
+        public static readonly string DefaultCondition = "Default";
+        public static readonly string ExperimentalDesignFilename = "ExperimentalDesign.tsv";
+        public ObservableCollection<string> conditions;
 
         public MainWindow()
         {
             InitializeComponent();
+            PopulateSettings();
 
-            spectraFilesForDataGrid = new ObservableCollection<SpectraFileForDataGrid>();
-            identFilesForDataGrid = new ObservableCollection<IdentificationFileForDataGrid>();
+            spectraFiles = new ObservableCollection<SpectraFileForDataGrid>();
+
+            conditions = new ObservableCollection<string>();
+            ControlConditionComboBox.ItemsSource = conditions;
+
+            // sort the spectra files by condition, then sample, then fraction, then replicate
+            var collectionView = CollectionViewSource.GetDefaultView(spectraFiles);
+            collectionView.SortDescriptions.Add(new SortDescription(nameof(SpectraFileForDataGrid.Condition), ListSortDirection.Ascending));
+            collectionView.SortDescriptions.Add(new SortDescription(nameof(SpectraFileForDataGrid.Sample), ListSortDirection.Ascending));
+            collectionView.SortDescriptions.Add(new SortDescription(nameof(SpectraFileForDataGrid.Fraction), ListSortDirection.Ascending));
+            collectionView.SortDescriptions.Add(new SortDescription(nameof(SpectraFileForDataGrid.Replicate), ListSortDirection.Ascending));
+
+            // file names are readonly
+            spectraFilesDataGrid.Columns[0].IsReadOnly = true;
+            identFilesDataGrid.Columns[0].IsReadOnly = true;
+
+            idFiles = new ObservableCollection<IdentificationFileForDataGrid>();
             worker = new BackgroundWorker();
             worker.DoWork += new DoWorkEventHandler(RunProgram);
+            worker.RunWorkerCompleted += Worker_RunWorkerCompleted;
 
             flashLfqEngine = new FlashLfqEngine(new List<Identification>());
-            spectraFileInfo = new List<SpectraFileInfo>();
 
-            identFilesDataGrid.DataContext = identFilesForDataGrid;
-            dataGridSpectraFiles.DataContext = spectraFilesForDataGrid;
+            identFilesDataGrid.ItemsSource = idFiles;
+            spectraFilesDataGrid.DataContext = spectraFiles;
+
+            BayesianSettings1.Visibility = Visibility.Hidden;
+            BayesianSettings2.Visibility = Visibility.Hidden;
 
             var _writer = new TextBoxWriter(notificationsTextBox);
             Console.SetOut(_writer);
         }
 
+        private void Worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Error == null)
+            {
+                MessageBox.Show("Run complete");
+            }
+        }
+
+        private void PopulateSettings()
+        {
+            settings = new FlashLfqSettings();
+
+            // basic
+            ppmToleranceTextBox.Text = settings.PpmTolerance.ToString("F1");
+            normalizeCheckbox.IsChecked = settings.Normalize;
+            mbrCheckbox.IsChecked = settings.MatchBetweenRuns;
+            sharedPeptideCheckbox.IsChecked = settings.UseSharedPeptidesForProteinQuant;
+            bayesianCheckbox.IsChecked = settings.BayesianFoldChangeAnalysis;
+            FoldChangeCutoffManualTextBox.Text = "0.5";
+
+            // advanced
+            integrateCheckBox.IsChecked = settings.Integrate;
+            precursorIdOnlyCheckbox.IsChecked = settings.IdSpecificCharge;
+            isotopePpmToleranceTextBox.Text = settings.IsotopePpmTolerance.ToString("F1");
+            numIsotopesRequiredTextBox.Text = settings.NumIsotopesRequired.ToString();
+            mbrRtWindowTextBox.Text = settings.MbrRtWindow.ToString("F1");
+            mcmcIterationsTextBox.Text = settings.McmcSteps.ToString();
+            mcmcRandomSeedTextBox.Text = settings.RandomSeed.ToString();
+            requireMsmsIdInConditionCheckbox.IsChecked = settings.RequireMsMsIdentifiedPeptideInConditionForMbr;
+        }
+
+        private void ParseSettings()
+        {
+            // check for ID/spectra files
+            if (!spectraFiles.Any())
+            {
+                throw new Exception("You need to add at least one spectra file!");
+            }
+            if (!idFiles.Any())
+            {
+                throw new Exception("You need to add at least one identification file!");
+            }
+
+            // fold-change cutoff
+            if (manualNullRadioButton.IsChecked.Value)
+            {
+                if (!double.TryParse(FoldChangeCutoffManualTextBox.Text, out double foldChangeCutoff))
+                {
+                    throw new Exception("The fold-change cutoff must be a decimal number");
+                }
+
+                settings.FoldChangeCutoff = double.Parse(FoldChangeCutoffManualTextBox.Text);
+            }
+            else
+            {
+                settings.FoldChangeCutoff = null;
+            }
+
+            // ppm tolerance
+            if (double.TryParse(ppmToleranceTextBox.Text, out double ppmTolerance))
+            {
+                settings.PpmTolerance = ppmTolerance;
+            }
+            else
+            {
+                throw new Exception("The PPM tolerance must be a decimal number");
+            }
+
+            settings.Normalize = normalizeCheckbox.IsChecked.Value;
+            settings.MatchBetweenRuns = mbrCheckbox.IsChecked.Value;
+            settings.UseSharedPeptidesForProteinQuant = sharedPeptideCheckbox.IsChecked.Value;
+            settings.BayesianFoldChangeAnalysis = bayesianCheckbox.IsChecked.Value;
+
+            settings.Integrate = integrateCheckBox.IsChecked.Value;
+            settings.IdSpecificCharge = precursorIdOnlyCheckbox.IsChecked.Value;
+            settings.ControlCondition = (string)ControlConditionComboBox.SelectedItem;
+            settings.RequireMsMsIdentifiedPeptideInConditionForMbr = requireMsmsIdInConditionCheckbox.IsChecked.Value;
+
+            // isotope PPM tolerance
+            if (double.TryParse(isotopePpmToleranceTextBox.Text, out double isotopePpmTolerance))
+            {
+                settings.IsotopePpmTolerance = isotopePpmTolerance;
+            }
+            else
+            {
+                throw new Exception("The isotope PPM tolerance must be a decimal number");
+            }
+
+            // num isotopes required
+            if (int.TryParse(numIsotopesRequiredTextBox.Text, out int numIsotopesRequired))
+            {
+                settings.NumIsotopesRequired = numIsotopesRequired;
+            }
+            else
+            {
+                throw new Exception("The number of isotopes required must be an integer");
+            }
+
+            // mcmc iterations
+            if (int.TryParse(mcmcIterationsTextBox.Text, out int McmcSteps))
+            {
+                settings.McmcSteps = McmcSteps;
+            }
+            else
+            {
+                throw new Exception("The number of MCMC iterations must be an integer");
+            }
+
+            // random seed
+            if (int.TryParse(mcmcRandomSeedTextBox.Text, out int randomSeed))
+            {
+                settings.RandomSeed = randomSeed;
+            }
+            else
+            {
+                throw new Exception("The random seed must be an integer");
+            }
+
+            // MBR time tolerance
+            if (double.TryParse(mbrRtWindowTextBox.Text, out double MbrRtWindow))
+            {
+                settings.MbrRtWindow = MbrRtWindow;
+            }
+            else
+            {
+                throw new Exception("The MBR time window must be a decimal number");
+            }
+
+            settings.ValidateSettings(spectraFiles.Select(p => p.SpectraFileInfo).ToList());
+        }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
         private void RunProgram(object sender, DoWorkEventArgs e)
         {
             RunFlashLfq();
         }
 
-        private void changeSettingsMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            var dialog = new SettingsWindow();
-            dialog.PopulateSettings(flashLfqEngine);
-
-            if (dialog.ShowDialog() == true)
-            {
-                flashLfqEngine = dialog.TempFlashLfqEngine;
-            }
-        }
-
-        private void SetExperDesign_Click(object sender, RoutedEventArgs e)
-        {
-            var dialog = new ExperimentalDesignWindow(spectraFilesForDataGrid);
-            dialog.ShowDialog();
-        }
-
-        private void ClearSpectra_Click(object sender, RoutedEventArgs e)
-        {
-            spectraFilesForDataGrid.Clear();
-            OutputFolderTextBox.Clear();
-        }
-
+        /// <summary>
+        /// This event fires when the "Add Spectra" button is clicked. It opens a Windows dialog 
+        /// to select the desired spectra files.
+        /// </summary>
         private void AddSpectra_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog openFileDialog1 = new Microsoft.Win32.OpenFileDialog
@@ -92,14 +231,13 @@ namespace GUI
                 }
             }
 
-            dataGridSpectraFiles.Items.Refresh();
+            spectraFilesDataGrid.Items.Refresh();
         }
 
-        private void ClearIdentFiles_Click(object sender, RoutedEventArgs e)
-        {
-            identFilesForDataGrid.Clear();
-        }
-
+        /// <summary>
+        /// This event fires when the "Add Identifications" button is clicked. It opens a Windows 
+        /// dialog to select the desired identification files.
+        /// </summary>
         private void AddIdentFile_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog openPicker = new Microsoft.Win32.OpenFileDialog()
@@ -109,6 +247,7 @@ namespace GUI
                 RestoreDirectory = true,
                 Multiselect = true
             };
+
             if (openPicker.ShowDialog() == true)
             {
                 foreach (var filepath in openPicker.FileNames.OrderBy(p => p))
@@ -120,6 +259,9 @@ namespace GUI
             identFilesDataGrid.Items.Refresh();
         }
 
+        /// <summary>
+        /// This event fires when the user has dragged+dropped files into the program.
+        /// </summary>
         private void Window_Drop(object sender, DragEventArgs e)
         {
             if (Run.IsEnabled)
@@ -130,6 +272,7 @@ namespace GUI
                 {
                     foreach (var draggedFilePath in files)
                     {
+                        // folder has been dragged+dropped
                         if (Directory.Exists(draggedFilePath))
                         {
                             foreach (string file in Directory.EnumerateFiles(draggedFilePath, "*.*", SearchOption.AllDirectories))
@@ -137,43 +280,79 @@ namespace GUI
                                 AddAFile(file);
                             }
                         }
+                        // file has been dragged+dropped
                         else
                         {
                             AddAFile(draggedFilePath);
                         }
-                        dataGridSpectraFiles.CommitEdit(DataGridEditingUnit.Row, true);
+                        spectraFilesDataGrid.CommitEdit(DataGridEditingUnit.Row, true);
                         identFilesDataGrid.CommitEdit(DataGridEditingUnit.Row, true);
-                        dataGridSpectraFiles.Items.Refresh();
+                        spectraFilesDataGrid.Items.Refresh();
                         identFilesDataGrid.Items.Refresh();
                     }
                 }
             }
         }
-
+        
+        /// <summary>
+        /// Handles adding a file (spectra or ID file). The source can be by drag+drop or through 
+        /// clicking one of the "Add" buttons.
+        /// </summary>
         private void AddAFile(string filePath)
         {
             string filename = Path.GetFileName(filePath);
             string theExtension = Path.GetExtension(filename).ToLowerInvariant();
 
+            if (theExtension == ".raw")
+            {
+                var licenceAgreement = LicenceAgreementSettings.ReadLicenceSettings();
+
+                if (!licenceAgreement.HasAcceptedThermoLicence)
+                {
+                    var thermoLicenceWindow = new ThermoLicenceAgreementWindow();
+                    thermoLicenceWindow.LicenceText.AppendText(ThermoRawFileReader.ThermoRawFileReaderLicence.ThermoLicenceText);
+                    var dialogResult = thermoLicenceWindow.ShowDialog();
+
+                    if (dialogResult.HasValue && dialogResult.Value == true)
+                    {
+                        licenceAgreement.AcceptLicenceAndWrite();
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+            }
+
             switch (theExtension)
             {
                 case ".raw":
-                    if (!ThermoStaticData.CheckForMsFileReader())
+                case ".mzml":
+                    List<int> existingDefaultSampleNumbers = spectraFiles.Where(p => p.Condition == DefaultCondition)
+                        .Select(p => p.Sample)
+                        .Distinct()
+                        .OrderBy(p => p).ToList();
+
+                    int sampleNumber = 1;
+                    for (int i = 1; i < int.MaxValue; i++)
                     {
-                        AddNotification("Warning! Cannot find Thermo MSFileReader (v3.0 SP2 is preferred); a crash may result from searching this .raw file");
+                        if (!existingDefaultSampleNumbers.Contains(i))
+                        {
+                            sampleNumber = i;
+                            break;
+                        }
                     }
 
-                    goto case ".mzml";
-
-                case ".mzml":
-                    SpectraFileForDataGrid spectraFile = new SpectraFileForDataGrid(filePath);
-                    if (!spectraFilesForDataGrid.Select(f => f.FilePath).Contains(spectraFile.FilePath))
+                    SpectraFileForDataGrid spectraFile = new SpectraFileForDataGrid(filePath, DefaultCondition, sampleNumber, 1, 1);
+                    if (!spectraFiles.Select(f => f.FilePath).Contains(spectraFile.FilePath))
                     {
-                        spectraFilesForDataGrid.Add(spectraFile);
+                        CheckForExistingExperimentalDesignFile(spectraFile);
+                        spectraFiles.Add(spectraFile);
+                        DragAndDropHelperLabelSpectraFiles.Visibility = Visibility.Hidden;
                     }
                     if (string.IsNullOrEmpty(OutputFolderTextBox.Text))
                     {
-                        var pathOfFirstSpectraFile = Path.GetDirectoryName(spectraFilesForDataGrid.First().FilePath);
+                        var pathOfFirstSpectraFile = Path.GetDirectoryName(spectraFiles.First().FilePath);
                         OutputFolderTextBox.Text = Path.Combine(pathOfFirstSpectraFile, @"FlashLFQ_$DATETIME");
                     }
                     break;
@@ -183,40 +362,39 @@ namespace GUI
                 case ".psmtsv":
                 case ".tabular":
                     IdentificationFileForDataGrid identFile = new IdentificationFileForDataGrid(filePath);
-                    if (!identFilesForDataGrid.Select(f => f.FilePath).Contains(identFile.FilePath) && !identFile.FileName.Equals("ExperimentalDesign.tsv"))
+                    if (!idFiles.Select(f => f.FilePath).Contains(identFile.FilePath) && !identFile.FileName.Equals("ExperimentalDesign.tsv"))
                     {
-                        identFilesForDataGrid.Add(identFile);
+                        bool valid = ValidateIdentificationFile(identFile);
+
+                        if (valid)
+                        {
+                            idFiles.Add(identFile);
+                            DragAndDropHelperLabelIdFiles.Visibility = Visibility.Hidden;
+                        }
                     }
                     break;
 
                 default:
+                    //TODO: change this to popup
                     AddNotification("Unrecognized file type: " + theExtension);
                     break;
             }
         }
 
+        /// <summary>
+        /// This event fires when the user has clicked the "Run FlashLFQ" button. First, the program
+        /// checks to see if the input is valid, and if it is, it runs the FlashLFQ engine. If the
+        /// input is not valid, it tells the user why the input is not valid.
+        /// </summary>
         private void Run_Click(object sender, RoutedEventArgs e)
         {
-            // check for valid tasks/spectra files/protein databases
-            if (!spectraFilesForDataGrid.Any())
-            {
-                MessageBox.Show("You need to add at least one spectra file!", "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
-                return;
-            }
-            if (!identFilesForDataGrid.Any())
-            {
-                MessageBox.Show("You need to add at least one identification file!", "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
-                return;
-            }
-
-            // get experimental design
             try
             {
-                SetupSpectraFileInfo();
+                ParseSettings();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Problem setting up run:\n" + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
                 return;
             }
 
@@ -229,31 +407,57 @@ namespace GUI
                 // output folder
                 if (string.IsNullOrEmpty(OutputFolderTextBox.Text))
                 {
-                    var pathOfFirstSpectraFile = Path.GetDirectoryName(spectraFilesForDataGrid.First().FilePath);
+                    var pathOfFirstSpectraFile = Path.GetDirectoryName(spectraFiles.First().FilePath);
                     OutputFolderTextBox.Text = Path.Combine(pathOfFirstSpectraFile, @"FlashLFQ_@$DATETIME");
                 }
 
                 var startTimeForAllFilenames = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss", CultureInfo.InvariantCulture);
                 string outputFolder = OutputFolderTextBox.Text.Replace("$DATETIME", startTimeForAllFilenames);
                 OutputFolderTextBox.Text = outputFolder;
-
-                Run.IsEnabled = false;
-                changeSettingsMenuItem.IsEnabled = false;
-                AddIdentFile.IsEnabled = false;
-                AddSpectra.IsEnabled = false;
-                ClearIdentFiles.IsEnabled = false;
-                ClearSpectra.IsEnabled = false;
-                SetExperDesign.IsEnabled = false;
-
-                dataGridSpectraFiles.IsReadOnly = true;
-                identFilesDataGrid.IsReadOnly = true;
-
                 outputFolderPath = outputFolder;
+                settings.OutputPath = outputFolderPath;
+
+                // write FlashLFQ settings to a file
+                if (!Directory.Exists(settings.OutputPath))
+                {
+                    Directory.CreateDirectory(settings.OutputPath);
+                }
+                Nett.Toml.WriteFile(settings, Path.Combine(settings.OutputPath, "FlashLfqSettings.toml"));
+
+                WriteExperimentalDesignToFile();
+
+                // disable everything except opening output folder
+                Run.IsEnabled = false;
+                AddIdsButton.IsEnabled = false;
+                AddSpectraButton.IsEnabled = false;
+                spectraFilesDataGrid.IsReadOnly = true;
+                identFilesDataGrid.IsReadOnly = true;
+                ppmToleranceTextBox.IsEnabled = false;
+                normalizeCheckbox.IsEnabled = false;
+                mbrCheckbox.IsEnabled = false;
+                sharedPeptideCheckbox.IsEnabled = false;
+                bayesianCheckbox.IsEnabled = false;
+                BayesianSettings1.IsEnabled = false;
+                BayesianSettings2.IsEnabled = false;
+                integrateCheckBox.IsEnabled = false;
+                precursorIdOnlyCheckbox.IsEnabled = false;
+                isotopePpmToleranceTextBox.IsEnabled = false;
+                numIsotopesRequiredTextBox.IsEnabled = false;
+                requireMsmsIdInConditionCheckbox.IsEnabled = false;
+                mbrRtWindowTextBox.IsEnabled = false;
+                mcmcIterationsTextBox.IsEnabled = false;
+                mcmcRandomSeedTextBox.IsEnabled = false;
+
+                OpenOutputFolderButton.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2ecc71"));
 
                 worker.RunWorkerAsync();
             }
         }
 
+        /// <summary>
+        /// This event fires when the user has clicked the "Open" button, to open the output folder.
+        /// This opens the folder via the Windows file explorer.
+        /// </summary>
         private void OpenOutputFolderButton_Click(object sender, RoutedEventArgs e)
         {
             string outputFolder = OutputFolderTextBox.Text;
@@ -293,6 +497,10 @@ namespace GUI
             }
         }
 
+        /// <summary>
+        /// Runs the FlashLFQ engine with the user's defined spectra files, ID files, and FlashLFQ 
+        /// settings.
+        /// </summary>
         private void RunFlashLfq()
         {
             // read IDs
@@ -300,14 +508,14 @@ namespace GUI
 
             try
             {
-                foreach (var identFile in identFilesForDataGrid)
+                foreach (var identFile in idFiles)
                 {
-                    ids = ids.Concat(PsmReader.ReadPsms(identFile.FilePath, false, spectraFileInfo)).ToList();
+                    ids = ids.Concat(PsmReader.ReadPsms(identFile.FilePath, false, spectraFiles.Select(p => p.SpectraFileInfo).ToList())).ToList();
                 }
             }
             catch (Exception e)
             {
-                string errorReportPath = Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName;
+                string errorReportPath = Directory.GetParent(spectraFiles.First().FilePath).FullName;
                 if (outputFolderPath != null)
                 {
                     errorReportPath = outputFolderPath;
@@ -315,7 +523,7 @@ namespace GUI
 
                 try
                 {
-                    OutputWriter.WriteErrorReport(e, Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName,
+                    OutputWriter.WriteErrorReport(e, Directory.GetParent(spectraFiles.First().FilePath).FullName,
                         outputFolderPath);
                 }
                 catch (Exception ex2)
@@ -346,25 +554,28 @@ namespace GUI
             {
                 flashLfqEngine = new FlashLfqEngine(
                     allIdentifications: ids,
-                    normalize: flashLfqEngine.Normalize,
-                    ppmTolerance: flashLfqEngine.PpmTolerance,
-                    isotopeTolerancePpm: flashLfqEngine.IsotopePpmTolerance,
-                    matchBetweenRuns: flashLfqEngine.MatchBetweenRuns,
-                    matchBetweenRunsPpmTolerance: flashLfqEngine.MbrPpmTolerance,
-                    integrate: flashLfqEngine.Integrate,
-                    numIsotopesRequired: flashLfqEngine.NumIsotopesRequired,
-                    idSpecificChargeState: flashLfqEngine.IdSpecificChargeState,
-                    requireMonoisotopicMass: flashLfqEngine.RequireMonoisotopicMass,
+                    normalize: settings.Normalize,
+                    ppmTolerance: settings.PpmTolerance,
+                    matchBetweenRunsPpmTolerance: settings.PpmTolerance,
+                    isotopeTolerancePpm: settings.IsotopePpmTolerance,
+                    matchBetweenRuns: settings.MatchBetweenRuns,
+                    integrate: settings.Integrate,
+                    numIsotopesRequired: settings.NumIsotopesRequired,
+                    idSpecificChargeState: settings.IdSpecificCharge,
                     silent: false,
-                    optionalPeriodicTablePath: null,
-                    maxMbrWindow: flashLfqEngine.MbrRtWindow,
-                    advancedProteinQuant: flashLfqEngine.AdvancedProteinQuant);
+                    maxMbrWindow: settings.MbrRtWindow,
+                    requireMsmsIdInCondition: settings.RequireMsMsIdentifiedPeptideInConditionForMbr,
+                    bayesianProteinQuant: settings.BayesianFoldChangeAnalysis,
+                    proteinQuantBaseCondition: settings.ControlCondition,
+                    proteinQuantFoldChangeCutoff: settings.FoldChangeCutoff,
+                    randomSeed: settings.RandomSeed);
 
                 results = flashLfqEngine.Run();
             }
             catch (Exception ex)
             {
-                string errorReportPath = Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName;
+                string errorReportPath = Directory.GetParent(spectraFiles.First().FilePath).FullName;
+
                 if (outputFolderPath != null)
                 {
                     errorReportPath = outputFolderPath;
@@ -372,7 +583,7 @@ namespace GUI
 
                 try
                 {
-                    OutputWriter.WriteErrorReport(ex, Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName,
+                    OutputWriter.WriteErrorReport(ex, Directory.GetParent(spectraFiles.First().FilePath).FullName,
                         outputFolderPath);
                 }
                 catch (Exception ex2)
@@ -394,7 +605,7 @@ namespace GUI
             {
                 try
                 {
-                    OutputWriter.WriteOutput(Directory.GetParent(spectraFileInfo.First().FullFilePathWithExtension).FullName, results,
+                    OutputWriter.WriteOutput(Directory.GetParent(spectraFiles.First().FilePath).FullName, results, flashLfqEngine.Silent,
                         outputFolderPath);
                 }
                 catch (Exception ex)
@@ -406,63 +617,237 @@ namespace GUI
             }
         }
 
+        /// <summary>
+        /// Writes a notification (text) to the notifications text box. The written text is usually 
+        /// coming from FlashLFQ's console output.
+        /// </summary>
         private void AddNotification(string text)
         {
             notificationsTextBox.AppendText(text + Environment.NewLine);
             notificationsTextBox.ScrollToEnd();
         }
 
+        /// <summary>
+        /// This event fires when text is added to the notifications text box. It scrolls to the bottom
+        /// of the text area, displaying the most recently added notification.
+        /// </summary>
         private void notificationsTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             notificationsTextBox.ScrollToEnd();
         }
 
-        private void SetupSpectraFileInfo()
+        /// <summary>
+        /// Closes the window.
+        /// </summary>
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            string assumedExperimentalDesignPath = Directory.GetParent(spectraFilesForDataGrid.First().FilePath).FullName;
-            assumedExperimentalDesignPath = Path.Combine(assumedExperimentalDesignPath, "ExperimentalDesign.tsv");
+            MainWindowObj.Close();
+        }
 
-            if (File.Exists(assumedExperimentalDesignPath))
+        /// <summary>
+        /// Minimizes the window.
+        /// </summary>
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            MainWindowObj.WindowState = WindowState.Minimized;
+        }
+
+        /// <summary>
+        /// Maximizes the window.
+        /// </summary>
+        private void MaximizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (MainWindowObj.WindowState == WindowState.Normal)
             {
-                var experimentalDesign = File.ReadAllLines(assumedExperimentalDesignPath)
-                    .ToDictionary(p => p.Split('\t')[0], p => p);
-
-                foreach (var file in spectraFilesForDataGrid)
-                {
-                    string filename = Path.GetFileNameWithoutExtension(file.FileName);
-
-                    if (!experimentalDesign.ContainsKey(filename))
-                    {
-                        throw new KeyNotFoundException(filename + " is not defined in the Experimental Design!");
-                    }
-                    var expDesignForThisFile = experimentalDesign[filename];
-                    var split = expDesignForThisFile.Split('\t');
-
-                    string condition = split[1];
-                    int biorep = int.Parse(split[2]);
-                    int fraction = int.Parse(split[3]);
-                    int techrep = int.Parse(split[4]);
-
-                    // experimental design info passed in here for each spectra file
-                    spectraFileInfo.Add(new SpectraFileInfo(fullFilePathWithExtension: file.FilePath,
-                        condition: condition,
-                        biorep: biorep - 1,
-                        fraction: fraction - 1,
-                        techrep: techrep - 1));
-                }
+                MainWindowObj.WindowState = WindowState.Maximized;
             }
             else
             {
-                if (flashLfqEngine.Normalize)
+                MainWindowObj.WindowState = WindowState.Normal;
+            }
+        }
+
+        /// <summary>
+        /// Opens the requested URL with the user's web browser.
+        /// </summary>
+        private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+        {
+            System.Diagnostics.Process.Start(e.Uri.ToString());
+        }
+
+        private void MailTo(object sender, RequestNavigateEventArgs e)
+        {
+            string mailto = string.Format("mailto:{0}?Subject={1}&Body={2}", "mm_support@chem.wisc.edu", "[FlashLFQ Help]", "");
+            System.Diagnostics.Process.Start(mailto);
+        }
+
+        /// <summary>
+        /// Deletes a file (ID or spectra file) from the data grid.
+        /// </summary>
+        private void DeleteFileFromGrid_Click(object sender, RoutedEventArgs e)
+        {
+            SpectraFileForDataGrid spectraFile = (sender as Button).DataContext as SpectraFileForDataGrid;
+            if (spectraFile != null)
+            {
+                spectraFiles.Remove(spectraFile);
+
+                if (!spectraFiles.Any())
                 {
-                    throw new Exception("Could not find experimental design file!\nYou need to define this if you want to normalize");
+                    DragAndDropHelperLabelSpectraFiles.Visibility = Visibility.Visible;
                 }
 
-                foreach (var file in spectraFilesForDataGrid)
+                return;
+            }
+
+            IdentificationFileForDataGrid idFile = (sender as Button).DataContext as IdentificationFileForDataGrid;
+            if (idFile != null)
+            {
+                idFiles.Remove(idFile);
+
+                if (!idFiles.Any())
                 {
-                    // experimental design info passed in here for each spectra file
-                    spectraFileInfo.Add(new SpectraFileInfo(fullFilePathWithExtension: file.FilePath, condition: "", biorep: 0, fraction: 0, techrep: 0));
+                    DragAndDropHelperLabelIdFiles.Visibility = Visibility.Visible;
                 }
+
+                return;
+            }
+        }
+
+        /// <summary>
+        /// Checks that the ID file that the user has added is valid input. This is called
+        /// each time a new ID file is added. The method first checks that the ID header is
+        /// interpretable and then attempts to read the first identification. A popup is displayed
+        /// if there is an error.
+        /// </summary>
+        private bool ValidateIdentificationFile(IdentificationFileForDataGrid idFile)
+        {
+            //TODO
+            bool valid = true;
+
+            return valid;
+        }
+
+        private void WriteExperimentalDesignToFile()
+        {
+            string expDesignFilePath = Path.Combine(Path.GetDirectoryName(outputFolderPath), ExperimentalDesignFilename);
+
+            using (StreamWriter output = new StreamWriter(expDesignFilePath))
+            {
+                output.WriteLine("FileName\tCondition\tBiorep\tFraction\tTechrep");
+
+                foreach (var spectraFile in spectraFiles)
+                {
+                    output.WriteLine(
+                        spectraFile.SpectraFileInfo.FilenameWithoutExtension +
+                        "\t" + spectraFile.Condition +
+                        "\t" + (spectraFile.Sample) +
+                        "\t" + (spectraFile.Fraction) +
+                        "\t" + (spectraFile.Replicate));
+                }
+            }
+        }
+
+        private void CheckForExistingExperimentalDesignFile(SpectraFileForDataGrid file)
+        {
+            try
+            {
+                string experimentalDesignFilePath = Path.Combine(Path.GetDirectoryName(file.FilePath), ExperimentalDesignFilename);
+
+                if (!File.Exists(experimentalDesignFilePath))
+                {
+                    return;
+                }
+
+                var lines = File.ReadAllLines(experimentalDesignFilePath);
+                Dictionary<string, int> typeToIndex = new Dictionary<string, int>();
+
+                for (int l = 0; l < lines.Length; l++)
+                {
+                    var split = lines[l].Split('\t');
+                    if (l == 0)
+                    {
+                        foreach (var type in split)
+                        {
+                            typeToIndex.Add(type, Array.IndexOf(split, type));
+                        }
+                    }
+                    else
+                    {
+                        if (split[typeToIndex["FileName"]] == file.SpectraFileInfo.FilenameWithoutExtension)
+                        {
+                            file.Condition = split[typeToIndex["Condition"]];
+                            file.Sample = int.Parse(split[typeToIndex["Biorep"]]);
+                            file.Fraction = int.Parse(split[typeToIndex["Fraction"]]);
+                            file.Replicate = int.Parse(split[typeToIndex["Techrep"]]);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                // something went wrong trying to read the existing experimental design. not a critical error. just ignore it
+            }
+        }
+
+        private void UpdateKnownConditions()
+        {
+            string selectedControlCondition = (string)ControlConditionComboBox.SelectedItem;
+            conditions.Clear();
+
+            foreach (SpectraFileForDataGrid item in spectraFiles)
+            {
+                if (!conditions.Contains(item.Condition))
+                {
+                    conditions.Add(item.Condition);
+                }
+            }
+
+            if (conditions.Contains(selectedControlCondition))
+            {
+                ControlConditionComboBox.SelectedItem = selectedControlCondition;
+            }
+            else
+            {
+                ControlConditionComboBox.SelectedIndex = -1;
+            }
+        }
+
+        private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // this "if" stuff is here to check if the sender is a tab item
+            // for some weird reason this event also gets triggered by selecting a control condition in the combobox in the settings...
+            // that's why this "if" is here
+            var senderType = e.OriginalSource.GetType().Name;
+
+            if (senderType == "TabControl")
+            {
+                UpdateKnownConditions();
+            }
+        }
+
+        private void BaseConditionComboBox_IsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (ControlConditionComboBox.IsEnabled)
+            {
+                ControlConditionComboBox.SelectedIndex = 0;
+            }
+            else
+            {
+                ControlConditionComboBox.SelectedIndex = -1;
+            }
+        }
+
+        private void BayesianCheckbox_Checked(object sender, RoutedEventArgs e)
+        {
+            if (bayesianCheckbox.IsChecked.Value)
+            {
+                BayesianSettings1.Visibility = Visibility.Visible;
+                BayesianSettings2.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                BayesianSettings1.Visibility = Visibility.Hidden;
+                BayesianSettings2.Visibility = Visibility.Hidden;
             }
         }
     }

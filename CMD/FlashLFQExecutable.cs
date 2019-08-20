@@ -1,46 +1,51 @@
-﻿using System;
+﻿using Fclp;
+using FlashLFQ;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Fclp;
-using FlashLFQ;
 
 namespace CMD
 {
     public class FlashLfqExecutable
     {
+        public static List<string> acceptedSpectrumFileFormats = new List<string> { ".RAW", ".MZML" };
+
         public static void Main(string[] args)
         {
-            // parameters
-            List<string> acceptedSpectrumFileFormats = new List<string> { ".RAW", ".MZML" };
-
-            // setup parameters
-            var p = new FluentCommandLineParser<ApplicationArguments>();
+            var p = new FluentCommandLineParser<FlashLfqSettings>();
 
             p.SetupHelp("?", "help")
              .Callback(text => Console.WriteLine(
                 "Valid arguments:\n" +
-                "--idt [string|identification file path (TSV format)]\n" +
-                "--rep [string|directory containing spectrum data files]\n" +
+                "--idt [string|identification file path]\n" +
+                "--rep [string|directory containing spectral data files]\n" +
                 "--out [string|output directory]\n" +
                 "--ppm [double|ppm tolerance]\n" +
-                "--iso [double|isotopic distribution tolerance in ppm]\n" +
-                "--sil [bool|silent mode]\n" +
-                "--int [bool|integrate features]\n" +
+                "--nor [bool|normalize intensity results]\n" +
                 "--mbr [bool|match between runs]\n" +
+                "--sha [bool|use shared peptides for protein quantification]\n" +
+                "--bay [bool|Bayesian protein fold-change analysis]\n" +
+                "--ctr [string|control condition for Bayesian protein fold-change analysis]\n" +
+                "--fcc [double|fold-change cutoff for Bayesian protein fold-change analysis]\n" +
+
+                "\nAdvanced settings\n" +
+                "--sil [bool|silent mode]\n" +
+                "--int [bool|integrate peak areas (not recommended)]\n" +
+                "--iso [double|isotopic distribution tolerance in ppm]\n" +
                 "--mrt [double|maximum MBR window in minutes]\n" +
                 "--chg [bool|use only precursor charge state]\n" +
-                "--rmm [bool|require observed monoisotopic mass peak]\n" +
                 "--nis [int|number of isotopes required to be observed]\n" +
-                "--nor [bool|normalize intensity results]\n" +
-                "--pro [bool|advanced protein quantification]\n"
+                "--rmc [bool|require MS/MS ID in condition]\n" +
+                "--mcm [int|number of markov-chain monte carlo iterations for the Bayesian protein fold-change analysis]\n" +
+                "--rns [int|random seed for the Bayesian protein fold-change analysis]\n"
             ));
 
-            p.Setup(arg => arg.PsmInputPath) // PSMs file
+            p.Setup(arg => arg.PsmIdentificationPath) // PSMs file
              .As("idt").
              Required();
 
-            p.Setup(arg => arg.RawFilesPath) // spectrum files
+            p.Setup(arg => arg.SpectraFileRepository) // spectrum files
              .As("rep").
              Required();
 
@@ -50,78 +55,119 @@ namespace CMD
             p.Setup(arg => arg.PpmTolerance) // ppm tolerance
              .As("ppm");
 
-            p.Setup(arg => arg.IsotopePpmTolerance) // isotope ppm tolerance
-             .As("iso");
+            p.Setup(arg => arg.Normalize) // normalize
+             .As("nor");
 
+            p.Setup(arg => arg.MatchBetweenRuns) // match between runs
+             .As("mbr");
+
+            // bayesian stats settings
+            p.Setup(arg => arg.UseSharedPeptidesForProteinQuant)
+             .As("sha");
+            
+            p.Setup(arg => arg.BayesianFoldChangeAnalysis)
+             .As("bay");
+            
+            p.Setup(arg => arg.ControlCondition)
+             .As("ctr");
+            
+            p.Setup(arg => arg.FoldChangeCutoff)
+             .As("fcc");
+
+            // advanced settings
             p.Setup(arg => arg.Silent) // do not display output messages
              .As("sil");
 
             p.Setup(arg => arg.Integrate) // integrate
              .As("int");
 
-            p.Setup(arg => arg.MatchBetweenRuns) // match between runs
-             .As("mbr");
-
+            p.Setup(arg => arg.IsotopePpmTolerance) // isotope ppm tolerance
+             .As("iso");
+            
             p.Setup(arg => arg.MbrRtWindow) // maximum match-between-runs window in minutes
              .As("mrt");
 
-            p.Setup(arg => arg.IdSpecificChargeState) // only use PSM-identified charge states
+            p.Setup(arg => arg.IdSpecificCharge) // only use PSM-identified charge states
              .As("chg");
-
-            p.Setup(arg => arg.RequireMonoisotopicMass) // require observation of monoisotopic peak
-             .As("rmm");
 
             p.Setup(arg => arg.NumIsotopesRequired) // num of isotopes required
              .As("nis");
+            
+            p.Setup(arg => arg.RequireMsMsIdentifiedPeptideInConditionForMbr)
+             .As("rmc");
+            
+            p.Setup(arg => arg.McmcSteps)
+             .As("mcm");
+            
+            p.Setup(arg => arg.RandomSeed)
+             .As("rns");
 
-            p.Setup(arg => arg.Normalize) // normalize
-             .As("nor");
+            FlashLfqSettings settings = p.Object;
 
-            p.Setup(arg => arg.AdvancedProteinQuant) // advanced protein quant
-             .As("pro");
-
-            // args are OK - run FlashLFQ
-            if (!p.Parse(args).HasErrors && p.Object.PsmInputPath != null)
+            if (!p.Parse(args).HasErrors && settings.PsmIdentificationPath != null)
             {
-                if (!File.Exists(p.Object.PsmInputPath))
+                // args are OK - run FlashLFQ
+
+                try
                 {
-                    if (!p.Object.Silent)
+                    settings.ValidateCommandLineSettings();
+                }
+                catch (Exception e)
+                {
+                    if (!settings.Silent)
                     {
-                        Console.WriteLine("Could not locate identification file " + p.Object.PsmInputPath);
+                        Console.WriteLine("Error: " + e.Message);
                     }
                     return;
                 }
 
-                if (!Directory.Exists(p.Object.RawFilesPath))
+                // check to see if experimental design file exists
+                string assumedPathToExpDesign = Path.Combine(settings.SpectraFileRepository, "ExperimentalDesign.tsv");
+                if ((settings.Normalize || settings.BayesianFoldChangeAnalysis) && !File.Exists(assumedPathToExpDesign))
                 {
-                    if (!p.Object.Silent)
+                    if (!settings.Silent)
                     {
-                        Console.WriteLine("Could not locate folder " + p.Object.RawFilesPath);
-                    }
-                    return;
-                }
-
-                string assumedPathToExpDesign = Path.Combine(p.Object.RawFilesPath, "ExperimentalDesign.tsv");
-                if (p.Object.Normalize && !File.Exists(assumedPathToExpDesign))
-                {
-                    if (!p.Object.Silent)
-                    {
-                        Console.WriteLine("Could not find experimental design file (required for normalization): " + assumedPathToExpDesign);
+                        Console.WriteLine("Could not find experimental design file " +
+                            "(required for normalization and Bayesian statistical analysis): " + assumedPathToExpDesign);
                     }
                     return;
                 }
 
                 // set up spectra file info
                 List<SpectraFileInfo> spectraFileInfos = new List<SpectraFileInfo>();
-                IEnumerable<string> files = Directory.GetFiles(p.Object.RawFilesPath)
-                    .Where(f => acceptedSpectrumFileFormats.Contains(Path.GetExtension(f).ToUpperInvariant()));
+                List<string> filePaths = Directory.GetFiles(settings.SpectraFileRepository)
+                    .Where(f => acceptedSpectrumFileFormats.Contains(Path.GetExtension(f).ToUpperInvariant())).ToList();
+
+                // check thermo licence agreement
+                if (filePaths.Select(v => Path.GetExtension(v).ToUpper()).Any(f => f == ".RAW"))
+                {
+                    var licenceAgreement = LicenceAgreementSettings.ReadLicenceSettings();
+
+                    if (!licenceAgreement.HasAcceptedThermoLicence)
+                    {
+                        // decided to write this even if it's on silent mode...
+                        Console.WriteLine(ThermoRawFileReader.ThermoRawFileReaderLicence.ThermoLicenceText);
+                        Console.WriteLine("\nIn order to search Thermo .raw files, you must agree to the above terms. Do you agree to the above terms? y/n\n");
+
+                        string res = Console.ReadLine().ToLowerInvariant();
+                        if (res == "y")
+                        {
+                            licenceAgreement.AcceptLicenceAndWrite();
+                        }
+                        else
+                        {
+                            Console.WriteLine("Thermo licence has been declined. Exiting FlashLFQ. You can still search .mzML and .mgf files without agreeing to the Thermo licence.");
+                            return;
+                        }
+                    }
+                }
 
                 if (File.Exists(assumedPathToExpDesign))
                 {
                     var experimentalDesign = File.ReadAllLines(assumedPathToExpDesign)
                         .ToDictionary(v => v.Split('\t')[0], v => v);
 
-                    foreach (var file in files)
+                    foreach (var file in filePaths)
                     {
                         string filename = Path.GetFileNameWithoutExtension(file);
 
@@ -143,21 +189,36 @@ namespace CMD
                 }
                 else
                 {
-                    foreach (var file in files)
+                    for (int i = 0; i < filePaths.Count; i++)
                     {
+                        var file = filePaths[i];
                         spectraFileInfos.Add(new SpectraFileInfo(fullFilePathWithExtension: file,
-                            condition: "",
-                            biorep: 0,
+                            condition: "Default",
+                            biorep: i,
                             fraction: 0,
                             techrep: 0));
                     }
+                }
+
+                // check the validity of the settings and experimental design
+                try
+                {
+                    settings.ValidateSettings(spectraFileInfos);
+                }
+                catch (Exception e)
+                {
+                    if (!settings.Silent)
+                    {
+                        Console.WriteLine("Error: " + e.Message);
+                    }
+                    return;
                 }
 
                 // set up IDs
                 List<Identification> ids;
                 try
                 {
-                    ids = PsmReader.ReadPsms(p.Object.PsmInputPath, p.Object.Silent, spectraFileInfos);
+                    ids = PsmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos);
                 }
                 catch (Exception e)
                 {
@@ -167,10 +228,17 @@ namespace CMD
 
                 if (ids.Any())
                 {
-                    if (!p.Object.Silent)
+                    if (!settings.Silent)
                     {
                         Console.WriteLine("Setup is OK; read in " + ids.Count + " identifications; starting FlashLFQ engine");
                     }
+
+                    // write FlashLFQ settings to a file
+                    if (!Directory.Exists(settings.OutputPath))
+                    {
+                        Directory.CreateDirectory(settings.OutputPath);
+                    }
+                    Nett.Toml.WriteFile(settings, Path.Combine(settings.OutputPath, "FlashLfqSettings.toml"));
 
                     // make engine with desired settings
                     FlashLfqEngine engine = null;
@@ -179,60 +247,57 @@ namespace CMD
                     {
                         engine = new FlashLfqEngine(
                             allIdentifications: ids,
-                            normalize: p.Object.Normalize,
-                            ppmTolerance: p.Object.PpmTolerance,
-                            isotopeTolerancePpm: p.Object.IsotopePpmTolerance,
-                            matchBetweenRuns: p.Object.MatchBetweenRuns,
-                            matchBetweenRunsPpmTolerance: p.Object.MbrPpmTolerance,
-                            integrate: p.Object.Integrate,
-                            numIsotopesRequired: p.Object.NumIsotopesRequired,
-                            idSpecificChargeState: p.Object.IdSpecificChargeState,
-                            requireMonoisotopicMass: p.Object.RequireMonoisotopicMass,
-                            silent: p.Object.Silent,
-                            optionalPeriodicTablePath: null,
-                            maxMbrWindow: p.Object.MbrRtWindow,
-                            advancedProteinQuant: p.Object.AdvancedProteinQuant);
+                            silent: settings.Silent,
+
+                            normalize: settings.Normalize,
+                            ppmTolerance: settings.PpmTolerance,
+                            isotopeTolerancePpm: settings.IsotopePpmTolerance,
+                            integrate: settings.Integrate,
+                            numIsotopesRequired: settings.NumIsotopesRequired,
+                            idSpecificChargeState: settings.IdSpecificCharge,
+
+                            matchBetweenRuns: settings.MatchBetweenRuns,
+                            matchBetweenRunsPpmTolerance: settings.PpmTolerance,
+                            maxMbrWindow: settings.MbrRtWindow,
+
+                            bayesianProteinQuant: settings.BayesianFoldChangeAnalysis,
+                            proteinQuantBaseCondition: settings.ControlCondition,
+                            proteinQuantFoldChangeCutoff: settings.FoldChangeCutoff,
+                            mcmcSteps: settings.McmcSteps,
+                            useSharedPeptidesForProteinQuant: settings.UseSharedPeptidesForProteinQuant,
+                            randomSeed: settings.RandomSeed
+                            );
 
                         // run
                         results = engine.Run();
                     }
                     catch (Exception ex)
                     {
-                        string errorReportPath = Directory.GetParent(files.First()).FullName;
-                        if (p.Object.OutputPath != null)
+                        string errorReportPath = Directory.GetParent(filePaths.First()).FullName;
+                        if (settings.OutputPath != null)
                         {
-                            errorReportPath = p.Object.OutputPath;
+                            errorReportPath = settings.OutputPath;
                         }
 
-                        if (!p.Object.Silent)
+                        if (!settings.Silent)
                         {
                             Console.WriteLine("FlashLFQ has crashed with the following error: " + ex.Message +
                                 ".\nError report written to " + errorReportPath);
                         }
 
-                        OutputWriter.WriteErrorReport(ex, Directory.GetParent(files.First()).FullName, p.Object.OutputPath);
+                        OutputWriter.WriteErrorReport(ex, Directory.GetParent(filePaths.First()).FullName, settings.OutputPath);
                     }
 
                     // output
                     if (results != null)
                     {
-                        if (!p.Object.Silent)
-                        {
-                            Console.WriteLine("Writing output...");
-                        }
-
                         try
                         {
-                            OutputWriter.WriteOutput(p.Object.PsmInputPath, results, p.Object.OutputPath);
-
-                            if (!p.Object.Silent)
-                            {
-                                Console.WriteLine("Finished writing output");
-                            }
+                            OutputWriter.WriteOutput(settings.PsmIdentificationPath, results, settings.Silent, settings.OutputPath);
                         }
                         catch (Exception ex)
                         {
-                            if (!p.Object.Silent)
+                            if (!settings.Silent)
                             {
                                 Console.WriteLine("Could not write FlashLFQ output: " + ex.Message);
                             }
@@ -241,14 +306,14 @@ namespace CMD
                 }
                 else
                 {
-                    if (!p.Object.Silent)
+                    if (!settings.Silent)
                     {
                         Console.WriteLine("No peptide IDs for the specified spectra files were found! " +
                             "Check to make sure the spectra file names match between the ID file and the spectra files");
                     }
                 }
             }
-            else if (p.Parse(args).HasErrors == false && p.Object.PsmInputPath == null)
+            else if (p.Parse(args).HasErrors == false && settings.PsmIdentificationPath == null)
             {
                 // no errors - just requesting help?
             }
@@ -256,26 +321,6 @@ namespace CMD
             {
                 Console.WriteLine("Invalid arguments - type \"--help\" for valid arguments");
             }
-        }
-
-        internal class ApplicationArguments
-        {
-            // settings
-            public string PsmInputPath { get; private set; } = null;
-            public string OutputPath { get; private set; } = null;
-            public string RawFilesPath { get; private set; } = null;
-            public double PpmTolerance { get; private set; } = 10.0;
-            public double IsotopePpmTolerance { get; private set; } = 5.0;
-            public bool MatchBetweenRuns { get; private set; } = false;
-            public double MbrPpmTolerance { get; private set; } = 5.0;
-            public bool Integrate { get; private set; } = false;
-            public int NumIsotopesRequired { get; private set; } = 2;
-            public bool Silent { get; private set; } = false;
-            public bool IdSpecificChargeState { get; private set; } = false;
-            public bool RequireMonoisotopicMass { get; private set; } = true;
-            public double MbrRtWindow { get; private set; } = 1.5;
-            public bool Normalize { get; private set; } = false;
-            public bool AdvancedProteinQuant { get; private set; } = false;
         }
     }
 }

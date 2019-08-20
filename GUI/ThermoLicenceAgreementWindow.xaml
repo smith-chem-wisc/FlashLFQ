@@ -1,0 +1,44 @@
+﻿<Window x:Class="GUI.ThermoLicenceAgreementWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GUI"
+        mc:Ignorable="d"
+        Title="Thermo RawFileReader Licence" Height="450" Width="500"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Background>
+        <LinearGradientBrush StartPoint="-3,-4.5" EndPoint="1,1">
+            <GradientStop Color="#abadb0" Offset="0" />
+            <GradientStop Color="#18191a" Offset="1.0" />
+        </LinearGradientBrush>
+    </Window.Background>
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome x:Name="chrome" GlassFrameThickness="25" ResizeBorderThickness="5" CaptionHeight="25" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="20" />
+        </Grid.RowDefinitions>
+
+        <Label Grid.Row="0" Content="Thermo RawFileReader Licence Agreement" Foreground="DarkGray" Background="Transparent" FontSize="14" FontWeight="Bold" FontStyle="Italic" />
+
+        <RichTextBox x:Name="LicenceText" VerticalScrollBarVisibility="Visible" IsReadOnly="True" IsDocumentEnabled="True" Grid.Row="1" Background="Transparent" Foreground="DarkGray"
+                     BorderThickness="0">
+            <RichTextBox.Resources>
+                <Style TargetType="{x:Type Paragraph}">
+                    <Setter Property="Margin" Value="0" />
+                </Style>
+            </RichTextBox.Resources>
+        </RichTextBox>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="2">
+            <Button Name="AgreeButton" Content="AGREE" Click="AgreeButton_Click" Background="#2ecc71" Foreground="White" FontSize="12" BorderThickness="0" Width="70" FontWeight="Bold" />
+            <Button Name="DisagreeButton" Content="DECLINE" Click="DisagreeButton_Click" Background="#3f3c4d" Foreground="DarkGray" FontSize="12" BorderThickness="0" Width="70" FontWeight="Bold" />
+        </StackPanel>
+    </Grid>
+</Window>

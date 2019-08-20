@@ -5,71 +5,560 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GUI"
         mc:Ignorable="d"
-        Title="FlashLFQ" Drop="Window_Drop" AllowDrop="true" Height="600" Width="500" WindowStartupLocation="CenterScreen" Icon="FlashLFQ_Icon.ico" >
-    <DockPanel>
-        <Menu x:Name="menu" DockPanel.Dock="Top">
-            <MenuItem Header="Settings">
-                <MenuItem Name="changeSettingsMenuItem" Header="Open FlashLFQ Settings" Click="changeSettingsMenuItem_Click" />
-            </MenuItem>
-        </Menu>
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="36" />
-                <RowDefinition Height="50" />
-                <RowDefinition Height="150" />
-            </Grid.RowDefinitions>
-            <GroupBox Header="Identification Files" Name="proteinDatabasesGroupBox" Grid.Row="0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="20" />
-                    </Grid.RowDefinitions>
-                    <DataGrid x:Name="identFilesDataGrid" ItemsSource="{Binding}" />
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="1">
-                        <Button x:Name="AddIdentFile" Content="Add" Click="AddIdentFile_Click" />
-                        <Button x:Name="ClearIdentFiles" Content="Clear" Click="ClearIdentFiles_Click" />
-                    </StackPanel>
-                </Grid>
-            </GroupBox>
-            <GridSplitter
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Stretch"
-                        Background="Silver"
-                        Height="5"
-                        Grid.Row="1"
-                        ResizeDirection="Rows" />
-            <GroupBox Header="Mass Spectra Files" Grid.Row="2" Name="datafilesGroupBox">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="20" />
-                    </Grid.RowDefinitions>
-                    <DataGrid x:Name="dataGridSpectraFiles" ItemsSource="{Binding}" />
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="1">
-                        <Button x:Name="AddSpectra" Content="Add" Click="AddSpectra_Click" />
-                        <Button x:Name="ClearSpectra" Content="Clear" Click="ClearSpectra_Click" />
-                        <Button x:Name="SetExperDesign" Content="Experimental Design" Click="SetExperDesign_Click"/>
-                    </StackPanel>
-                </Grid>
-            </GroupBox>
-            <DockPanel Margin="5" Grid.Row="3" LastChildFill="True">
-                <Button x:Name="OpenOutputFolderButton" Content="Open" Width="40" DockPanel.Dock="Right" Click="OpenOutputFolderButton_Click"></Button>
-                <Label Content="Output Folder:" />
-                <TextBox x:Name="OutputFolderTextBox" ToolTip="$DATETIME is automatically replaced by the current date and time" />
-            </DockPanel>
-            <Button x:Name="Run" Content="Run FlashLFQ" Click="Run_Click" FontSize="24" Grid.Row="4" Margin="5" />
-            <GroupBox Header="Notifications" Grid.Row="5">
-                <RichTextBox x:Name="notificationsTextBox" VerticalScrollBarVisibility="Visible" IsReadOnly="True" TextChanged="notificationsTextBox_TextChanged">
-                    <RichTextBox.Resources>
-                        <Style TargetType="{x:Type Paragraph}">
-                            <Setter Property="Margin" Value="0" />
-                        </Style>
-                    </RichTextBox.Resources>
-                </RichTextBox>
-            </GroupBox>
+        Title="FlashLFQ" Drop="Window_Drop" AllowDrop="true" Height="550" Width="850" 
+        WindowStartupLocation="CenterScreen" Icon="FlashLFQ_Icon.ico" 
+        MinHeight="200" MinWidth="200"
+        Name="MainWindowObj">
+
+    <!--Background gray/black color gradient-->
+    <Window.Background>
+        <LinearGradientBrush StartPoint="-3,-4.5" EndPoint="1,1">
+            <GradientStop Color="#abadb0" Offset="0" />
+            <GradientStop Color="#18191a" Offset="1.0" />
+        </LinearGradientBrush>
+    </Window.Background>
+
+    <!--This lets us use a custom window frame (title bar, etc)-->
+    <!--It disables the minimize/maximize/close buttons though, so we have to create custom ones...-->
+    <WindowChrome.WindowChrome>
+        <WindowChrome x:Name="chrome" GlassFrameThickness="25" ResizeBorderThickness="5" CaptionHeight="25" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <!--Custom CheckBox style-->
+        <Style TargetType="CheckBox" x:Key="SquareCheckbox">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type CheckBox}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!--The checkbox-->
+                            <Border Background="Transparent" BorderBrush="DarkGray" BorderThickness="1" Width="15" Height="15" VerticalAlignment="Bottom" Grid.Column="0">
+                                <Grid>
+                                    <Rectangle x:Name="square" Grid.Column="0" Margin="1" />
+                                </Grid>
+                            </Border>
+
+                            <!--The checkbox text-->
+                            <ContentPresenter Grid.Column="1" x:Name="content" Margin="5,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="square" Property="Fill" Value="DodgerBlue">
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="False">
+                                <Setter TargetName="square" Property="Fill" Value="Transparent">
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--Custom RadioButton style-->
+        <Style TargetType="{x:Type RadioButton}" x:Key="CustomRadioButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type RadioButton}">
+                        <BulletDecorator Background="Transparent">
+                            <!--The button-->
+                            <BulletDecorator.Bullet>
+                                <Grid Height="14" Width="14">
+                                    <Ellipse Name="TickMark" Stroke="DarkGray" StrokeThickness="0" Margin="2"/>
+                                    <Border CornerRadius="10" BorderBrush="DarkGray" BorderThickness="1.5" />
+                                </Grid>
+                            </BulletDecorator.Bullet>
+
+                            <!--Text element-->
+                            <Border Background="Transparent" Margin="5,0,0,0">
+                                <TextBlock Background="Transparent" Foreground="DarkGray">
+                                    <ContentPresenter />
+                                </TextBlock>
+                            </Border>
+                        </BulletDecorator>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="true">
+                                <Setter TargetName="TickMark" Property="Fill" Value="DodgerBlue"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="false">
+                                <Setter TargetName="TickMark" Property="Fill" Value="Transparent"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!--The window frame-->
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <!--Task bar-->
+            <RowDefinition Height="25" />
+            <!--Main area-->
+            <RowDefinition Height="1*" />
+        </Grid.RowDefinitions>
+
+        <!--Task bar (drag/maximize/minimize/close)-->
+        <Grid Grid.Row="0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="40" />
+                    <ColumnDefinition Width="40" />
+                    <ColumnDefinition Width="40" />
+                </Grid.ColumnDefinitions>
+
+                <Label Content="FlashLFQ" Grid.Column="0" Background="Transparent" Foreground="DarkGray" FontStyle="Italic" FontWeight="Black" FontSize="13"/>
+
+                <Button Name="MinimizeButton" Content="-" VerticalAlignment="Top" FontWeight="Bold" VerticalContentAlignment="Center"
+                        Foreground="DarkGray" Click="MinimizeButton_Click" Background="#3f3c4d" BorderThickness="0" Grid.Column="1" WindowChrome.IsHitTestVisibleInChrome="True"
+                        Height="21"/>
+
+                <Button Name="MaximizeButton" Content="+" VerticalAlignment="Top" FontWeight="Bold" VerticalContentAlignment="Center"
+                        Foreground="DarkGray" Click="MaximizeButton_Click" Background="#3f3c4d" BorderThickness="0" Grid.Column="2" WindowChrome.IsHitTestVisibleInChrome="True"
+                        Height="21"/>
+
+                <Button Name="CloseButton" Content="x" VerticalAlignment="Top" FontWeight="Bold" VerticalContentAlignment="Center"
+                        Foreground="DarkGray" Click="CloseButton_Click" Background="#c0392b" BorderThickness="0" Grid.Column="3" WindowChrome.IsHitTestVisibleInChrome="True"
+                        Height="21"/>
+            </Grid>
         </Grid>
-    </DockPanel>
+
+        <!--Main area of the program-->
+        <Grid Background="Transparent" Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+
+            <!--Sets the style template for the tabs on the left side-->
+            <TabControl Grid.Row="0" Background="Transparent" BorderThickness="0" TabStripPlacement="Left" Margin="0,0,0,0" SelectionChanged="TabControl_SelectionChanged">
+                <TabControl.Resources>
+                    <Style TargetType="TabItem">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="TabItem">
+                                    <Grid Height="35" Width="140" Background="#3f3c4d">
+                                        <Border Name="Border" Margin="0,0,0,0" Background="Transparent"
+                                                BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" >
+                                            <ContentPresenter 
+                                                x:Name="ContentSite" 
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Left"
+                                                ContentSource="Header" Margin="5,2,10,2"
+                                                RecognizesAccessKey="True">
+                                            </ContentPresenter>
+                                        </Border>
+                                    </Grid>
+
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Foreground" Value="#2ecc71"/>
+                                            <Setter Property="BorderThickness" Value="0,0,3,0"/>
+                                            <Setter Property="BorderBrush" Value="#2ecc71"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </Trigger>
+
+                                        <Trigger Property="IsSelected" Value="False">
+                                            <Setter Property="Foreground" Value="LightGray"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </TabControl.Resources>
+
+                <!--About tab-->
+                <TabItem Name="AboutTab" Header="About" FontSize="14" TabIndex="0">
+                    <Grid Margin="5,0,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="50"/>
+                            <RowDefinition Height="1*"/>
+                        </Grid.RowDefinitions>
+
+                        <!--Label-->
+                        <Label Content="About" Grid.Row="0" Width="400" Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                 BorderThickness="0" FontSize="32" FontWeight="Bold" Foreground="DarkGray" Margin="-5,-17,0,0" />
+
+                        <TextBlock Foreground="DarkGray" TextWrapping="WrapWithOverflow" Grid.Row="1">
+                            FlashLFQ is a label-free quantification program/algorithm for HPLC-MS/MS proteomics data. It takes a list of peptide identifications (PSMs)
+                            as input, as well as spectra files in .mzML or Thermo .raw format.
+                            Visit the 
+                            <Hyperlink NavigateUri="https://github.com/smith-chem-wisc/FlashLFQ/wiki" RequestNavigate="Hyperlink_RequestNavigate">
+                                wiki
+                            </Hyperlink> 
+                            to learn more.
+                            <LineBreak />
+                            <LineBreak />
+                            <LineBreak />
+                            <LineBreak />
+                            FlashLFQ uses Thermo's RawFileReader reading tool. Copyright © 2016 by Thermo Fisher Scientific, Inc. All rights reserved.
+                        </TextBlock>
+                    </Grid>
+                </TabItem>
+
+                <!--Identifications tab-->
+                <TabItem Name="IdentificationFilesTab" Header="Identifications" FontSize="14" TabIndex="1">
+                    <Grid Margin="5,0,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="50"/>
+                            <RowDefinition Height="60"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="1*"/>
+                        </Grid.RowDefinitions>
+
+                        <!--Label-->
+                        <Label Content="Identifications" Grid.Row="0" Width="400" Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                 BorderThickness="0" FontSize="32" FontWeight="Bold" Foreground="DarkGray" Margin="-5,-17,0,0" />
+
+                        <!--Tutorial text-->
+                        <TextBlock Foreground="DarkGray" Grid.Row="1" TextWrapping="WrapWithOverflow" >
+                            Add your identification (PSM) files here. Accepted file formats are MetaMorpheus .psmtsv, Morpheus .tsv, 
+                            MaxQuant msms.txt, PeptideShaker .tabular, or generic .txt/.tsv
+                        </TextBlock>
+
+                        <!--Button to add ID files-->
+                        <Button Name="AddIdsButton" BorderThickness="0" Grid.Row="2" Width="200" Background="#2ecc71" Content="+ADD IDENTIFICATIONS" 
+                                Foreground="White" Click="AddIdentFile_Click" HorizontalAlignment="Right" FontSize="12" Margin="0,0,5,0" />
+
+                        <!--The list of ID files-->
+                        <DataGrid x:Name="identFilesDataGrid" ItemsSource="{Binding}" Grid.Row="3" Background="#3f3c4d" 
+                                  Foreground="DarkGray" BorderThickness="0" Margin="0,0,5,5" GridLinesVisibility="None" AlternationCount="1" 
+                                  AlternatingRowBackground="#373737" CanUserResizeRows="False" HeadersVisibility="Column" AutoGenerateColumns="False">
+                            <DataGrid.Resources>
+                                <Style TargetType="{x:Type DataGridRow}">
+                                    <Setter Property="Foreground" Value="DarkGray"/>
+                                    <Setter Property="Background" Value="#323232"/>
+                                    <Setter Property="Height" Value="Auto"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="FontSize" Value="12"/>
+                                </Style>
+                                <Style TargetType="{x:Type DataGridColumnHeader}">
+                                    <Setter Property="Background" Value="#3f3c4d"/>
+                                </Style>
+                            </DataGrid.Resources>
+                            <DataGrid.Columns>
+                                <!--The rest of the columns-->
+                                <DataGridTextColumn Header="File" Binding="{Binding FilePath}" Width="590" />
+
+                                <!--Defines the "delete" column-->
+                                <DataGridTemplateColumn>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Click="DeleteFileFromGrid_Click" Content="Delete" Foreground="#c0392b" Background="Transparent" BorderThickness="0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!--Helper label-->
+                        <Label Name="DragAndDropHelperLabelIdFiles" Content="Drag and drop to add, or click on the green button" 
+                               Foreground="DodgerBlue" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="3" />
+                    </Grid>
+                </TabItem>
+
+                <!--Spectra Files tab-->
+                <TabItem Name="SpectraFilesTab" Header="Spectra" FontSize="14" TabIndex="2">
+                    <Grid Margin="5,0,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="50"/>
+                            <RowDefinition Height="60"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="1*"/>
+                        </Grid.RowDefinitions>
+
+                        <!--Label-->
+                        <Label Content="Spectra" Grid.Row="0" Width="400" Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                 BorderThickness="0" FontSize="32" FontWeight="Bold" Foreground="DarkGray" Margin="-5,-17,0,0" />
+
+                        <!--Tutorial text-->
+                        <TextBlock Foreground="DarkGray" Grid.Row="1" TextWrapping="WrapWithOverflow" >
+                            Add your spectra files here. Accepted file formats are .mzML and Thermo .raw. If you have another data format, 
+                            you can convert to .mzML with ProteoWizard's 
+                            <Hyperlink NavigateUri="http://proteowizard.sourceforge.net/download.html" RequestNavigate="Hyperlink_RequestNavigate">
+                            MSConvert
+                            </Hyperlink> 
+                            program.
+                        </TextBlock>
+
+                        <!--Button to add spectra files-->
+                        <Button Name="AddSpectraButton" BorderThickness="0" Grid.Row="2" Width="200" Background="#2ecc71" Content="+ADD SPECTRA" 
+                                Foreground="White" Click="AddSpectra_Click" HorizontalAlignment="Right" FontSize="12" Margin="0,0,5,0" />
+
+                        <!--The list of spectra files-->
+                        <DataGrid x:Name="spectraFilesDataGrid" ItemsSource="{Binding}" Grid.Row="3" Background="#3f3c4d" 
+                                  Foreground="DarkGray" BorderThickness="0" Margin="0,0,5,5" GridLinesVisibility="None" AlternationCount="1" 
+                                  AlternatingRowBackground="#373737" CanUserResizeRows="False" HeadersVisibility="Column" AutoGenerateColumns="False">
+                            <DataGrid.Resources>
+                                <Style TargetType="{x:Type DataGridRow}">
+                                    <Setter Property="Foreground" Value="DarkGray"/>
+                                    <Setter Property="Background" Value="#323232"/>
+                                    <Setter Property="Height" Value="Auto"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="FontSize" Value="12"/>
+                                </Style>
+                                <Style TargetType="{x:Type DataGridColumnHeader}">
+                                    <Setter Property="Background" Value="#3f3c4d"/>
+                                </Style>
+                            </DataGrid.Resources>
+                            <DataGrid.Columns>
+                                <!--The rest of the columns-->
+                                <DataGridTextColumn Header="File" Binding="{Binding FileName}" Width="250" />
+                                <DataGridTextColumn Header="Condition" Binding="{Binding Condition}" Width="110" />
+                                <DataGridTextColumn Header="Sample" Binding="{Binding Sample}" Width="80" />
+                                <DataGridTextColumn Header="Fraction" Binding="{Binding Fraction}" Width="80" />
+                                <DataGridTextColumn Header="Replicate" Binding="{Binding Replicate}" Width="70" />
+
+                                <!--Defines the "delete" column-->
+                                <DataGridTemplateColumn>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Click="DeleteFileFromGrid_Click" Content="Delete" Foreground="#c0392b" Background="Transparent" BorderThickness="0" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!--Helper label-->
+                        <Label Name="DragAndDropHelperLabelSpectraFiles" Content="Drag and drop to add, or click on the green button" 
+                               Foreground="DodgerBlue" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="3" />
+                    </Grid>
+                </TabItem>
+
+                <!--Settings tab-->
+                <TabItem Name="SettingsTab" Header="Settings" FontSize="14" TabIndex="4">
+                    <Grid Margin="5,0,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="50" />
+                            <RowDefinition Height="35" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="70" />
+                            <RowDefinition Height="1*" />
+                        </Grid.RowDefinitions>
+
+                        <Label Content="Settings" Grid.Row="0" Width="400" Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                 BorderThickness="0" FontSize="32" FontWeight="Bold" Foreground="DarkGray" Margin="-5,-17,0,0" />
+
+                        <TextBlock Foreground="DarkGray" TextWrapping="WrapWithOverflow" Grid.Row="1">
+                            Visit the 
+                            <Hyperlink NavigateUri="https://github.com/smith-chem-wisc/FlashLFQ/wiki" RequestNavigate="Hyperlink_RequestNavigate">
+                                wiki
+                            </Hyperlink> 
+                            to learn about FlashLFQ's settings.
+                        </TextBlock>
+
+                        <StackPanel Orientation="Horizontal" Grid.Row="2" 
+                                    ToolTip="The mass tolerance in parts per million for both MS/MS-identified species and match-between-runs">
+                            <TextBox Name="ppmToleranceTextBox" Width="40" Height="21" Background="Transparent" Foreground="DarkGray" 
+                                     BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
+                            <Label Content="PPM Tolerance" Foreground="DarkGray" />
+                        </StackPanel>
+
+                        <CheckBox Name="normalizeCheckbox" Content="Normalize Intensities" Foreground="DarkGray" Grid.Row="3" Style="{StaticResource SquareCheckbox}" 
+                                  ToolTip="Corrects systematic intensity errors with median normalization. The main assumption is that most proteins do not change in abundance between samples" />
+
+                        <CheckBox Name="mbrCheckbox" Content="Match Between Runs" Foreground="DarkGray" Grid.Row="4" Style="{StaticResource SquareCheckbox}"
+                                  ToolTip="Maps MS/MS identifications from one run onto other runs in which they were not identified, using retention time and isotopic envelope similarity"/>
+
+                        <CheckBox Name="sharedPeptideCheckbox" Content="Use shared peptides for protein quantification" Foreground="DarkGray" Grid.Row="5" 
+                                  Style="{StaticResource SquareCheckbox}" 
+                                  ToolTip="Uses peptide sequences shared between proteins for protein quantification" />
+
+                        <CheckBox Name="bayesianCheckbox" Content="Bayesian Protein Fold-Change Analysis" Foreground="DarkGray" 
+                                  Grid.Row="6" Style="{StaticResource SquareCheckbox}" Checked="BayesianCheckbox_Checked" Unchecked="BayesianCheckbox_Checked"
+                                  ToolTip="This estimates each protein's fold-change relative to the control condition using Bayesian statistics. Also calculates posterior error probability (PEP) and false discovery rate (FDR)"/>
+
+                        <StackPanel Name="BayesianSettings1" Orientation="Horizontal" Margin="20,0,0,0" Grid.Row="7" IsEnabled="{Binding IsEnabled, ElementName=bayesianCheckbox}"
+                                    ToolTip="The condition to calculate protein fold-changes relative to">
+                            <ComboBox Name="ControlConditionComboBox" ItemsSource="{Binding}" MinWidth="80" IsEnabledChanged="BaseConditionComboBox_IsEnabledChanged" />
+                            <Label Content="Control Condition" Foreground="DarkGray" />
+                        </StackPanel>
+
+                        <StackPanel Name="BayesianSettings2" Orientation="Vertical" Grid.Row="8" Margin="20,0,0,0" IsEnabled="{Binding IsEnabled, ElementName=bayesianCheckbox}"
+                                    ToolTip="The protein log2-transformed fold-change that is considered to be not important, or noise">
+                            <Label Content="Log2 Fold-change cutoff:" Foreground="DarkGray" />
+                            <RadioButton GroupName="FoldChangeCutoffType" IsChecked="True" Name="empericalNullRadioButton" Content="Determine from data (emperical null)"
+                                         Foreground="DarkGray" Margin="10,0,0,0" Style="{StaticResource CustomRadioButton}" 
+                                         ToolTip="Uses sample-to-sample variance to estimate noise. Works best if there are at least 2 samples per condition" />
+                            <StackPanel Orientation="Horizontal" Margin="10,0,0,0" 
+                                        ToolTip="Manually define a fold-change cutoff in log2 units. Higher values are more statistically conservative">
+                                <RadioButton GroupName="FoldChangeCutoffType" Name="manualNullRadioButton" Content="Manual: " Foreground="DarkGray" 
+                                             Style="{StaticResource CustomRadioButton}" />
+                                <TextBox Name="FoldChangeCutoffManualTextBox" Width="40" Height="21" Foreground="DarkGray" Background="Transparent" 
+                                         BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Expander Header="Advanced Settings" Foreground="DarkGray" Grid.Row="9" Margin="0,20,0,0" >
+                            <Grid Margin="20,0,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="300"/>
+                                    <ColumnDefinition Width="300"/>
+                                </Grid.ColumnDefinitions>
+
+                                <CheckBox Name="integrateCheckBox" Content="Integrate Peak Areas" Foreground="DarkGray" Grid.Row="0" Style="{StaticResource SquareCheckbox}"
+                                          ToolTip="By default, FlashLFQ reports the peak height and not peak area. Enabling integration reports the peak area"/>
+
+                                <CheckBox Name="precursorIdOnlyCheckbox" Content="Only quantify identified charge" Foreground="DarkGray" Grid.Row="1" Style="{StaticResource SquareCheckbox}"
+                                          ToolTip="FlashLFQ will only quantify the identified charge, and will not look for alternative charges"/>
+
+                                <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="2"
+                                            ToolTip="The mass tolerance in parts per million of isotope peaks (e.g., M+1, M+2 peaks)">
+                                    <TextBox Name="isotopePpmToleranceTextBox" Width="40" Foreground="DarkGray" Background="Transparent" BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
+                                    <Label Content="Isotope PPM Tolerance" Foreground="DarkGray" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Grid.Row="3" Margin="2"
+                                            ToolTip="The number of isotopic peaks required to detect an isotopic envelope">
+                                    <TextBox Name="numIsotopesRequiredTextBox" Width="40" Foreground="DarkGray" Background="Transparent" BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
+                                    <Label Content="Number of isotopes required" Foreground="DarkGray" />
+                                </StackPanel>
+
+                                <CheckBox Name="requireMsmsIdInConditionCheckbox" Content="Require MS/MS Identification in Condition" Foreground="DarkGray" Grid.Row="0" 
+                                          Grid.Column="1" Style="{StaticResource SquareCheckbox}" IsEnabled="{Binding IsChecked, ElementName=mbrCheckbox}"
+                                          ToolTip="Only try to match peptides from proteins if an MS/MS identified peptide from that protein was observed in the condition"/>
+
+                                <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="1" Margin="2" IsEnabled="{Binding IsChecked, ElementName=mbrCheckbox}"
+                                            ToolTip="The retention-time error allowed in match-between runs. This is not the systematic time shift, but a sort of &quot;variance&quot; or &quot;error&quot; in the retention time allowed">
+                                    <TextBox Name="mbrRtWindowTextBox" Width="40" Foreground="DarkGray" Background="Transparent" BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
+                                    <Label Content="Maximum MBR window (minutes)" Foreground="DarkGray" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="1" Margin="2" IsEnabled="{Binding IsChecked, ElementName=bayesianCheckbox}"
+                                            ToolTip="The number of iterations to perform for the Markov-Chain Monte Carlo sampler in the Bayesian stats engine. A larger number of iterations will result in a slower but more precise estimate of the protein fold-change, the PEP, and the FDR">
+                                    <TextBox Name="mcmcIterationsTextBox" Width="40" Foreground="DarkGray" Background="Transparent" BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
+                                    <Label Content="MCMC Iterations" Foreground="DarkGray" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Grid.Row="3" Grid.Column="1" Margin="2" IsEnabled="{Binding IsChecked, ElementName=bayesianCheckbox}"
+                                            ToolTip="The seed for the random number generator in the Markov-Chain Monte Carlo sampler. You should probably not change this unless unless you are trying to reproduce an analysis">
+                                    <TextBox Name="mcmcRandomSeedTextBox" Width="40" Foreground="DarkGray" Background="Transparent" BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
+                                    <Label Content="MCMC Random Seed" Foreground="DarkGray" />
+                                </StackPanel>
+                            </Grid>
+                        </Expander>
+                    </Grid>
+                </TabItem>
+
+                <!--Run tab-->
+                <TabItem Name="RunTab" Header="Run" FontSize="14" TabIndex="5">
+                    <Grid Margin="5,0,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="1*" />
+                        </Grid.RowDefinitions>
+
+                        <Label Content="Run" Grid.Row="0" Width="400" Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                 BorderThickness="0" FontSize="32" FontWeight="Bold" Foreground="DarkGray" Margin="-5,-17,0,0" />
+                        
+                        <!--Output folder-->
+                        <DockPanel Margin="0,0,0,0" Grid.Row="1" LastChildFill="True">
+                            <Button x:Name="OpenOutputFolderButton" Content="OPEN" Width="60" DockPanel.Dock="Right" 
+                                    Click="OpenOutputFolderButton_Click" Background="#3f3c4d" Foreground="White" FontSize="12" BorderThickness="0" />
+                            <Label Content="Output Folder:" Foreground="DarkGray" FontSize="12" />
+                            <TextBox x:Name="OutputFolderTextBox" ToolTip="$DATETIME is automatically replaced by the current date and time" Background="Transparent" Foreground="DarkGray" BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
+                        </DockPanel>
+
+                        <!--Run button-->
+                        <Button x:Name="Run" Content="RUN FLASHLFQ" Click="Run_Click" FontSize="14" Grid.Row="2" Margin="10" Height="30"
+                                Width="200" Background="#2ecc71" Foreground="White" BorderThickness="0" />
+
+                        <!--Notifications-->
+                        <GroupBox Header="Notifications" Grid.Row="3" Foreground="DarkGray" BorderThickness="0">
+                            <RichTextBox x:Name="notificationsTextBox" VerticalScrollBarVisibility="Visible" IsReadOnly="True" 
+                                         TextChanged="notificationsTextBox_TextChanged" Background="Transparent" Foreground="DarkGray">
+                                <RichTextBox.Resources>
+                                    <Style TargetType="{x:Type Paragraph}">
+                                        <Setter Property="Margin" Value="0" />
+                                    </Style>
+                                </RichTextBox.Resources>
+                            </RichTextBox>
+                        </GroupBox>
+                    </Grid>
+                </TabItem>
+
+                <!--Statistics tab-->
+                <!--<TabItem Name="StatisticsTab" Header="Statistics" FontSize="14" TabIndex="5">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="50"/>
+                            <RowDefinition Height="60"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="1*"/>
+                        </Grid.RowDefinitions>
+
+                        --><!--Label--><!--
+                        <Label Content="Statistics" Grid.Row="0" Width="400" Height="100" Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                 BorderThickness="0" FontSize="32" FontWeight="Bold" Foreground="DarkGray" Margin="10,0,0,0" />
+
+                        --><!--Tutorial text--><!--
+                        <TextBlock Foreground="DarkGray" Grid.Row="1" Margin="5,0,0,0" TextWrapping="WrapWithOverflow">
+                            You can run FlashLFQ's Bayesian protein quantification engine here, separately from the rest of the algorithm. You can import FlashLFQ peptide
+                            quantification results, or import results from other quantification software if the results are formatted properly.
+                        </TextBlock>
+                    </Grid>
+                </TabItem>-->
+
+                <!--Visualization tab-->
+                <!--<TabItem Name="VisualizationTab" Header="Visualize" FontSize="14" TabIndex="5">
+                </TabItem>-->
+
+                <TabItem Name="HelpTab" Header="Help" FontSize="14" TabIndex="5">
+                    <Grid Margin="5,0,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="1*" />
+                        </Grid.RowDefinitions>
+
+                        <Label Content="Help" Grid.Row="0" Width="400" Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                 BorderThickness="0" FontSize="32" FontWeight="Bold" Foreground="DarkGray" Margin="-5,-17,0,0" />
+
+                        <TextBlock Foreground="DarkGray" TextWrapping="WrapWithOverflow" Grid.Row="1">
+                            If you encounter problems or you have a suggestion, please visit  
+                            <Hyperlink NavigateUri="https://github.com/smith-chem-wisc/FlashLFQ/issues" RequestNavigate="Hyperlink_RequestNavigate">
+                                our issues page
+                            </Hyperlink> 
+                            on GitHub and submit a new issue. If you would prefer to keep your correspondence private, you may email us at 
+                            <Hyperlink NavigateUri="null" RequestNavigate="MailTo">
+                                mm_support@chem.wisc.edu
+                            </Hyperlink>.
+                        </TextBlock>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+        </Grid>
+    </Grid>
 </Window>

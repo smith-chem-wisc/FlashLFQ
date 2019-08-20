@@ -9,7 +9,7 @@ namespace CMD
 {
     public class OutputWriter
     {
-        public static void WriteOutput(string inputPath, FlashLfqResults results, string outputPath = null)
+        public static void WriteOutput(string inputPath, FlashLfqResults results, bool silent, string outputPath = null)
         {
             if (outputPath == null)
             {
@@ -22,17 +22,15 @@ namespace CMD
             {
                 Directory.CreateDirectory(outputPath);
             }
-
-            string append = "_FlashLFQ_";
-            if (inputFileName.ToLowerInvariant().Contains("flashlfq"))
-            {
-                append = "_";
-            }
+            
+            bool bayesianResults = results.ProteinGroups.Any(p => p.Value.ConditionToQuantificationResults.Any());
 
             results.WriteResults(
-                outputPath + Path.DirectorySeparatorChar + inputFileName + append + "QuantifiedPeaks.tsv",
-                outputPath + Path.DirectorySeparatorChar + inputFileName + append + "QuantifiedPeptides.tsv",
-                outputPath + Path.DirectorySeparatorChar + inputFileName + append + "QuantifiedProteins.tsv"
+                Path.Combine(outputPath, "QuantifiedPeaks.tsv"),
+                Path.Combine(outputPath, "QuantifiedPeptides.tsv"),
+                Path.Combine(outputPath, "QuantifiedProteins.tsv"),
+                bayesianResults ? Path.Combine(outputPath, "BayesianFoldChangeAnalysis.tsv") : null,
+                silent
                 );
         }
 
