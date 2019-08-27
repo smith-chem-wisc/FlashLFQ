@@ -49,7 +49,19 @@ namespace CMD
         public void AcceptLicenceAndWrite()
         {
             HasAcceptedThermoLicence = true;
-            Nett.Toml.WriteFile(this, Path.Combine(PathToAssembly, "LicenceAgreements.toml"));
+
+            try
+            {
+                Nett.Toml.WriteFile(this, Path.Combine(PathToAssembly, "LicenceAgreements.toml"));
+            }
+            catch (Exception e)
+            {
+                // for some reason the file could not be written - maybe because we don't have permission to write files to this directory
+                // we can continue on with the data analysis but they will probably need to re-accept the licence every time since we can't store the result
+
+                throw new Exception("Your agreement of the licence could not be stored. Make sure FlashLFQ has permission to write to its folder. " +
+                    "Analysis will continue, but you'll need to accept the licence again next time.");
+            }
         }
     }
 }

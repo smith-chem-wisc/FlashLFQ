@@ -293,7 +293,7 @@ namespace GUI
                 }
             }
         }
-        
+
         /// <summary>
         /// Handles adding a file (spectra or ID file). The source can be by drag+drop or through 
         /// clicking one of the "Add" buttons.
@@ -315,7 +315,14 @@ namespace GUI
 
                     if (dialogResult.HasValue && dialogResult.Value == true)
                     {
-                        licenceAgreement.AcceptLicenceAndWrite();
+                        try
+                        {
+                            licenceAgreement.AcceptLicenceAndWrite();
+                        }
+                        catch (Exception e)
+                        {
+                            MessageBox.Show(e.Message);
+                        }
                     }
                     else
                     {
@@ -843,6 +850,7 @@ namespace GUI
             {
                 BayesianSettings1.Visibility = Visibility.Visible;
                 BayesianSettings2.Visibility = Visibility.Visible;
+                BaseConditionComboBox_IsEnabledChanged(sender, new DependencyPropertyChangedEventArgs());
             }
             else
             {

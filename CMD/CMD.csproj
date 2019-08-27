@@ -12,7 +12,7 @@
   <ItemGroup>
     <PackageReference Include="FluentCommandLineParser" Version="1.5.0.20-commands" />
     <PackageReference Include="MathNet.Numerics" Version="4.8.1" />
-    <PackageReference Include="mzLib" Version="1.0.449" />
+    <PackageReference Include="mzLib" Version="1.0.452" />
     <PackageReference Include="NetSerializer" Version="4.1.0" />
     <PackageReference Include="Nett" Version="0.13.0" />
     <PackageReference Include="SharpLearning.Common.Interfaces" Version="0.26.9" />

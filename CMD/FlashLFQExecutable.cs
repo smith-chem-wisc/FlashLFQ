@@ -64,13 +64,13 @@ namespace CMD
             // bayesian stats settings
             p.Setup(arg => arg.UseSharedPeptidesForProteinQuant)
              .As("sha");
-            
+
             p.Setup(arg => arg.BayesianFoldChangeAnalysis)
              .As("bay");
-            
+
             p.Setup(arg => arg.ControlCondition)
              .As("ctr");
-            
+
             p.Setup(arg => arg.FoldChangeCutoff)
              .As("fcc");
 
@@ -83,7 +83,7 @@ namespace CMD
 
             p.Setup(arg => arg.IsotopePpmTolerance) // isotope ppm tolerance
              .As("iso");
-            
+
             p.Setup(arg => arg.MbrRtWindow) // maximum match-between-runs window in minutes
              .As("mrt");
 
@@ -92,13 +92,13 @@ namespace CMD
 
             p.Setup(arg => arg.NumIsotopesRequired) // num of isotopes required
              .As("nis");
-            
+
             p.Setup(arg => arg.RequireMsMsIdentifiedPeptideInConditionForMbr)
              .As("rmc");
-            
+
             p.Setup(arg => arg.McmcSteps)
              .As("mcm");
-            
+
             p.Setup(arg => arg.RandomSeed)
              .As("rns");
 
@@ -152,7 +152,14 @@ namespace CMD
                         string res = Console.ReadLine().ToLowerInvariant();
                         if (res == "y")
                         {
-                            licenceAgreement.AcceptLicenceAndWrite();
+                            try
+                            {
+                                licenceAgreement.AcceptLicenceAndWrite();
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e.Message);
+                            }
                         }
                         else
                         {
