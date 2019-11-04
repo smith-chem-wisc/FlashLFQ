@@ -3,38 +3,77 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using CommandLine;
 
 namespace CMD
 {
     public class FlashLfqSettings
     {
         // these are used in the command-line version only
+        [Option("idt", Required = true, HelpText = "string|identification file path")]
         public string PsmIdentificationPath { get; set; }
+
+        [Option("rep", Required = true, HelpText = "string|directory containing spectral data files")]
         public string SpectraFileRepository { get; set; }
+
+        [Option("sil", Default = false, HelpText = "bool|silent mode")]
         public bool Silent { get; set; }
 
         // general settings
+        [Option("out", Default = null, HelpText = "string|output directory")]
         public string OutputPath { get; set; }
+
+        [Option("nor", Default = false, HelpText = "bool|normalize intensity results")]
         public bool Normalize { get; set; }
+
+        [Option("ppm", Default = 10, HelpText = "double|ppm tolerance")]
         public double PpmTolerance { get; set; }
+
+        [Option("iso", Default = 5, HelpText = "double|isotopic distribution tolerance in ppm")]
         public double IsotopePpmTolerance { get; set; }
+
+        [Option("int", Default = false, HelpText = "bool|integrate peak areas (not recommended)")]
         public bool Integrate { get; set; }
+
+        [Option("nis", Default = 2, HelpText = "int|number of isotopes required to be observed")]
         public int NumIsotopesRequired { get; set; }
+
+        [Option("chg", Default = false, HelpText = "bool|use only precursor charge state")]
         public bool IdSpecificCharge { get; set; }
+
+        [Option("thr", Default = -1, HelpText = "int|number of CPU threads to use")]
         public int MaxThreads { get; set; }
 
         // MBR settings
+        [Option("mbr", Default = false, HelpText = "bool|match between runs")]
         public bool MatchBetweenRuns { get; set; }
+
+        [Option("mrt", Default = 2.5, HelpText = "double|maximum MBR window in minutes")]
         public double MbrRtWindow { get; set; }
+
+        [Option("rmc", Default = false, HelpText = "bool|require MS/MS ID in condition")]
         public bool RequireMsMsIdentifiedPeptideInConditionForMbr { get; set; }
 
         // Bayesian protein quant settings
+        [Option("bay", Default = false, HelpText = "bool|Bayesian protein fold-change analysis")]
         public bool BayesianFoldChangeAnalysis { get; set; }
+
+        [Option("ctr", Default = null, HelpText = "string|control condition for Bayesian protein fold-change analysis")]
         public string ControlCondition { get; set; }
+
+        [Option("fcc", Default = null, HelpText = "double|fold-change cutoff for Bayesian protein fold-change analysis")]
         public double? FoldChangeCutoff { get; set; }
+
+        [Option("mcm", Default = 3000, HelpText = "int|number of markov-chain monte carlo iterations for the Bayesian protein fold-change analysis")]
         public int McmcSteps { get; set; }
+
+        [Option("bur", Default = 1000, HelpText = "int|number of markov-chain monte carlo burn-in iterations")]
         public int McmcBurninSteps { get; set; }
+
+        [Option("sha", Default = false, HelpText = "bool|use shared peptides for protein quantification")]
         public bool UseSharedPeptidesForProteinQuant { get; set; }
+
+        [Option("rns", HelpText = "int|random seed for the Bayesian protein fold-change analysis")]
         public int? RandomSeed { get; set; }
         //TODO: paired samples
 

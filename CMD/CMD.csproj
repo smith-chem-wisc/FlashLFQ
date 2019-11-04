@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentCommandLineParser" Version="1.5.0.20-commands" />
+    <PackageReference Include="CommandLineParser" Version="2.6.0" />
     <PackageReference Include="MathNet.Numerics" Version="4.8.1" />
     <PackageReference Include="mzLib" Version="1.0.452" />
     <PackageReference Include="NetSerializer" Version="4.1.0" />
