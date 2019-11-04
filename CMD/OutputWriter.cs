@@ -53,6 +53,7 @@ namespace CMD
 
             using (StreamWriter file = new StreamWriter(resultsFileName))
             {
+                file.WriteLine("FlashLFQ version: " + typeof(OutputWriter).Assembly.GetName().Version.ToString());
                 file.WriteLine(SystemInfo.CompleteSystemInfo()); //OS, OS Version, .Net Version, RAM, processor count, MSFileReader .dll versions X3
                 file.Write("e: " + e);
                 file.Write("e.Message: " + e.Message);
