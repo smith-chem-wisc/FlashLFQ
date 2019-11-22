@@ -6,7 +6,7 @@ FlashLFQ is an ultrafast label-free quantification algorithm for mass-spectromet
 This repository is for the stand-alone application of FlashLFQ. FlashLFQ is also bundled into [MetaMorpheus](https://github.com/smith-chem-wisc/MetaMorpheus).
 
 ## Requirements
-The graphical user interface (GUI) version is Windows-only. The .NET framework version of the command-line is also Windows only. Both require [.NET Framework 4.7.1](https://dotnet.microsoft.com/download/dotnet-framework). The command-line .NET Core version can be used on Windows, Linux, or OSX, and require [.NET Core](https://dotnet.microsoft.com/download) to be installed.
+The graphical user interface (GUI) version is Windows-only. The .NET framework version of the command-line is also Windows only. Both require [.NET Framework 4.7.1](https://dotnet.microsoft.com/download/dotnet-framework). The command-line .NET Core version can be used on Windows, Linux, or OSX, and requires [.NET Core](https://dotnet.microsoft.com/download) to be installed.
 
 The input to FlashLFQ is a tab-separated value (TSV) text file of [MS/MS identifications](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Identification-Input-Formats) and one or more bottom-up mass spectra files. Currently, .mzML and .raw file formats are supported. You can convert other formats to .mzML using [MSConvert](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Converting-spectral-data-files-with-MSConvert).
 
