@@ -20,8 +20,6 @@ Alternatively, FlashLFQ is bundled into MetaMorpheus, which can be downloaded [h
 ## Usage
 FlashLFQ can be used as a [command-line program](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Using-the-Command-Line) or in a [graphical user interface (GUI)](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Using-the-Graphical-User-Interface-(GUI)). It is also built into the MetaMorpheus GUI (see [MetaMorpheus](https://github.com/smith-chem-wisc/MetaMorpheus)).
 
-NOTE: On Linux, absolute file paths do not currently work. See Issue [#71](https://github.com/smith-chem-wisc/FlashLFQ/issues/71).
-
 ## Tutorial Vignette
 To get started using FlashLFQ, you may want to walk through the [vignette](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Vignettes). If you want to learn more about how FlashLFQ works, you can browse the [Wiki](https://github.com/smith-chem-wisc/FlashLFQ/wiki). 
 
