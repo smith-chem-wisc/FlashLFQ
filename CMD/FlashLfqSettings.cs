@@ -39,7 +39,7 @@ namespace CMD
         public int NumIsotopesRequired { get; set; }
 
         [Option("chg", Default = false, HelpText = "bool; use only precursor charge state")]
-        public bool IdSpecificCharge { get; set; }
+        public bool IdSpecificChargeState { get; set; }
 
         [Option("thr", Default = -1, HelpText = "int; number of CPU threads to use")]
         public int MaxThreads { get; set; }
@@ -52,17 +52,17 @@ namespace CMD
         public double MbrRtWindow { get; set; }
 
         [Option("rmc", Default = false, HelpText = "bool; require MS/MS ID in condition")]
-        public bool RequireMsMsIdentifiedPeptideInConditionForMbr { get; set; }
+        public bool RequireMsmsIdInCondition { get; set; }
 
         // Bayesian protein quant settings
         [Option("bay", Default = false, HelpText = "bool; Bayesian protein fold-change analysis")]
-        public bool BayesianFoldChangeAnalysis { get; set; }
+        public bool BayesianProteinQuant { get; set; }
 
         [Option("ctr", Default = null, HelpText = "string; control condition for Bayesian protein fold-change analysis")]
-        public string ControlCondition { get; set; }
+        public string ProteinQuantBaseCondition { get; set; }
 
         [Option("fcc", Default = null, HelpText = "double; fold-change cutoff for Bayesian protein fold-change analysis")]
-        public double? FoldChangeCutoff { get; set; }
+        public double? ProteinQuantFoldChangeCutoff { get; set; }
 
         [Option("mcm", Default = 3000, HelpText = "int; number of markov-chain monte carlo iterations for the Bayesian protein fold-change analysis")]
         public int McmcSteps { get; set; }
@@ -87,21 +87,50 @@ namespace CMD
             IsotopePpmTolerance = f.IsotopePpmTolerance;
             Integrate = f.Integrate;
             NumIsotopesRequired = f.NumIsotopesRequired;
-            IdSpecificCharge = f.IdSpecificChargeState;
+            IdSpecificChargeState = f.IdSpecificChargeState;
             MaxThreads = f.MaxThreads;
 
             MatchBetweenRuns = f.MatchBetweenRuns;
             MbrRtWindow = f.MbrRtWindow;
-            RequireMsMsIdentifiedPeptideInConditionForMbr = f.RequireMsmsIdInCondition;
+            RequireMsmsIdInCondition = f.RequireMsmsIdInCondition;
 
-            BayesianFoldChangeAnalysis = f.BayesianProteinQuant;
-            ControlCondition = f.ProteinQuantBaseCondition;
-            FoldChangeCutoff = f.ProteinQuantFoldChangeCutoff;
+            BayesianProteinQuant = f.BayesianProteinQuant;
+            ProteinQuantBaseCondition = f.ProteinQuantBaseCondition;
+            ProteinQuantFoldChangeCutoff = f.ProteinQuantFoldChangeCutoff;
             McmcSteps = f.McmcSteps;
             McmcBurninSteps = f.McmcBurninSteps;
             UseSharedPeptidesForProteinQuant = f.UseSharedPeptidesForProteinQuant;
 
             RandomSeed = bayesianSettings.RandomSeed;
+        }
+
+        public static FlashLfqEngine CreateEngineWithSettings(FlashLfqSettings settings, List<Identification> ids)
+        {
+            return new FlashLfqEngine(
+                allIdentifications: ids,
+                silent: settings.Silent,
+
+                normalize: settings.Normalize,
+                ppmTolerance: settings.PpmTolerance,
+                isotopeTolerancePpm: settings.IsotopePpmTolerance,
+                integrate: settings.Integrate,
+                numIsotopesRequired: settings.NumIsotopesRequired,
+                idSpecificChargeState: settings.IdSpecificChargeState,
+                maxThreads: settings.MaxThreads,
+
+                matchBetweenRuns: settings.MatchBetweenRuns,
+                matchBetweenRunsPpmTolerance: settings.PpmTolerance,
+                maxMbrWindow: settings.MbrRtWindow,
+                requireMsmsIdInCondition: settings.RequireMsmsIdInCondition,
+
+                bayesianProteinQuant: settings.BayesianProteinQuant,
+                proteinQuantBaseCondition: settings.ProteinQuantBaseCondition,
+                proteinQuantFoldChangeCutoff: settings.ProteinQuantFoldChangeCutoff,
+                mcmcSteps: settings.McmcSteps,
+                mcmcBurninSteps: settings.McmcBurninSteps,
+                useSharedPeptidesForProteinQuant: settings.UseSharedPeptidesForProteinQuant,
+                randomSeed: settings.RandomSeed
+                );
         }
 
         public void ValidateCommandLineSettings()
@@ -161,22 +190,22 @@ namespace CMD
             }
 
             // check bayesian stats parameters
-            if (BayesianFoldChangeAnalysis)
+            if (BayesianProteinQuant)
             {
                 if (files.Select(f => f.Condition).Distinct().Count() < 2)
                 {
                     throw new Exception("At least two conditions must be specified to perform the Bayesian fold-change analysis");
                 }
 
-                if (ControlCondition == null)
+                if (ProteinQuantBaseCondition == null)
                 {
                     throw new Exception("The control condition must be specified to perform the Bayesian fold-change analysis");
                 }
 
-                if (!files.Select(f => f.Condition).Contains(ControlCondition))
+                if (!files.Select(f => f.Condition).Contains(ProteinQuantBaseCondition))
                 {
                     throw new Exception("The conditions listed in the ExperimentalDesign file do not contain the specified " +
-                        "control condition: " + ControlCondition);
+                        "control condition: " + ProteinQuantBaseCondition);
                 }
 
                 if (McmcSteps < 500)
@@ -184,7 +213,7 @@ namespace CMD
                     throw new Exception("The number of MCMC iterations must be at least 500");
                 }
 
-                if (FoldChangeCutoff != null && FoldChangeCutoff.Value <= 0)
+                if (ProteinQuantFoldChangeCutoff != null && ProteinQuantFoldChangeCutoff.Value <= 0)
                 {
                     throw new Exception("The fold-change cutoff must be greater than zero");
                 }

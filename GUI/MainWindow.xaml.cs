@@ -82,24 +82,25 @@ namespace GUI
         private void PopulateSettings()
         {
             settings = new FlashLfqSettings();
+            settings.Silent = false;
 
             // basic
             ppmToleranceTextBox.Text = settings.PpmTolerance.ToString("F1");
             normalizeCheckbox.IsChecked = settings.Normalize;
             mbrCheckbox.IsChecked = settings.MatchBetweenRuns;
             sharedPeptideCheckbox.IsChecked = settings.UseSharedPeptidesForProteinQuant;
-            bayesianCheckbox.IsChecked = settings.BayesianFoldChangeAnalysis;
+            bayesianCheckbox.IsChecked = settings.BayesianProteinQuant;
             FoldChangeCutoffManualTextBox.Text = "0.5";
 
             // advanced
             integrateCheckBox.IsChecked = settings.Integrate;
-            precursorIdOnlyCheckbox.IsChecked = settings.IdSpecificCharge;
+            precursorIdOnlyCheckbox.IsChecked = settings.IdSpecificChargeState;
             isotopePpmToleranceTextBox.Text = settings.IsotopePpmTolerance.ToString("F1");
             numIsotopesRequiredTextBox.Text = settings.NumIsotopesRequired.ToString();
             mbrRtWindowTextBox.Text = settings.MbrRtWindow.ToString("F1");
             mcmcIterationsTextBox.Text = settings.McmcSteps.ToString();
             mcmcRandomSeedTextBox.Text = settings.RandomSeed.ToString();
-            requireMsmsIdInConditionCheckbox.IsChecked = settings.RequireMsMsIdentifiedPeptideInConditionForMbr;
+            requireMsmsIdInConditionCheckbox.IsChecked = settings.RequireMsmsIdInCondition;
         }
 
         private void ParseSettings()
@@ -122,11 +123,11 @@ namespace GUI
                     throw new Exception("The fold-change cutoff must be a decimal number");
                 }
 
-                settings.FoldChangeCutoff = double.Parse(FoldChangeCutoffManualTextBox.Text);
+                settings.ProteinQuantFoldChangeCutoff = double.Parse(FoldChangeCutoffManualTextBox.Text);
             }
             else
             {
-                settings.FoldChangeCutoff = null;
+                settings.ProteinQuantFoldChangeCutoff = null;
             }
 
             // ppm tolerance
@@ -142,12 +143,12 @@ namespace GUI
             settings.Normalize = normalizeCheckbox.IsChecked.Value;
             settings.MatchBetweenRuns = mbrCheckbox.IsChecked.Value;
             settings.UseSharedPeptidesForProteinQuant = sharedPeptideCheckbox.IsChecked.Value;
-            settings.BayesianFoldChangeAnalysis = bayesianCheckbox.IsChecked.Value;
+            settings.BayesianProteinQuant = bayesianCheckbox.IsChecked.Value;
 
             settings.Integrate = integrateCheckBox.IsChecked.Value;
-            settings.IdSpecificCharge = precursorIdOnlyCheckbox.IsChecked.Value;
-            settings.ControlCondition = (string)ControlConditionComboBox.SelectedItem;
-            settings.RequireMsMsIdentifiedPeptideInConditionForMbr = requireMsmsIdInConditionCheckbox.IsChecked.Value;
+            settings.IdSpecificChargeState = precursorIdOnlyCheckbox.IsChecked.Value;
+            settings.ProteinQuantBaseCondition = (string)ControlConditionComboBox.SelectedItem;
+            settings.RequireMsmsIdInCondition = requireMsmsIdInConditionCheckbox.IsChecked.Value;
 
             // isotope PPM tolerance
             if (double.TryParse(isotopePpmToleranceTextBox.Text, out double isotopePpmTolerance))
@@ -559,31 +560,7 @@ namespace GUI
             // run FlashLFQ engine
             try
             {
-                flashLfqEngine = new FlashLfqEngine(
-                    allIdentifications: ids,
-                    silent: false,
-
-                    normalize: settings.Normalize,
-                    ppmTolerance: settings.PpmTolerance,
-                    isotopeTolerancePpm: settings.IsotopePpmTolerance,
-                    integrate: settings.Integrate,
-                    numIsotopesRequired: settings.NumIsotopesRequired,
-                    idSpecificChargeState: settings.IdSpecificCharge,
-                    maxThreads: settings.MaxThreads,
-
-                    matchBetweenRuns: settings.MatchBetweenRuns,
-                    matchBetweenRunsPpmTolerance: settings.PpmTolerance,
-                    maxMbrWindow: settings.MbrRtWindow,
-                    requireMsmsIdInCondition: settings.RequireMsMsIdentifiedPeptideInConditionForMbr,
-
-                    bayesianProteinQuant: settings.BayesianFoldChangeAnalysis,
-                    proteinQuantBaseCondition: settings.ControlCondition,
-                    proteinQuantFoldChangeCutoff: settings.FoldChangeCutoff,
-                    mcmcSteps: settings.McmcSteps,
-                    mcmcBurninSteps: settings.McmcBurninSteps,
-                    useSharedPeptidesForProteinQuant: settings.UseSharedPeptidesForProteinQuant,
-                    randomSeed: settings.RandomSeed
-                    );
+                flashLfqEngine = FlashLfqSettings.CreateEngineWithSettings(settings, ids);
 
                 results = flashLfqEngine.Run();
             }

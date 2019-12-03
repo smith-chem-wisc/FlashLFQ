@@ -50,7 +50,7 @@ namespace CMD
 
             // check to see if experimental design file exists
             string assumedPathToExpDesign = Path.Combine(settings.SpectraFileRepository, "ExperimentalDesign.tsv");
-            if ((settings.Normalize || settings.BayesianFoldChangeAnalysis) && !File.Exists(assumedPathToExpDesign))
+            if ((settings.Normalize || settings.BayesianProteinQuant) && !File.Exists(assumedPathToExpDesign))
             {
                 if (!settings.Silent)
                 {
@@ -179,31 +179,7 @@ namespace CMD
                 FlashLfqResults results = null;
                 try
                 {
-                    engine = new FlashLfqEngine(
-                        allIdentifications: ids,
-                        silent: settings.Silent,
-
-                        normalize: settings.Normalize,
-                        ppmTolerance: settings.PpmTolerance,
-                        isotopeTolerancePpm: settings.IsotopePpmTolerance,
-                        integrate: settings.Integrate,
-                        numIsotopesRequired: settings.NumIsotopesRequired,
-                        idSpecificChargeState: settings.IdSpecificCharge,
-                        maxThreads: settings.MaxThreads,
-
-                        matchBetweenRuns: settings.MatchBetweenRuns,
-                        matchBetweenRunsPpmTolerance: settings.PpmTolerance,
-                        maxMbrWindow: settings.MbrRtWindow,
-                        requireMsmsIdInCondition: settings.RequireMsMsIdentifiedPeptideInConditionForMbr,
-
-                        bayesianProteinQuant: settings.BayesianFoldChangeAnalysis,
-                        proteinQuantBaseCondition: settings.ControlCondition,
-                        proteinQuantFoldChangeCutoff: settings.FoldChangeCutoff,
-                        mcmcSteps: settings.McmcSteps,
-                        mcmcBurninSteps: settings.McmcBurninSteps,
-                        useSharedPeptidesForProteinQuant: settings.UseSharedPeptidesForProteinQuant,
-                        randomSeed: settings.RandomSeed
-                        );
+                    engine = FlashLfqSettings.CreateEngineWithSettings(settings, ids);
 
                     // run
                     results = engine.Run();
