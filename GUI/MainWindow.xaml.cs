@@ -561,21 +561,29 @@ namespace GUI
             {
                 flashLfqEngine = new FlashLfqEngine(
                     allIdentifications: ids,
+                    silent: false,
+
                     normalize: settings.Normalize,
                     ppmTolerance: settings.PpmTolerance,
-                    matchBetweenRunsPpmTolerance: settings.PpmTolerance,
                     isotopeTolerancePpm: settings.IsotopePpmTolerance,
-                    matchBetweenRuns: settings.MatchBetweenRuns,
                     integrate: settings.Integrate,
                     numIsotopesRequired: settings.NumIsotopesRequired,
                     idSpecificChargeState: settings.IdSpecificCharge,
-                    silent: false,
+                    maxThreads: settings.MaxThreads,
+
+                    matchBetweenRuns: settings.MatchBetweenRuns,
+                    matchBetweenRunsPpmTolerance: settings.PpmTolerance,
                     maxMbrWindow: settings.MbrRtWindow,
                     requireMsmsIdInCondition: settings.RequireMsMsIdentifiedPeptideInConditionForMbr,
+
                     bayesianProteinQuant: settings.BayesianFoldChangeAnalysis,
                     proteinQuantBaseCondition: settings.ControlCondition,
                     proteinQuantFoldChangeCutoff: settings.FoldChangeCutoff,
-                    randomSeed: settings.RandomSeed);
+                    mcmcSteps: settings.McmcSteps,
+                    mcmcBurninSteps: settings.McmcBurninSteps,
+                    useSharedPeptidesForProteinQuant: settings.UseSharedPeptidesForProteinQuant,
+                    randomSeed: settings.RandomSeed
+                    );
 
                 results = flashLfqEngine.Run();
             }

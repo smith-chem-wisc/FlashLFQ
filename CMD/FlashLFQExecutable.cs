@@ -189,15 +189,18 @@ namespace CMD
                         integrate: settings.Integrate,
                         numIsotopesRequired: settings.NumIsotopesRequired,
                         idSpecificChargeState: settings.IdSpecificCharge,
+                        maxThreads: settings.MaxThreads,
 
                         matchBetweenRuns: settings.MatchBetweenRuns,
                         matchBetweenRunsPpmTolerance: settings.PpmTolerance,
                         maxMbrWindow: settings.MbrRtWindow,
+                        requireMsmsIdInCondition: settings.RequireMsMsIdentifiedPeptideInConditionForMbr,
 
                         bayesianProteinQuant: settings.BayesianFoldChangeAnalysis,
                         proteinQuantBaseCondition: settings.ControlCondition,
                         proteinQuantFoldChangeCutoff: settings.FoldChangeCutoff,
                         mcmcSteps: settings.McmcSteps,
+                        mcmcBurninSteps: settings.McmcBurninSteps,
                         useSharedPeptidesForProteinQuant: settings.UseSharedPeptidesForProteinQuant,
                         randomSeed: settings.RandomSeed
                         );
