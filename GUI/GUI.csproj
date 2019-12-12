@@ -200,6 +200,10 @@
     <Resource Include="FlashLFQ_Icon.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CMD\CMD.csproj">
+      <Project>{7af2532b-0108-403b-a05a-1cc60f2a7407}</Project>
+      <Name>CMD</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Util\Util.csproj">
       <Project>{f40822de-e0fa-4223-8f03-d6bdbc43c157}</Project>
       <Name>Util</Name>
