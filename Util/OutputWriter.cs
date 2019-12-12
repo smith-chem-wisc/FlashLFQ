@@ -5,7 +5,7 @@ using System.Linq;
 using FlashLFQ;
 using MzLibUtil;
 
-namespace CMD
+namespace Util
 {
     public class OutputWriter
     {

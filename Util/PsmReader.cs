@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace CMD
+namespace Util
 {
     enum PsmFileType { MetaMorpheus, Morpheus, MaxQuant, PeptideShaker, Generic, Unknown }
 

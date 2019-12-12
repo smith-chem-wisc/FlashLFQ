@@ -12,7 +12,7 @@
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.6.0" />
     <PackageReference Include="MathNet.Numerics" Version="4.8.1" />
-    <PackageReference Include="mzLib" Version="1.0.452" />
+    <PackageReference Include="mzLib" Version="1.0.463" />
     <PackageReference Include="NetSerializer" Version="4.1.0" />
     <PackageReference Include="Nett" Version="0.13.0" />
     <PackageReference Include="SharpLearning.Common.Interfaces" Version="0.26.9" />
@@ -24,6 +24,10 @@
     <PackageReference Include="SharpLearning.Metrics" Version="0.26.9" />
     <PackageReference Include="SharpLearning.Optimization" Version="0.26.9" />
     <PackageReference Include="SharpLearning.RandomForest" Version="0.26.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Util\Util.csproj" />
   </ItemGroup>
 
   <ItemGroup>

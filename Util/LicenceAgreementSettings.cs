@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace CMD
+namespace Util
 {
     public class LicenceAgreementSettings
     {
