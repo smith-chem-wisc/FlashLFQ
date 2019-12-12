@@ -26,6 +26,7 @@ namespace Util
         private static int _organismCol;
 
         private static Dictionary<string, double> _modSequenceToMonoMass;
+        private static Dictionary<string, ProteinGroup> allProteinGroups;
 
         private static readonly Dictionary<PsmFileType, string[]> delimiters = new Dictionary<PsmFileType, string[]>
         {
@@ -35,14 +36,22 @@ namespace Util
             { PsmFileType.Generic, new string[] { ";" } },
             { PsmFileType.PeptideShaker, new string[] { ", " } },
         };
-        
+
         public static List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles)
         {
-            Dictionary<string, ProteinGroup> allProteinGroups = new Dictionary<string, ProteinGroup>();
-            _modSequenceToMonoMass = new Dictionary<string, double>();
+            if (_modSequenceToMonoMass == null)
+            {
+                _modSequenceToMonoMass = new Dictionary<string, double>();
+            }
+
+            if (allProteinGroups == null)
+            {
+                allProteinGroups = new Dictionary<string, ProteinGroup>();
+            }
+
             List<Identification> ids = new List<Identification>();
             PsmFileType fileType = PsmFileType.Unknown;
-            
+
             if (!silent)
             {
                 Console.WriteLine("Opening PSM file " + filepath);
