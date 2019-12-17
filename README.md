@@ -5,6 +5,9 @@ FlashLFQ is an ultrafast label-free quantification algorithm for mass-spectromet
 
 This repository is for the stand-alone application of FlashLFQ. FlashLFQ is also bundled into [MetaMorpheus](https://github.com/smith-chem-wisc/MetaMorpheus).
 
+## Getting Started
+To get started using FlashLFQ, please try the [vignette](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Vignettes). This is a helpful tutorial that provides the necessary input (spectra files, etc.) for you to try FlashLFQ. If you want to learn more about how FlashLFQ works, please check out the [Wiki](https://github.com/smith-chem-wisc/FlashLFQ/wiki).
+
 ## Requirements
 
 **Windows software requirements:**
@@ -16,9 +19,6 @@ This repository is for the stand-alone application of FlashLFQ. FlashLFQ is also
 **Input requirements:**
 - Tab-separated text file of [MS/MS identifications](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Identification-Input-Formats) (.tsv, .psmtsv., .txt)
 - One or more bottom-up mass spectra files. Supported formats are .raw or .mzML file formats on Windows, or .mzML format on Linux/OSX. You can convert other formats to .mzML using [MSConvert](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Converting-spectral-data-files-with-MSConvert).
-
-## Getting Started
-To get started using FlashLFQ, walk through the [vignette](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Vignettes). If you want to learn more about how FlashLFQ works, you can browse the [Wiki](https://github.com/smith-chem-wisc/FlashLFQ/wiki).
 
 ## Download
 To download the latest standalone version of FlashLFQ, go [here](https://github.com/smith-chem-wisc/FlashLFQ/releases/latest). Click the FlashLFQ.zip file and extract the contents to a desired location on your computer.
@@ -32,3 +32,5 @@ FlashLFQ can be used as a [command-line program](https://github.com/smith-chem-w
     To do: 
     Intensity imputation for missing values
     
+## Help/Support
+There are two methods to contact us. You can create a new issue on the [GitHub Issues page](https://github.com/smith-chem-wisc/FlashLFQ/issues) if you are comfortable with your question being public. This helps other people, because it is likely that someone else has the same question. For private correspondance, please email mm_support at chem dot wisc dot edu.
