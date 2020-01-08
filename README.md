@@ -2,7 +2,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/5mue0eiapbb6gk0u?svg=true)](https://ci.appveyor.com/project/robertmillikin/flashlfq)
 
 ## Docker Image
-[![](https://images.microbadger.com/badges/version/smithchemwisc/flashlfq:1.0.3.svg)](https://microbadger.com/images/smithchemwisc/flashlfq:1.0.3 "Get your own version badge on microbadger.com")
+[![](https://images.microbadger.com/badges/version/smithchemwisc/flashlfq:1.0.3.svg)](https://hub.docker.com/repository/docker/smithchemwisc/flashlfq)
 
 ## About
 FlashLFQ is an ultrafast label-free quantification algorithm for mass-spectrometry proteomics. 
@@ -37,6 +37,9 @@ FlashLFQ can be used as a [command-line program](https://github.com/smith-chem-w
 ## Development Status
     To do: 
     Intensity imputation for missing values
-    
-## Help/Support
+
+## Help - Wiki
+The [Wiki](https://github.com/smith-chem-wisc/FlashLFQ/wiki) contains a lot of useful information including [a description of FlashLFQ's settings](https://github.com/smith-chem-wisc/FlashLFQ/wiki/FlashLFQ's-Settings), how to [get started with our vignette](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Vignettes), and how to [interpret the results in the Bayesian quantification file](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Interpreting-Results). Check it out!
+
+## Help - Email
 There are two methods to contact us. You can create a new issue on the [GitHub Issues page](https://github.com/smith-chem-wisc/FlashLFQ/issues) if you are comfortable with your question being public. This helps other people, because it is likely that someone else has the same question. For private correspondance, please email mm_support at chem dot wisc dot edu.
