@@ -2,7 +2,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/5mue0eiapbb6gk0u?svg=true)](https://ci.appveyor.com/project/robertmillikin/flashlfq)
 
 ## Docker Image
-[![](https://images.microbadger.com/badges/version/smithchemwisc/flashlfq:1.0.3.svg)](https://hub.docker.com/r/smithchemwisc/flashlfq/tags)
+[![](https://images.microbadger.com/badges/version/smithchemwisc/flashlfq.svg)](https://hub.docker.com/r/smithchemwisc/flashlfq/tags)
 
 ## About
 FlashLFQ is an ultrafast label-free quantification algorithm for mass-spectrometry proteomics. 
