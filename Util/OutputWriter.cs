@@ -57,10 +57,17 @@ namespace Util
                 file.WriteLine(SystemInfo.CompleteSystemInfo()); //OS, OS Version, .Net Version, RAM, processor count, MSFileReader .dll versions X3
                 file.Write("e: " + e);
                 file.Write("e.Message: " + e.Message);
-                file.Write("e.InnerException: " + e.InnerException);
+                file.Write("e.Data: " + e.Data);
+                
                 file.Write("e.Source: " + e.Source);
                 file.Write("e.StackTrace: " + e.StackTrace);
                 file.Write("e.TargetSite: " + e.TargetSite);
+
+                while (e.InnerException != null)
+                {
+                    e = e.InnerException;
+                    file.Write("e.InnerException: " + e.InnerException);
+                }
             }
         }
     }

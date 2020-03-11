@@ -399,7 +399,7 @@
                         <StackPanel Name="BayesianSettings2" Orientation="Vertical" Grid.Row="8" Margin="20,0,0,0" IsEnabled="{Binding IsEnabled, ElementName=bayesianCheckbox}"
                                     ToolTip="The protein log2-transformed fold-change that is considered to be not important, or noise">
                             <Label Content="Log2 Fold-change cutoff:" Foreground="DarkGray" />
-                            <RadioButton GroupName="FoldChangeCutoffType" IsChecked="True" Name="empericalNullRadioButton" Content="Determine from data (emperical null)"
+                            <RadioButton GroupName="FoldChangeCutoffType" IsChecked="True" Name="empericalNullRadioButton" Content="Determine from data (emperical null hypothesis)"
                                          Foreground="DarkGray" Margin="10,0,0,0" Style="{StaticResource CustomRadioButton}" 
                                          ToolTip="Uses sample-to-sample variance to estimate noise. Works best if there are at least 2 samples per condition" />
                             <StackPanel Orientation="Horizontal" Margin="10,0,0,0" 
