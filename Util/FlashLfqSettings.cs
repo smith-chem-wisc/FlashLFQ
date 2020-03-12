@@ -61,8 +61,8 @@ namespace Util
         [Option("ctr", Default = null, HelpText = "string; control condition for Bayesian protein fold-change analysis")]
         public string ProteinQuantBaseCondition { get; set; }
 
-        [Option("fcc", Default = null, HelpText = "double; fold-change cutoff for Bayesian protein fold-change analysis")]
-        public double? ProteinQuantFoldChangeCutoff { get; set; }
+        [Option("fcc", Default = 0.1, HelpText = "double; fold-change cutoff for Bayesian protein fold-change analysis")]
+        public double ProteinQuantFoldChangeCutoff { get; set; }
 
         [Option("mcm", Default = 3000, HelpText = "int; number of markov-chain monte carlo iterations for the Bayesian protein fold-change analysis")]
         public int McmcSteps { get; set; }
@@ -213,7 +213,7 @@ namespace Util
                     throw new Exception("The number of MCMC iterations must be at least 500");
                 }
 
-                if (ProteinQuantFoldChangeCutoff != null && ProteinQuantFoldChangeCutoff.Value <= 0)
+                if (ProteinQuantFoldChangeCutoff < 0)
                 {
                     throw new Exception("The fold-change cutoff must be greater than zero");
                 }

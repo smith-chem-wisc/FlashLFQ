@@ -354,7 +354,7 @@
                             <RowDefinition Height="28" />
                             <RowDefinition Height="28" />
                             <RowDefinition Height="28" />
-                            <RowDefinition Height="70" />
+                            <RowDefinition Height="29" />
                             <RowDefinition Height="1*" />
                         </Grid.RowDefinitions>
 
@@ -396,19 +396,11 @@
                             <Label Content="Control Condition" Foreground="DarkGray" />
                         </StackPanel>
 
-                        <StackPanel Name="BayesianSettings2" Orientation="Vertical" Grid.Row="8" Margin="20,0,0,0" IsEnabled="{Binding IsEnabled, ElementName=bayesianCheckbox}"
-                                    ToolTip="The protein log2-transformed fold-change that is considered to be not important, or noise">
+                        <StackPanel Name="BayesianSettings2" Orientation="Horizontal" Grid.Row="8" Margin="20,0,0,0" IsEnabled="{Binding IsEnabled, ElementName=bayesianCheckbox}"
+                                    ToolTip="The protein log2-transformed fold-change that is considered to be not important, or background">
                             <Label Content="Log2 Fold-change cutoff:" Foreground="DarkGray" />
-                            <RadioButton GroupName="FoldChangeCutoffType" IsChecked="True" Name="empericalNullRadioButton" Content="Determine from data (emperical null hypothesis)"
-                                         Foreground="DarkGray" Margin="10,0,0,0" Style="{StaticResource CustomRadioButton}" 
-                                         ToolTip="Uses sample-to-sample variance to estimate noise. Works best if there are at least 2 samples per condition" />
-                            <StackPanel Orientation="Horizontal" Margin="10,0,0,0" 
-                                        ToolTip="Manually define a fold-change cutoff in log2 units. Higher values are more statistically conservative">
-                                <RadioButton GroupName="FoldChangeCutoffType" Name="manualNullRadioButton" Content="Manual: " Foreground="DarkGray" 
-                                             Style="{StaticResource CustomRadioButton}" />
-                                <TextBox Name="FoldChangeCutoffManualTextBox" Width="40" Height="21" Foreground="DarkGray" Background="Transparent" 
+                            <TextBox Name="FoldChangeCutoffManualTextBox" Width="40" Height="21" Foreground="DarkGray" Background="Transparent" 
                                          BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
-                            </StackPanel>
                         </StackPanel>
 
                         <Expander Header="Advanced Settings" Foreground="DarkGray" Grid.Row="9" Margin="0,20,0,0" >

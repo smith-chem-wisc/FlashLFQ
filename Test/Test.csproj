@@ -45,31 +45,31 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BayesianEstimation, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\BayesianEstimation.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\BayesianEstimation.dll</HintPath>
     </Reference>
     <Reference Include="Chemistry, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\Chemistry.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\Chemistry.dll</HintPath>
     </Reference>
     <Reference Include="FlashLFQ, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\FlashLFQ.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\FlashLFQ.dll</HintPath>
     </Reference>
     <Reference Include="MassSpectrometry, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\MassSpectrometry.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\MassSpectrometry.dll</HintPath>
     </Reference>
     <Reference Include="MathNet.Numerics, Version=4.8.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MathNet.Numerics.4.8.1\lib\net461\MathNet.Numerics.dll</HintPath>
     </Reference>
     <Reference Include="Mgf, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\Mgf.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\Mgf.dll</HintPath>
     </Reference>
     <Reference Include="MzIdentML, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\MzIdentML.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\MzIdentML.dll</HintPath>
     </Reference>
     <Reference Include="MzLibUtil, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\MzLibUtil.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\MzLibUtil.dll</HintPath>
     </Reference>
     <Reference Include="MzML, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\MzML.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\MzML.dll</HintPath>
     </Reference>
     <Reference Include="NetSerializer, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\NetSerializer.4.1.0\lib\net45\NetSerializer.dll</HintPath>
@@ -78,10 +78,10 @@
       <HintPath>..\packages\NUnit.3.10.1\lib\net45\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="PepXML, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\PepXML.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\PepXML.dll</HintPath>
     </Reference>
     <Reference Include="Proteomics, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\Proteomics.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\Proteomics.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -94,22 +94,22 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="ThermoFisher.CommonCore.BackgroundSubtraction, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1aef06afb5abd953, processorArchitecture=MSIL">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\ThermoFisher.CommonCore.BackgroundSubtraction.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\ThermoFisher.CommonCore.BackgroundSubtraction.dll</HintPath>
     </Reference>
     <Reference Include="ThermoFisher.CommonCore.Data, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1aef06afb5abd953, processorArchitecture=MSIL">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\ThermoFisher.CommonCore.Data.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\ThermoFisher.CommonCore.Data.dll</HintPath>
     </Reference>
     <Reference Include="ThermoFisher.CommonCore.MassPrecisionEstimator, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\ThermoFisher.CommonCore.MassPrecisionEstimator.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\ThermoFisher.CommonCore.MassPrecisionEstimator.dll</HintPath>
     </Reference>
     <Reference Include="ThermoFisher.CommonCore.RawFileReader, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1aef06afb5abd953, processorArchitecture=MSIL">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\ThermoFisher.CommonCore.RawFileReader.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\ThermoFisher.CommonCore.RawFileReader.dll</HintPath>
     </Reference>
     <Reference Include="ThermoRawFileReader, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\ThermoRawFileReader.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\ThermoRawFileReader.dll</HintPath>
     </Reference>
     <Reference Include="UsefulProteomicsDatabases, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\mzLib.1.0.468.8\lib\net471\UsefulProteomicsDatabases.dll</HintPath>
+      <HintPath>..\packages\mzLib.1.0.468.9\lib\net471\UsefulProteomicsDatabases.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -167,7 +167,7 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\NUnit.3.10.1\build\NUnit.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NUnit.3.10.1\build\NUnit.props'))" />
     <Error Condition="!Exists('..\packages\NUnit3TestAdapter.3.10.0\build\net35\NUnit3TestAdapter.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NUnit3TestAdapter.3.10.0\build\net35\NUnit3TestAdapter.props'))" />
-    <Error Condition="!Exists('..\packages\mzLib.1.0.468.8\build\net471\mzLib.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\mzLib.1.0.468.8\build\net471\mzLib.targets'))" />
+    <Error Condition="!Exists('..\packages\mzLib.1.0.468.9\build\net471\mzLib.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\mzLib.1.0.468.9\build\net471\mzLib.targets'))" />
   </Target>
-  <Import Project="..\packages\mzLib.1.0.468.8\build\net471\mzLib.targets" Condition="Exists('..\packages\mzLib.1.0.468.8\build\net471\mzLib.targets')" />
+  <Import Project="..\packages\mzLib.1.0.468.9\build\net471\mzLib.targets" Condition="Exists('..\packages\mzLib.1.0.468.9\build\net471\mzLib.targets')" />
 </Project>

@@ -55,18 +55,18 @@ namespace Util
             {
                 file.WriteLine("FlashLFQ version: " + typeof(OutputWriter).Assembly.GetName().Version.ToString());
                 file.WriteLine(SystemInfo.CompleteSystemInfo()); //OS, OS Version, .Net Version, RAM, processor count, MSFileReader .dll versions X3
-                file.Write("e: " + e);
-                file.Write("e.Message: " + e.Message);
-                file.Write("e.Data: " + e.Data);
+                file.WriteLine("e: " + e);
+                file.WriteLine("e.Message: " + e.Message);
+                file.WriteLine("e.Data: " + e.Data);
                 
-                file.Write("e.Source: " + e.Source);
-                file.Write("e.StackTrace: " + e.StackTrace);
-                file.Write("e.TargetSite: " + e.TargetSite);
+                file.WriteLine("e.Source: " + e.Source);
+                file.WriteLine("e.StackTrace: " + e.StackTrace);
+                file.WriteLine("e.TargetSite: " + e.TargetSite);
 
                 while (e.InnerException != null)
                 {
                     e = e.InnerException;
-                    file.Write("e.InnerException: " + e.InnerException);
+                    file.WriteLine("e.InnerException: " + e.InnerException);
                 }
             }
         }

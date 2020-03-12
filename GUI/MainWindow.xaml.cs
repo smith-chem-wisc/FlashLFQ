@@ -1,5 +1,4 @@
-﻿using Util;
-using FlashLFQ;
+﻿using FlashLFQ;
 using GUI.DataGridObjects;
 using System;
 using System.Collections.Generic;
@@ -14,6 +13,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Navigation;
 using System.Windows.Threading;
+using Util;
 
 namespace GUI
 {
@@ -116,20 +116,13 @@ namespace GUI
             }
 
             // fold-change cutoff
-            if (manualNullRadioButton.IsChecked.Value)
+            if (!double.TryParse(FoldChangeCutoffManualTextBox.Text, out double foldChangeCutoff))
             {
-                if (!double.TryParse(FoldChangeCutoffManualTextBox.Text, out double foldChangeCutoff))
-                {
-                    throw new Exception("The fold-change cutoff must be a decimal number");
-                }
-
-                settings.ProteinQuantFoldChangeCutoff = double.Parse(FoldChangeCutoffManualTextBox.Text);
-            }
-            else
-            {
-                settings.ProteinQuantFoldChangeCutoff = null;
+                throw new Exception("The fold-change cutoff must be a decimal number");
             }
 
+            settings.ProteinQuantFoldChangeCutoff = double.Parse(FoldChangeCutoffManualTextBox.Text);
+            
             // ppm tolerance
             if (double.TryParse(ppmToleranceTextBox.Text, out double ppmTolerance))
             {
