@@ -657,13 +657,13 @@ namespace GUI
         /// </summary>
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-            System.Diagnostics.Process.Start(e.Uri.ToString());
+            Misc.StartProcess(e.Uri.ToString());
         }
 
         private void MailTo(object sender, RequestNavigateEventArgs e)
         {
             string mailto = string.Format("mailto:{0}?Subject={1}&Body={2}", "mm_support@chem.wisc.edu", "[FlashLFQ Help]", "");
-            System.Diagnostics.Process.Start(mailto);
+            Misc.StartProcess(mailto);
         }
 
         /// <summary>

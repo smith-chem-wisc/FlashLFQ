@@ -49,6 +49,7 @@ namespace Util
                 allProteinGroups = new Dictionary<string, ProteinGroup>();
             }
 
+            var rawFileDictionary = rawfiles.ToDictionary(p => p.FilenameWithoutExtension, v => v);
             List<Identification> ids = new List<Identification>();
             PsmFileType fileType = PsmFileType.Unknown;
 
@@ -72,21 +73,26 @@ namespace Util
                 return new List<Identification>();
             }
 
-            int lineNum = 1;
+            int lineNum = 0;
 
             while (reader.Peek() > 0)
             {
                 string line = reader.ReadLine();
+                lineNum++;
 
                 try
                 {
-                    if (lineNum != 1)
+                    if (lineNum == 1)
                     {
+                        fileType = GetFileTypeFromHeader(line);
+
                         if (fileType == PsmFileType.Unknown)
                         {
-                            break;
+                            throw new Exception("Could not interpret PSM header labels from file: " + filepath);
                         }
-
+                    }
+                    else
+                    {
                         var param = line.Split('\t');
 
                         // only quantify PSMs below 1% FDR
@@ -117,63 +123,79 @@ namespace Util
 
                         // base sequence
                         string baseSequence = param[_baseSequCol];
-                        // skip ambiguous sequence in MetaMorpheus output
-                        if (fileType == PsmFileType.MetaMorpheus && (baseSequence.Contains(" or ") || baseSequence.Contains("|")))
-                        {
-                            lineNum++;
-                            continue;
-                        }
 
                         // modified sequence
                         string modSequence = param[_fullSequCol];
 
                         // skip ambiguous sequence in MetaMorpheus output
-                        if (fileType == PsmFileType.MetaMorpheus && (modSequence.Contains(" or ") || modSequence.Contains("|") || modSequence.Contains("too long")))
+                        if (fileType == PsmFileType.MetaMorpheus && (modSequence.Contains(" or ") || modSequence.Contains("|") || modSequence.ToLowerInvariant().Contains("too long")))
                         {
-                            lineNum++;
                             continue;
                         }
 
                         // monoisotopic mass
-                        double monoisotopicMass = double.Parse(param[_monoMassCol]);
-
-                        if (_modSequenceToMonoMass.TryGetValue(modSequence, out double storedMonoisotopicMass))
+                        if (double.TryParse(param[_monoMassCol], out double monoisotopicMass))
                         {
-                            if (storedMonoisotopicMass != monoisotopicMass)
+                            if (_modSequenceToMonoMass.TryGetValue(modSequence, out double storedMonoisotopicMass))
+                            {
+                                if (storedMonoisotopicMass != monoisotopicMass)
+                                {
+                                    if (!silent)
+                                    {
+                                        Console.WriteLine("Caution! PSM with sequence " + modSequence + " at line " +
+                                           lineNum + " could not be read; " +
+                                           "a peptide with the same modified sequence but a different monoisotopic mass has already been added");
+                                    }
+
+                                    continue;
+                                }
+                            }
+                            else
+                            {
+                                _modSequenceToMonoMass.Add(modSequence, monoisotopicMass);
+                            }
+                        }
+                        else
+                        {
+                            if (!silent)
+                            {
+                                Console.WriteLine("PSM with sequence " + modSequence + " at line " +
+                                   lineNum + " could not be read; " +
+                                   "monoisotopic mass was not interpretable: \"" + param[_monoMassCol] + "\"");
+                            }
+
+                            continue;
+                        }
+
+                        // retention time
+                        if (double.TryParse(param[_msmsRetnCol], out double ms2RetentionTime))
+                        {
+                            if (fileType == PsmFileType.PeptideShaker)
+                            {
+                                // peptide shaker RT is in seconds - convert to minutes
+                                ms2RetentionTime = ms2RetentionTime / 60.0;
+                            }
+
+                            if (ms2RetentionTime < 0)
                             {
                                 if (!silent)
                                 {
                                     Console.WriteLine("Caution! PSM with sequence " + modSequence + " at line " +
-                                       lineNum + " could not be read; " +
-                                       "a peptide with the same modified sequence but a different monoisotopic mass has already been added");
+                                       lineNum + " could not be read; retention time was negative");
                                 }
 
-                                lineNum++;
                                 continue;
                             }
                         }
                         else
                         {
-                            _modSequenceToMonoMass.Add(modSequence, monoisotopicMass);
-                        }
-
-                        // retention time
-                        double ms2RetentionTime = double.Parse(param[_msmsRetnCol]);
-                        if (fileType == PsmFileType.PeptideShaker)
-                        {
-                            // peptide shaker RT is in seconds - convert to minutes
-                            ms2RetentionTime = ms2RetentionTime / 60.0;
-                        }
-
-                        if (ms2RetentionTime < 0)
-                        {
                             if (!silent)
                             {
-                                Console.WriteLine("Caution! PSM with sequence " + modSequence + " at line " +
-                                   lineNum + " could not be read; retention time was negative");
+                                Console.WriteLine("PSM with sequence " + modSequence + " at line " +
+                                   lineNum + " could not be read; " +
+                                   "retention time was not interpretable: \"" + param[_msmsRetnCol] + "\"");
                             }
 
-                            lineNum++;
                             continue;
                         }
 
@@ -181,12 +203,49 @@ namespace Util
                         int chargeState;
                         if (fileType == PsmFileType.PeptideShaker)
                         {
-                            string charge = new String(param[_chargeStCol].Where(Char.IsDigit).ToArray());
-                            chargeState = int.Parse(charge);
+                            string chargeStringNumbersOnly = new String(param[_chargeStCol].Where(Char.IsDigit).ToArray());
+
+                            if (string.IsNullOrWhiteSpace(chargeStringNumbersOnly))
+                            {
+                                if (!silent)
+                                {
+                                    Console.WriteLine("PSM with sequence " + modSequence + " at line " +
+                                        lineNum + " could not be read; " +
+                                        "charge state was not interpretable: \"" + param[_chargeStCol] + "\"");
+                                }
+
+                                continue;
+                            }
+                            else
+                            {
+                                if (!int.TryParse(chargeStringNumbersOnly, out chargeState))
+                                {
+                                    if (!silent)
+                                    {
+                                        Console.WriteLine("PSM with sequence " + modSequence + " at line " +
+                                            lineNum + " could not be read; " +
+                                            "charge state was not interpretable: \"" + param[_chargeStCol] + "\"");
+                                    }
+
+                                    continue;
+                                }
+                            }
                         }
                         else
                         {
-                            chargeState = (int)double.Parse(param[_chargeStCol]);
+                            if (!double.TryParse(param[_chargeStCol], out double chargeStateDouble))
+                            {
+                                if (!silent)
+                                {
+                                    Console.WriteLine("PSM with sequence " + modSequence + " at line " +
+                                        lineNum + " could not be read; " +
+                                        "charge state was not interpretable: \"" + param[_chargeStCol] + "\"");
+                                }
+
+                                continue;
+                            }
+
+                            chargeState = (int)chargeStateDouble;
                         }
 
                         // protein groups
@@ -222,6 +281,10 @@ namespace Util
                                 {
                                     gene = genes[pr];
                                 }
+                                else if (proteins.Length == 1)
+                                {
+                                    gene = param[_geneNameCol];
+                                }
                             }
 
                             if (organisms != null)
@@ -233,6 +296,10 @@ namespace Util
                                 else if (organisms.Length == proteins.Length)
                                 {
                                     organism = organisms[pr];
+                                }
+                                else if (proteins.Length == 1)
+                                {
+                                    organism = param[_organismCol];
                                 }
                             }
 
@@ -248,25 +315,19 @@ namespace Util
                             }
                         }
 
-                        // construct id
+                        // get file name and look up file name object
                         var fileNameNoExt = Path.GetFileNameWithoutExtension(fileName);
-                        var rawFileInfoToUse = rawfiles.FirstOrDefault(p => p.FilenameWithoutExtension.Equals(fileNameNoExt));
-                        if (rawFileInfoToUse == null)
+
+                        if (!rawFileDictionary.TryGetValue(fileNameNoExt, out SpectraFileInfo spectraFileInfoToUse))
                         {
                             // skip PSMs for files with no spectrum data input
-                            lineNum++;
                             continue;
                         }
 
-                        var ident = new Identification(rawFileInfoToUse, baseSequence, modSequence, monoisotopicMass, ms2RetentionTime, chargeState, proteinGroups);
+                        // construct id
+                        var ident = new Identification(spectraFileInfoToUse, baseSequence, modSequence, monoisotopicMass, ms2RetentionTime, chargeState, proteinGroups);
                         ids.Add(ident);
                     }
-                    else
-                    {
-                        fileType = GetFileTypeFromHeader(line);
-                    }
-
-                    lineNum++;
                 }
                 catch (Exception)
                 {
@@ -276,11 +337,6 @@ namespace Util
                     }
                     return new List<Identification>();
                 }
-            }
-
-            if (fileType == PsmFileType.Unknown)
-            {
-                throw new Exception("Could not interpret PSM header labels from file: " + filepath);
             }
 
             reader.Close();
@@ -297,128 +353,128 @@ namespace Util
         {
             PsmFileType type = PsmFileType.Unknown;
 
-            var split = header.Split('\t');
+            var split = header.Split('\t').Select(p => p.ToLowerInvariant()).ToArray();
 
             // MetaMorpheus MS/MS input
-            if (split.Contains("File Name")
-                        && split.Contains("Base Sequence")
-                        && split.Contains("Full Sequence")
-                        && split.Contains("Peptide Monoisotopic Mass")
-                        && split.Contains("Scan Retention Time")
-                        && split.Contains("Precursor Charge")
-                        && split.Contains("Protein Accession")
-                        && split.Contains("Decoy/Contaminant/Target")
-                        && split.Contains("QValue")
-                        && split.Contains("QValue Notch"))
+            if (split.Contains("File Name".ToLowerInvariant())
+                        && split.Contains("Base Sequence".ToLowerInvariant())
+                        && split.Contains("Full Sequence".ToLowerInvariant())
+                        && split.Contains("Peptide Monoisotopic Mass".ToLowerInvariant())
+                        && split.Contains("Scan Retention Time".ToLowerInvariant())
+                        && split.Contains("Precursor Charge".ToLowerInvariant())
+                        && split.Contains("Protein Accession".ToLowerInvariant())
+                        && split.Contains("Decoy/Contaminant/Target".ToLowerInvariant())
+                        && split.Contains("QValue".ToLowerInvariant())
+                        && split.Contains("QValue Notch".ToLowerInvariant()))
             {
-                _fileNameCol = Array.IndexOf(split, "File Name");
-                _baseSequCol = Array.IndexOf(split, "Base Sequence");
-                _fullSequCol = Array.IndexOf(split, "Full Sequence");
-                _monoMassCol = Array.IndexOf(split, "Peptide Monoisotopic Mass");
-                _msmsRetnCol = Array.IndexOf(split, "Scan Retention Time");
-                _chargeStCol = Array.IndexOf(split, "Precursor Charge");
-                _protNameCol = Array.IndexOf(split, "Protein Accession");
-                _decoyCol = Array.IndexOf(split, "Decoy/Contaminant/Target");
-                _qValueCol = Array.IndexOf(split, "QValue");
-                _qValueNotchCol = Array.IndexOf(split, "QValue Notch");
-                _geneNameCol = Array.IndexOf(split, "Gene Name");
-                _organismCol = Array.IndexOf(split, "Organism Name");
+                _fileNameCol = Array.IndexOf(split, "File Name".ToLowerInvariant());
+                _baseSequCol = Array.IndexOf(split, "Base Sequence".ToLowerInvariant());
+                _fullSequCol = Array.IndexOf(split, "Full Sequence".ToLowerInvariant());
+                _monoMassCol = Array.IndexOf(split, "Peptide Monoisotopic Mass".ToLowerInvariant());
+                _msmsRetnCol = Array.IndexOf(split, "Scan Retention Time".ToLowerInvariant());
+                _chargeStCol = Array.IndexOf(split, "Precursor Charge".ToLowerInvariant());
+                _protNameCol = Array.IndexOf(split, "Protein Accession".ToLowerInvariant());
+                _decoyCol = Array.IndexOf(split, "Decoy/Contaminant/Target".ToLowerInvariant());
+                _qValueCol = Array.IndexOf(split, "QValue".ToLowerInvariant());
+                _qValueNotchCol = Array.IndexOf(split, "QValue Notch".ToLowerInvariant());
+                _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant());
+                _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 
                 return PsmFileType.MetaMorpheus;
             }
 
             // Morpheus MS/MS input
-            else if (split.Contains("Filename")
-                && split.Contains("Base Peptide Sequence")
-                && split.Contains("Peptide Sequence")
-                && split.Contains("Theoretical Mass (Da)")
-                && split.Contains("Retention Time (minutes)")
-                && split.Contains("Precursor Charge")
-                && split.Contains("Protein Description")
-                && split.Contains("Decoy?")
-                && split.Contains("Q-Value (%)"))
+            else if (split.Contains("Filename".ToLowerInvariant())
+                && split.Contains("Base Peptide Sequence".ToLowerInvariant())
+                && split.Contains("Peptide Sequence".ToLowerInvariant())
+                && split.Contains("Theoretical Mass (Da)".ToLowerInvariant())
+                && split.Contains("Retention Time (minutes)".ToLowerInvariant())
+                && split.Contains("Precursor Charge".ToLowerInvariant())
+                && split.Contains("Protein Description".ToLowerInvariant())
+                && split.Contains("Decoy?".ToLowerInvariant())
+                && split.Contains("Q-Value (%)".ToLowerInvariant()))
             {
-                _fileNameCol = Array.IndexOf(split, "Filename");
-                _baseSequCol = Array.IndexOf(split, "Base Peptide Sequence");
-                _fullSequCol = Array.IndexOf(split, "Peptide Sequence");
-                _monoMassCol = Array.IndexOf(split, "Theoretical Mass (Da)");
-                _msmsRetnCol = Array.IndexOf(split, "Retention Time (minutes)");
-                _chargeStCol = Array.IndexOf(split, "Precursor Charge");
-                _protNameCol = Array.IndexOf(split, "Protein Description");
-                _decoyCol = Array.IndexOf(split, "Decoy?");
-                _qValueCol = Array.IndexOf(split, "Q-Value (%)");
+                _fileNameCol = Array.IndexOf(split, "Filename".ToLowerInvariant());
+                _baseSequCol = Array.IndexOf(split, "Base Peptide Sequence".ToLowerInvariant());
+                _fullSequCol = Array.IndexOf(split, "Peptide Sequence".ToLowerInvariant());
+                _monoMassCol = Array.IndexOf(split, "Theoretical Mass (Da)".ToLowerInvariant());
+                _msmsRetnCol = Array.IndexOf(split, "Retention Time (minutes)".ToLowerInvariant());
+                _chargeStCol = Array.IndexOf(split, "Precursor Charge".ToLowerInvariant());
+                _protNameCol = Array.IndexOf(split, "Protein Description".ToLowerInvariant());
+                _decoyCol = Array.IndexOf(split, "Decoy?".ToLowerInvariant());
+                _qValueCol = Array.IndexOf(split, "Q-Value (%)".ToLowerInvariant());
 
-                _geneNameCol = Array.IndexOf(split, "Gene Name"); // probably doesn't exist
-                _organismCol = Array.IndexOf(split, "Organism Name");
+                _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant()); // probably doesn't exist
+                _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 
                 return PsmFileType.Morpheus;
             }
 
             // MaxQuant MS/MS input
-            else if (split.Contains("Raw file")
-                && split.Contains("Sequence")
-                && split.Contains("Modified sequence")
-                && split.Contains("Mass")
-                && split.Contains("Retention time")
-                && split.Contains("Charge")
-                && split.Contains("Proteins"))
+            else if (split.Contains("Raw file".ToLowerInvariant())
+                && split.Contains("Sequence".ToLowerInvariant())
+                && split.Contains("Modified sequence".ToLowerInvariant())
+                && split.Contains("Mass".ToLowerInvariant())
+                && split.Contains("Retention time".ToLowerInvariant())
+                && split.Contains("Charge".ToLowerInvariant())
+                && split.Contains("Proteins".ToLowerInvariant()))
             {
-                _fileNameCol = Array.IndexOf(split, "Raw file");
-                _baseSequCol = Array.IndexOf(split, "Sequence");
-                _fullSequCol = Array.IndexOf(split, "Modified sequence");
-                _monoMassCol = Array.IndexOf(split, "Mass");
-                _msmsRetnCol = Array.IndexOf(split, "Retention time");
-                _chargeStCol = Array.IndexOf(split, "Charge");
-                _protNameCol = Array.IndexOf(split, "Proteins");
-                _geneNameCol = Array.IndexOf(split, "Gene Names");
+                _fileNameCol = Array.IndexOf(split, "Raw file".ToLowerInvariant());
+                _baseSequCol = Array.IndexOf(split, "Sequence".ToLowerInvariant());
+                _fullSequCol = Array.IndexOf(split, "Modified sequence".ToLowerInvariant());
+                _monoMassCol = Array.IndexOf(split, "Mass".ToLowerInvariant());
+                _msmsRetnCol = Array.IndexOf(split, "Retention time".ToLowerInvariant());
+                _chargeStCol = Array.IndexOf(split, "Charge".ToLowerInvariant());
+                _protNameCol = Array.IndexOf(split, "Proteins".ToLowerInvariant());
+                _geneNameCol = Array.IndexOf(split, "Gene Names".ToLowerInvariant());
 
-                _organismCol = Array.IndexOf(split, "Organism Name");
+                _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 
                 return PsmFileType.MaxQuant;
             }
 
             // Peptide Shaker Input
-            else if (split.Contains("Spectrum File")
-                && split.Contains("Sequence")
-                && split.Contains("Modified Sequence")
-                && split.Contains("Theoretical Mass")
-                && split.Contains("RT")
-                && split.Contains("Identification Charge")
-                && split.Contains("Protein(s)"))
+            else if (split.Contains("Spectrum File".ToLowerInvariant())
+                && split.Contains("Sequence".ToLowerInvariant())
+                && split.Contains("Modified Sequence".ToLowerInvariant())
+                && split.Contains("Theoretical Mass".ToLowerInvariant())
+                && split.Contains("RT".ToLowerInvariant())
+                && split.Contains("Identification Charge".ToLowerInvariant())
+                && split.Contains("Protein(s)".ToLowerInvariant()))
             {
-                _fileNameCol = Array.IndexOf(split, "Spectrum File");
-                _baseSequCol = Array.IndexOf(split, "Sequence");
-                _fullSequCol = Array.IndexOf(split, "Modified Sequence");
-                _monoMassCol = Array.IndexOf(split, "Theoretical Mass");
-                _msmsRetnCol = Array.IndexOf(split, "RT");
-                _chargeStCol = Array.IndexOf(split, "Identification Charge");
-                _protNameCol = Array.IndexOf(split, "Protein(s)");
+                _fileNameCol = Array.IndexOf(split, "Spectrum File".ToLowerInvariant());
+                _baseSequCol = Array.IndexOf(split, "Sequence".ToLowerInvariant());
+                _fullSequCol = Array.IndexOf(split, "Modified Sequence".ToLowerInvariant());
+                _monoMassCol = Array.IndexOf(split, "Theoretical Mass".ToLowerInvariant());
+                _msmsRetnCol = Array.IndexOf(split, "RT".ToLowerInvariant());
+                _chargeStCol = Array.IndexOf(split, "Identification Charge".ToLowerInvariant());
+                _protNameCol = Array.IndexOf(split, "Protein(s)".ToLowerInvariant());
 
-                _geneNameCol = Array.IndexOf(split, "Gene Name"); // probably doesn't exist
-                _organismCol = Array.IndexOf(split, "Organism Name");
+                _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant()); // probably doesn't exist
+                _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 
                 return PsmFileType.PeptideShaker;
             }
 
             // Generic MS/MS input
-            if (split.Contains("File Name")
-                        && split.Contains("Base Sequence")
-                        && split.Contains("Full Sequence")
-                        && split.Contains("Peptide Monoisotopic Mass")
-                        && split.Contains("Scan Retention Time")
-                        && split.Contains("Precursor Charge")
-                        && split.Contains("Protein Accession"))
+            if (split.Contains("File Name".ToLowerInvariant())
+                        && split.Contains("Base Sequence".ToLowerInvariant())
+                        && split.Contains("Full Sequence".ToLowerInvariant())
+                        && split.Contains("Peptide Monoisotopic Mass".ToLowerInvariant())
+                        && split.Contains("Scan Retention Time".ToLowerInvariant())
+                        && split.Contains("Precursor Charge".ToLowerInvariant())
+                        && split.Contains("Protein Accession".ToLowerInvariant()))
             {
-                _fileNameCol = Array.IndexOf(split, "File Name");
-                _baseSequCol = Array.IndexOf(split, "Base Sequence");
-                _fullSequCol = Array.IndexOf(split, "Full Sequence");
-                _monoMassCol = Array.IndexOf(split, "Peptide Monoisotopic Mass");
-                _msmsRetnCol = Array.IndexOf(split, "Scan Retention Time");
-                _chargeStCol = Array.IndexOf(split, "Precursor Charge");
-                _protNameCol = Array.IndexOf(split, "Protein Accession");
+                _fileNameCol = Array.IndexOf(split, "File Name".ToLowerInvariant());
+                _baseSequCol = Array.IndexOf(split, "Base Sequence".ToLowerInvariant());
+                _fullSequCol = Array.IndexOf(split, "Full Sequence".ToLowerInvariant());
+                _monoMassCol = Array.IndexOf(split, "Peptide Monoisotopic Mass".ToLowerInvariant());
+                _msmsRetnCol = Array.IndexOf(split, "Scan Retention Time".ToLowerInvariant());
+                _chargeStCol = Array.IndexOf(split, "Precursor Charge".ToLowerInvariant());
+                _protNameCol = Array.IndexOf(split, "Protein Accession".ToLowerInvariant());
 
-                _geneNameCol = Array.IndexOf(split, "Gene Name"); // probably doesn't exist
-                _organismCol = Array.IndexOf(split, "Organism Name");
+                _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant()); // probably doesn't exist
+                _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 
                 return PsmFileType.Generic;
             }

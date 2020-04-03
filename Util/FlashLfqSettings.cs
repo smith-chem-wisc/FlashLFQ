@@ -96,7 +96,7 @@ namespace Util
 
             BayesianProteinQuant = f.BayesianProteinQuant;
             ProteinQuantBaseCondition = f.ProteinQuantBaseCondition;
-            ProteinQuantFoldChangeCutoff = f.ProteinQuantFoldChangeCutoff;
+            ProteinQuantFoldChangeCutoff = 0.1;
             McmcSteps = f.McmcSteps;
             McmcBurninSteps = f.McmcBurninSteps;
             UseSharedPeptidesForProteinQuant = f.UseSharedPeptidesForProteinQuant;

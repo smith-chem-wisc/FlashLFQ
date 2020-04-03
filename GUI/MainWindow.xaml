@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:GUI"
         mc:Ignorable="d"
         Title="FlashLFQ" Drop="Window_Drop" AllowDrop="true" Height="550" Width="850" 
-        WindowStartupLocation="CenterScreen" Icon="FlashLFQ_Icon.ico" 
+        WindowStartupLocation="CenterScreen"
         MinHeight="200" MinWidth="200"
         Name="MainWindowObj">
 

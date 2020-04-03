@@ -1,29 +1,33 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <Configurations>Debug;Release;ReleaseDotNetCore</Configurations>
-  </PropertyGroup>
-  <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net471;netcoreapp2.0</TargetFrameworks>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Version>1.0.0.0</Version>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+    <ApplicationIcon>FlashLFQ_Icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommandLineParser" Version="2.6.0" />
-    <PackageReference Include="MathNet.Numerics" Version="4.8.1" />
-    <PackageReference Include="mzLib" Version="1.0.468.9" />
-    <PackageReference Include="NetSerializer" Version="4.1.0" />
-    <PackageReference Include="Nett" Version="0.13.0" />
-    <PackageReference Include="SharpLearning.Common.Interfaces" Version="0.26.9" />
-    <PackageReference Include="SharpLearning.Containers" Version="0.26.9" />
-    <PackageReference Include="SharpLearning.CrossValidation" Version="0.26.9" />
-    <PackageReference Include="SharpLearning.DecisionTrees" Version="0.26.9" />
-    <PackageReference Include="SharpLearning.GradientBoost" Version="0.26.9" />
-    <PackageReference Include="SharpLearning.InputOutput" Version="0.26.9" />
-    <PackageReference Include="SharpLearning.Metrics" Version="0.26.9" />
-    <PackageReference Include="SharpLearning.Optimization" Version="0.26.9" />
-    <PackageReference Include="SharpLearning.RandomForest" Version="0.26.9" />
+    <PackageReference Include="CommandLineParser" Version="2.7.82" />
+    <PackageReference Include="MathNet.Numerics" Version="4.9.0" />
+    <PackageReference Include="mzLib" Version="1.0.472" />
+    <PackageReference Include="NetSerializer" Version="4.1.1" />
+    <PackageReference Include="Nett" Version="0.15.0" />
+    <PackageReference Include="SharpLearning.Common.Interfaces" Version="0.28.0" />
+    <PackageReference Include="SharpLearning.Containers" Version="0.28.0" />
+    <PackageReference Include="SharpLearning.CrossValidation" Version="0.28.0" />
+    <PackageReference Include="SharpLearning.DecisionTrees" Version="0.28.0" />
+    <PackageReference Include="SharpLearning.GradientBoost" Version="0.28.0" />
+    <PackageReference Include="SharpLearning.InputOutput" Version="0.28.0" />
+    <PackageReference Include="SharpLearning.Metrics" Version="0.28.0" />
+    <PackageReference Include="SharpLearning.Optimization" Version="0.28.0" />
+    <PackageReference Include="SharpLearning.RandomForest" Version="0.28.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,17 +35,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="FlashLFQ_Icon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="README.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  
-  <PropertyGroup>
-    <ApplicationIcon>FlashLFQ_Icon.ico</ApplicationIcon>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(TargetFramework)'=='net471'">
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
 
 </Project>
