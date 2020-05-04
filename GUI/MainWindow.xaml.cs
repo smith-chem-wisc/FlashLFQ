@@ -116,15 +116,15 @@ namespace GUI
             }
 
             // fold-change cutoff
-            if (!double.TryParse(FoldChangeCutoffManualTextBox.Text, out double foldChangeCutoff))
+            if (!double.TryParse(FoldChangeCutoffManualTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out double foldChangeCutoff))
             {
                 throw new Exception("The fold-change cutoff must be a decimal number");
             }
 
-            settings.ProteinQuantFoldChangeCutoff = double.Parse(FoldChangeCutoffManualTextBox.Text);
+            settings.ProteinQuantFoldChangeCutoff = double.Parse(FoldChangeCutoffManualTextBox.Text, CultureInfo.InvariantCulture);
             
             // ppm tolerance
-            if (double.TryParse(ppmToleranceTextBox.Text, out double ppmTolerance))
+            if (double.TryParse(ppmToleranceTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out double ppmTolerance))
             {
                 settings.PpmTolerance = ppmTolerance;
             }
@@ -144,7 +144,7 @@ namespace GUI
             settings.RequireMsmsIdInCondition = requireMsmsIdInConditionCheckbox.IsChecked.Value;
 
             // isotope PPM tolerance
-            if (double.TryParse(isotopePpmToleranceTextBox.Text, out double isotopePpmTolerance))
+            if (double.TryParse(isotopePpmToleranceTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out double isotopePpmTolerance))
             {
                 settings.IsotopePpmTolerance = isotopePpmTolerance;
             }
@@ -154,7 +154,7 @@ namespace GUI
             }
 
             // num isotopes required
-            if (int.TryParse(numIsotopesRequiredTextBox.Text, out int numIsotopesRequired))
+            if (int.TryParse(numIsotopesRequiredTextBox.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int numIsotopesRequired))
             {
                 settings.NumIsotopesRequired = numIsotopesRequired;
             }
@@ -174,7 +174,7 @@ namespace GUI
             }
 
             // random seed
-            if (int.TryParse(mcmcRandomSeedTextBox.Text, out int randomSeed))
+            if (int.TryParse(mcmcRandomSeedTextBox.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int randomSeed))
             {
                 settings.RandomSeed = randomSeed;
             }
@@ -184,7 +184,7 @@ namespace GUI
             }
 
             // MBR time tolerance
-            if (double.TryParse(mbrRtWindowTextBox.Text, out double MbrRtWindow))
+            if (double.TryParse(mbrRtWindowTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out double MbrRtWindow))
             {
                 settings.MbrRtWindow = MbrRtWindow;
             }

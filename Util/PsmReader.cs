@@ -1,6 +1,7 @@
 ﻿using FlashLFQ;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -96,17 +97,17 @@ namespace Util
                         var param = line.Split('\t');
 
                         // only quantify PSMs below 1% FDR
-                        if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueCol]) > 0.01)
+                        if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueCol], CultureInfo.InvariantCulture) > 0.01)
                         {
                             break;
                         }
-                        else if (fileType == PsmFileType.Morpheus && double.Parse(param[_qValueCol]) > 1.00)
+                        else if (fileType == PsmFileType.Morpheus && double.Parse(param[_qValueCol], CultureInfo.InvariantCulture) > 1.00)
                         {
                             break;
                         }
 
                         // only quantify PSMs below 1% notch FDR
-                        if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueNotchCol]) > 0.01)
+                        if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture) > 0.01)
                         {
                             continue;
                         }
@@ -134,7 +135,7 @@ namespace Util
                         }
 
                         // monoisotopic mass
-                        if (double.TryParse(param[_monoMassCol], out double monoisotopicMass))
+                        if (double.TryParse(param[_monoMassCol], NumberStyles.Number, CultureInfo.InvariantCulture, out double monoisotopicMass))
                         {
                             if (_modSequenceToMonoMass.TryGetValue(modSequence, out double storedMonoisotopicMass))
                             {
