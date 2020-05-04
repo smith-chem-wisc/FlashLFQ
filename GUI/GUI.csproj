@@ -31,7 +31,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CMD\CMD.csproj" />
     <ProjectReference Include="..\Util\Util.csproj" />
   </ItemGroup>
 

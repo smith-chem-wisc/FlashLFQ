@@ -7,8 +7,8 @@ FROM mcr.microsoft.com/dotnet/core/runtime:3.1-alpine AS build
 RUN apk update \
 	&& apk add unzip \
 	&& apk add wget \
-	&& wget https://github.com/smith-chem-wisc/FlashLFQ/releases/latest/download/FlashLFQ_DotNetCore.zip \
-	&& unzip FlashLFQ_DotNetCore.zip
+	&& wget https://github.com/smith-chem-wisc/FlashLFQ/releases/latest/download/FlashLFQ_CommandLine.zip \
+	&& unzip FlashLFQ_CommandLine.zip
 
 ## Set the entrypoint of the Docker image to CMD.dll
 ENTRYPOINT ["dotnet", "CMD.dll"]
