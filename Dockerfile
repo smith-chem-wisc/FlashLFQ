@@ -1,5 +1,5 @@
 ## Base image is the Alpine Linux distro with .NET Core runtime
-FROM mcr.microsoft.com/dotnet/core/runtime:2.1-alpine AS build
+FROM mcr.microsoft.com/dotnet/core/runtime:3.1-alpine AS build
 
 ## Install dependencies and download/unzip FlashLFQ
 ## "unzip" is an de-archiving package
