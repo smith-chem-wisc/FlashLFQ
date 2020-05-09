@@ -3,6 +3,7 @@ using CommandLine.Text;
 using FlashLFQ;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Util;
@@ -11,7 +12,7 @@ namespace CMD
 {
     public class FlashLfqExecutable
     {
-        public static List<string> acceptedSpectrumFileFormats = new List<string> { ".RAW", ".MZML" };
+        public static List<string> acceptedSpectrumFileFormats = new List<string> { ".raw", ".mzml" };
 
         public static void Main(string[] args)
         {
@@ -64,35 +65,71 @@ namespace CMD
             // set up spectra file info
             List<SpectraFileInfo> spectraFileInfos = new List<SpectraFileInfo>();
             List<string> filePaths = Directory.GetFiles(settings.SpectraFileRepository)
-                .Where(f => acceptedSpectrumFileFormats.Contains(Path.GetExtension(f).ToUpperInvariant())).ToList();
+                .Where(f => acceptedSpectrumFileFormats.Contains(Path.GetExtension(f).ToLowerInvariant())).ToList();
+
+            // check for duplicate file names (agnostic of file extension)
+            foreach (var fileName in filePaths.GroupBy(p => Path.GetFileNameWithoutExtension(p)))
+            {
+                if (fileName.Count() > 1)
+                {
+                    var types = fileName.Select(p => Path.GetFileNameWithoutExtension(p)).Distinct();
+
+                    if (!settings.Silent)
+                    {
+                        Console.WriteLine("Multiple spectra files with the same name were detected (maybe " + string.Join(" and ", types) + "?). " +
+                            "Please remove or rename duplicate files from the spectra file directory.");
+                    }
+                    return;
+                }
+            }
+
+            if (settings.PrintThermoLicenceViaCommandLine)
+            {
+                Console.WriteLine(ThermoRawFileReader.ThermoRawFileReaderLicence.ThermoLicenceText);
+                return;
+            }
 
             // check thermo licence agreement
-            if (filePaths.Select(v => Path.GetExtension(v).ToUpper()).Any(f => f == ".RAW"))
+            if (filePaths.Select(v => Path.GetExtension(v).ToLowerInvariant()).Any(f => f == ".raw"))
             {
                 var licenceAgreement = LicenceAgreementSettings.ReadLicenceSettings();
 
                 if (!licenceAgreement.HasAcceptedThermoLicence)
                 {
-                    // decided to write this even if it's on silent mode...
-                    Console.WriteLine(ThermoRawFileReader.ThermoRawFileReaderLicence.ThermoLicenceText);
-                    Console.WriteLine("\nIn order to search Thermo .raw files, you must agree to the above terms. Do you agree to the above terms? y/n\n");
-
-                    string res = Console.ReadLine().ToLowerInvariant();
-                    if (res == "y")
+                    if (settings.AcceptThermoLicenceViaCommandLine)
                     {
-                        try
+                        if (!settings.ReadOnlyFileSystem)
                         {
                             licenceAgreement.AcceptLicenceAndWrite();
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine(e.Message);
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Thermo licence has been declined. Exiting FlashLFQ. You can still search .mzML and .mgf files without agreeing to the Thermo licence.");
-                        return;
+                        // decided to write this even if it's on silent mode...
+                        Console.WriteLine(ThermoRawFileReader.ThermoRawFileReaderLicence.ThermoLicenceText);
+                        Console.WriteLine("\nIn order to search Thermo .raw files, you must agree to the above terms. Do you agree to the above terms? y/n\n");
+
+                        string res = Console.ReadLine();
+
+                        if (res.ToLowerInvariant() == "y")
+                        {
+                            try
+                            {
+                                if (!settings.ReadOnlyFileSystem)
+                                {
+                                    licenceAgreement.AcceptLicenceAndWrite();
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e.Message);
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Thermo licence has been declined. Exiting FlashLFQ. You can still search .mzML and .mgf files without agreeing to the Thermo licence.");
+                            return;
+                        }
                     }
                 }
             }

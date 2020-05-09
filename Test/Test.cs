@@ -293,9 +293,14 @@ namespace Test
             {
                 string name = property.Name;
 
+                // skip settings that don't exist in the FlashLFQ engine
+                // these are usually just command-line options for i/o stuff, etc.
                 if (name == "PsmIdentificationPath"
                     || name == "SpectraFileRepository"
-                    || name == "OutputPath")
+                    || name == "OutputPath"
+                    || name == "ReadOnlyFileSystem"
+                    || name == "PrintThermoLicenceViaCommandLine"
+                    || name == "AcceptThermoLicenceViaCommandLine")
                 {
                     continue;
                 }

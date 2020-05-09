@@ -19,6 +19,15 @@ namespace Util
         [Option("sil", Default = false, HelpText = "bool; silent mode")]
         public bool Silent { get; set; }
 
+        [Option("rea", Default = false, HelpText = "bool; filesystem is readonly, prevents writing to the FlashLFQ folder")]
+        public bool ReadOnlyFileSystem { get; set; }
+
+        [Option("pth", Default = false, HelpText = "bool; print Thermo's RawFileReader licence; required to read .raw files")]
+        public bool PrintThermoLicenceViaCommandLine { get; set; }
+
+        [Option("ath", Default = false, HelpText = "bool; accept Thermo's RawFileReader licence; required to read .raw files")]
+        public bool AcceptThermoLicenceViaCommandLine { get; set; }
+
         // general settings
         [Option("out", Default = null, HelpText = "string; output directory")]
         public string OutputPath { get; set; }
