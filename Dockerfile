@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/core/runtime:3.1-alpine AS build
 
 ## updates Linux package manager
-RUN apk update
+##RUN apk update
 
 ## This downloads the latest FlashLFQ release from the web
 ## Uncomment lines 10-11 if you want to download+build the latest release version
