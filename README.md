@@ -1,7 +1,8 @@
-## Build Status (AppVeyor)
-[![Build status](https://ci.appveyor.com/api/projects/status/5mue0eiapbb6gk0u?svg=true)](https://ci.appveyor.com/project/robertmillikin/flashlfq)
+## Current Version
+### Download from GitHub:
+[![](https://img.shields.io/github/v/release/smith-chem-wisc/FlashLFQ)](https://github.com/smith-chem-wisc/FlashLFQ/releases/latest)
 
-## Docker Image
+### Docker Image
 [![](https://images.microbadger.com/badges/version/smithchemwisc/flashlfq.svg)](https://hub.docker.com/r/smithchemwisc/flashlfq/tags)
 
 ## About
@@ -42,3 +43,6 @@ There are two methods to contact us. You can create a new issue on the [GitHub I
 ## Development Status
     To do: 
     Intensity imputation for missing values
+    
+### Development Version Build Status
+[![Build status](https://ci.appveyor.com/api/projects/status/5mue0eiapbb6gk0u?svg=true)](https://ci.appveyor.com/project/robertmillikin/flashlfq)
