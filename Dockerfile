@@ -2,16 +2,10 @@
 FROM mcr.microsoft.com/dotnet/core/runtime:3.1-alpine AS build
 
 ## Copies FlashLFQ_CommandLine.zip from the current directory into the Docker image
-COPY FlashLFQ_CommandLine.zip /
-
-## Install dependencies and unzip FlashLFQ
-## "unzip" is an de-archiving package
-RUN apk update \
-	&& apk add unzip \
-	&& unzip /FlashLFQ_CommandLine.zip
+ADD CMD/bin/Release/netcoreapp3.1/publish/ /flashlfq/
 
 ## Set the entrypoint of the Docker image to CMD.dll
-ENTRYPOINT ["dotnet", "CMD.dll"]
+ENTRYPOINT ["dotnet", "flashlfq/CMD.dll"]
 
 ## Build example:
 ## docker build -t flashlfq .
