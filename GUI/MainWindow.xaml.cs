@@ -1,5 +1,6 @@
 ﻿using FlashLFQ;
 using GUI.DataGridObjects;
+using IO.ThermoRawFileReader;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -57,7 +58,6 @@ namespace GUI
             idFiles = new ObservableCollection<IdentificationFileForDataGrid>();
             worker = new BackgroundWorker();
             worker.DoWork += new DoWorkEventHandler(RunProgram);
-            worker.RunWorkerCompleted += Worker_RunWorkerCompleted;
 
             flashLfqEngine = new FlashLfqEngine(new List<Identification>());
 
@@ -69,14 +69,6 @@ namespace GUI
 
             var _writer = new TextBoxWriter(notificationsTextBox);
             Console.SetOut(_writer);
-        }
-
-        private void Worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            if (e.Error == null)
-            {
-                MessageBox.Show("Run complete");
-            }
         }
 
         private void PopulateSettings()
@@ -122,7 +114,7 @@ namespace GUI
             }
 
             settings.ProteinQuantFoldChangeCutoff = double.Parse(FoldChangeCutoffManualTextBox.Text, CultureInfo.InvariantCulture);
-            
+
             // ppm tolerance
             if (double.TryParse(ppmToleranceTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out double ppmTolerance))
             {
@@ -304,7 +296,7 @@ namespace GUI
                 if (!licenceAgreement.HasAcceptedThermoLicence)
                 {
                     var thermoLicenceWindow = new ThermoLicenceAgreementWindow();
-                    thermoLicenceWindow.LicenceText.AppendText(ThermoRawFileReader.ThermoRawFileReaderLicence.ThermoLicenceText);
+                    thermoLicenceWindow.LicenceText.AppendText(ThermoRawFileReaderLicence.ThermoLicenceText);
                     var dialogResult = thermoLicenceWindow.ShowDialog();
 
                     if (dialogResult.HasValue && dialogResult.Value == true)
@@ -550,6 +542,18 @@ namespace GUI
                 return;
             }
 
+            if (ids.Any(p => p.Ms2RetentionTimeInMinutes > 500))
+            {
+                var res = MessageBox.Show("It seems that some of the retention times in the PSM file(s) are in seconds and not minutes; FlashLFQ requires the RT to be in minutes. " +
+                    "Continue with the FlashLFQ run? (only click yes if the RTs are actually in minutes)",
+                    "Error", MessageBoxButton.YesNo, MessageBoxImage.Hand);
+
+                if (res == MessageBoxResult.No)
+                {
+                    return;
+                }
+            }
+
             // run FlashLFQ engine
             try
             {
@@ -592,6 +596,8 @@ namespace GUI
                 {
                     OutputWriter.WriteOutput(Directory.GetParent(spectraFiles.First().FilePath).FullName, results, flashLfqEngine.Silent,
                         outputFolderPath);
+
+                    MessageBox.Show("Run complete");
                 }
                 catch (Exception ex)
                 {

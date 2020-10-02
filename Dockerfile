@@ -1,7 +1,7 @@
 ## Base image is the Alpine Linux distro with .NET Core runtime
 FROM mcr.microsoft.com/dotnet/core/runtime:3.1-alpine AS build
 
-## Copies FlashLFQ_CommandLine.zip from the current directory into the Docker image
+## Copies contents of the "publish" folder into the Docker image
 ADD CMD/bin/Release/netcoreapp3.1/publish/ /flashlfq/
 
 ## Set the entrypoint of the Docker image to CMD.dll

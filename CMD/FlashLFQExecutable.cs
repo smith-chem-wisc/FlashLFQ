@@ -1,6 +1,7 @@
 ﻿using CommandLine;
 using CommandLine.Text;
 using FlashLFQ;
+using IO.ThermoRawFileReader;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -85,7 +86,7 @@ namespace CMD
 
             if (settings.PrintThermoLicenceViaCommandLine)
             {
-                Console.WriteLine(ThermoRawFileReader.ThermoRawFileReaderLicence.ThermoLicenceText);
+                Console.WriteLine(ThermoRawFileReaderLicence.ThermoLicenceText);
                 return;
             }
 
@@ -106,7 +107,7 @@ namespace CMD
                     else
                     {
                         // decided to write this even if it's on silent mode...
-                        Console.WriteLine(ThermoRawFileReader.ThermoRawFileReaderLicence.ThermoLicenceText);
+                        Console.WriteLine(ThermoRawFileReaderLicence.ThermoLicenceText);
                         Console.WriteLine("\nIn order to search Thermo .raw files, you must agree to the above terms. Do you agree to the above terms? y/n\n");
 
                         string res = Console.ReadLine();
