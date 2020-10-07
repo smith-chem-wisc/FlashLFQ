@@ -12,11 +12,12 @@ This repository is for the stand-alone application of FlashLFQ. FlashLFQ is also
 
 ## Requirements
 
-**Windows requirements:**
-- [.NET Framework 4.7.1](https://dotnet.microsoft.com/download/dotnet-framework)
+The command-line version of FlashLFQ is cross-platform (Windows, macOS, or Linux). The GUI is Windows-only.
 
-**Linux/OSX requirements:**
-- [.NET Core 2.1](https://dotnet.microsoft.com/download)
+.NET Core 3.1 is required for both the command-line and GUI version:
+Windows: https://dotnet.microsoft.com/download/dotnet-core/thank-you/runtime-desktop-3.1.3-windows-x64-installer
+Mac: https://dotnet.microsoft.com/download/dotnet-core/thank-you/runtime-3.1.3-macos-x64-installer
+Linux: https://docs.microsoft.com/en-us/dotnet/core/install/linux-package-manager-ubuntu-1910
 
 ## Download
 To download FlashLFQ, go [here](https://github.com/smith-chem-wisc/FlashLFQ/releases/latest). Click the FlashLFQ.zip file and extract the contents to a desired location on your computer.
