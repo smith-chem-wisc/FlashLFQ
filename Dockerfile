@@ -5,7 +5,7 @@ FROM mcr.microsoft.com/dotnet/core/runtime:3.1-alpine AS build
 ADD CMD/bin/Release/netcoreapp3.1/publish/ /flashlfq/
 
 ## Set the entrypoint of the Docker image to CMD.dll
-ENTRYPOINT ["dotnet", "flashlfq/CMD.dll"]
+ENTRYPOINT ["dotnet", "/flashlfq/CMD.dll"]
 
 ## Build example:
 ## docker build -t flashlfq .
