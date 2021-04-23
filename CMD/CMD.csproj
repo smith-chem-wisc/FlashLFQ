@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0-windows</TargetFramework>
     <Version>1.0.0.0</Version>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
@@ -11,12 +11,13 @@
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
     <ApplicationIcon>FlashLFQ_Icon.ico</ApplicationIcon>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.7.82" />
     <PackageReference Include="MathNet.Numerics" Version="4.9.0" />
-    <PackageReference Include="mzLib" Version="1.0.479" />
+    <PackageReference Include="mzLib" Version="1.0.494" />
     <PackageReference Include="NetSerializer" Version="4.1.1" />
     <PackageReference Include="Nett" Version="0.15.0" />
     <PackageReference Include="SharpLearning.Common.Interfaces" Version="0.28.0" />
@@ -29,7 +30,7 @@
     <PackageReference Include="SharpLearning.Optimization" Version="0.28.0" />
     <PackageReference Include="SharpLearning.RandomForest" Version="0.28.0" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <ProjectReference Include="..\Util\Util.csproj" />
   </ItemGroup>

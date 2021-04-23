@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using FlashLFQ;
+using MzLibUtil;
+using System;
 using System.IO;
 using System.Linq;
-using FlashLFQ;
-using MzLibUtil;
 
 namespace Util
 {
@@ -22,7 +21,7 @@ namespace Util
             {
                 Directory.CreateDirectory(outputPath);
             }
-            
+
             bool bayesianResults = results.ProteinGroups.Any(p => p.Value.ConditionToQuantificationResults.Any());
 
             results.WriteResults(
@@ -58,7 +57,7 @@ namespace Util
                 file.WriteLine("e: " + e);
                 file.WriteLine("e.Message: " + e.Message);
                 file.WriteLine("e.Data: " + e.Data);
-                
+
                 file.WriteLine("e.Source: " + e.Source);
                 file.WriteLine("e.StackTrace: " + e.StackTrace);
                 file.WriteLine("e.TargetSite: " + e.TargetSite);
