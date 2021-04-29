@@ -1,5 +1,5 @@
 ## Base image is the Alpine Linux distro with .NET Core runtime
-FROM mcr.microsoft.com/dotnet/core/runtime:5.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/runtime:5.0-alpine AS build
 
 ## Copies contents of the "publish" folder into the Docker image
 ADD CMD/bin/Release/net5.0/publish/ /flashlfq/
