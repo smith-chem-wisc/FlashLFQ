@@ -169,7 +169,7 @@ namespace Util
                         }
 
                         // retention time
-                        if (double.TryParse(param[_msmsRetnCol], out double ms2RetentionTime))
+                        if (double.TryParse(param[_msmsRetnCol], NumberStyles.Number, CultureInfo.InvariantCulture, out double ms2RetentionTime))
                         {
                             if (fileType == PsmFileType.PeptideShaker)
                             {
@@ -234,7 +234,7 @@ namespace Util
                         }
                         else
                         {
-                            if (!double.TryParse(param[_chargeStCol], out double chargeStateDouble))
+                            if (!double.TryParse(param[_chargeStCol], NumberStyles.Number, CultureInfo.InvariantCulture, out double chargeStateDouble))
                             {
                                 if (!silent)
                                 {
