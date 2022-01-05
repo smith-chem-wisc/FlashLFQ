@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace Util
 {
-    enum PsmFileType { MetaMorpheus, Morpheus, MaxQuant, PeptideShaker, Generic, Unknown }
+    enum PsmFileType { MetaMorpheus, Morpheus, MaxQuant, PeptideShaker, Generic, Percolator, Unknown }
 
     public class PsmReader
     {
@@ -16,6 +16,7 @@ namespace Util
         private static int _fullSequCol;
         private static int _monoMassCol;
         private static int _msmsRetnCol;
+        private static int _msmsScanCol;
         private static int _chargeStCol;
         private static int _protNameCol;
         private static int _decoyCol;
@@ -28,12 +29,15 @@ namespace Util
 
         private static Dictionary<string, double> _modSequenceToMonoMass;
         private static Dictionary<string, ProteinGroup> allProteinGroups;
+        private static List<ScanHeaderInfo> _scanHeaderInfo = new List<ScanHeaderInfo>();
 
+        //Delimiters refere to contents of one field, not the delimiter between fields
         private static readonly Dictionary<PsmFileType, string[]> delimiters = new Dictionary<PsmFileType, string[]>
         {
             { PsmFileType.MetaMorpheus, new string[] { "|", " or " } },
             { PsmFileType.Morpheus, new string[] { ";" } },
             { PsmFileType.MaxQuant, new string[] { ";" } },
+            { PsmFileType.Percolator, new string[] { "|", "," } },
             { PsmFileType.Generic, new string[] { ";" } },
             { PsmFileType.PeptideShaker, new string[] { ", " } },
         };
@@ -91,12 +95,20 @@ namespace Util
                         {
                             throw new Exception("Could not interpret PSM header labels from file: " + filepath);
                         }
+                        if(fileType == PsmFileType.Percolator)
+                        {
+                            //Percolator files are missing retention times. So we have to load them ahead of time. Dynamic scan access is time cost prohibitive.
+                            foreach (KeyValuePair<string,SpectraFileInfo> item in rawFileDictionary)
+                            {
+                                _scanHeaderInfo.AddRange(ScanInfoRecovery.FileScanHeaderInfo(item.Value.FullFilePathWithExtension));
+                            }
+                        }
                     }
                     else
                     {
                         var param = line.Split('\t');
 
-                        // only quantify PSMs below 1% FDR
+                        // only quantify PSMs below 1% FDR with MetaMorpheus/Morpheus results
                         if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueCol], CultureInfo.InvariantCulture) > 0.01)
                         {
                             break;
@@ -106,13 +118,14 @@ namespace Util
                             break;
                         }
 
-                        // only quantify PSMs below 1% notch FDR
+                        // only quantify PSMs below 1% notch FDR with MetaMorpheus/Morpheus results
                         if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture) > 0.01)
                         {
                             continue;
                         }
 
-                        // skip decoys
+                        // skip decoys with MetaMorpheus/Morpheus results
+                        //TODO: what about decoys from other input types?
                         if ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus) &&
                             param[_decoyCol].Contains("D"))
                         {
@@ -169,12 +182,21 @@ namespace Util
                         }
 
                         // retention time
-                        if (double.TryParse(param[_msmsRetnCol], NumberStyles.Number, CultureInfo.InvariantCulture, out double ms2RetentionTime))
+                        double ms2RetentionTime = -1;
+                        //percolator input files do not have retention times. So, we have to get them from the data file using the scan number.
+                        if (fileType == PsmFileType.Percolator)
+                        {
+                            if (int.TryParse(param[_msmsScanCol], NumberStyles.Number, CultureInfo.InvariantCulture, out int scanNumber))
+                            {
+                                ms2RetentionTime = _scanHeaderInfo.Where(i => i.FileName == fileName && i.ScanNumber == scanNumber).FirstOrDefault().RetentionTime;
+                            }
+                        }
+                        else if (double.TryParse(param[_msmsRetnCol], NumberStyles.Number, CultureInfo.InvariantCulture, out double retentionTime))
                         {
                             if (fileType == PsmFileType.PeptideShaker)
                             {
                                 // peptide shaker RT is in seconds - convert to minutes
-                                ms2RetentionTime = ms2RetentionTime / 60.0;
+                                ms2RetentionTime = retentionTime / 60.0;
                             }
 
                             if (ms2RetentionTime < 0)
@@ -455,6 +477,29 @@ namespace Util
                 _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 
                 return PsmFileType.PeptideShaker;
+            }
+
+            // Percolator Input
+            // Assume that no decoy are provided in this input
+            else if (split.Contains("file_idx".ToLowerInvariant())
+                && split.Contains("scan".ToLowerInvariant())
+                && split.Contains("charge".ToLowerInvariant())
+                && split.Contains("spectrum neutral mass".ToLowerInvariant()) //experimental neutral mass
+                && split.Contains("peptide mass".ToLowerInvariant()) //theoretical neutral (uncharged) peptide mass
+                && split.Contains("percolator q-value".ToLowerInvariant())
+                && split.Contains("sequence".ToLowerInvariant())
+                && split.Contains("protein id".ToLowerInvariant()))
+            {
+                //_fileNameCol = Array.IndexOf(split, "File Name".ToLowerInvariant());
+                _baseSequCol = Array.IndexOf(split, "sequence".ToLowerInvariant());
+                _fullSequCol = Array.IndexOf(split, "sequence".ToLowerInvariant());
+                _monoMassCol = Array.IndexOf(split, "peptide mass".ToLowerInvariant()); //TODO: see if this needs to be theoretical or experimental mass AND if it is neutral or monoisotopic(H+)
+                _msmsScanCol = Array.IndexOf(split, "scan".ToLowerInvariant());
+                _chargeStCol = Array.IndexOf(split, "charge".ToLowerInvariant());
+                _protNameCol = Array.IndexOf(split, "protein id".ToLowerInvariant());
+                _qValueCol = Array.IndexOf(split, "percolator q-value".ToLowerInvariant());
+
+                return PsmFileType.Percolator;
             }
 
             // Generic MS/MS input
