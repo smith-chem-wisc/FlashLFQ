@@ -7,7 +7,8 @@ using System.Linq;
 
 namespace Util
 {
-    enum PsmFileType { MetaMorpheus, Morpheus, MaxQuant, PeptideShaker, Generic, Percolator, Unknown }
+    internal enum PsmFileType
+    { MetaMorpheus, Morpheus, MaxQuant, PeptideShaker, Generic, Percolator, Unknown }
 
     public class PsmReader
     {
@@ -25,6 +26,7 @@ namespace Util
 
         // optional columns
         private static int _geneNameCol;
+
         private static int _organismCol;
 
         private static Dictionary<string, double> _modSequenceToMonoMass;
@@ -95,10 +97,10 @@ namespace Util
                         {
                             throw new Exception("Could not interpret PSM header labels from file: " + filepath);
                         }
-                        if(fileType == PsmFileType.Percolator)
+                        if (fileType == PsmFileType.Percolator)
                         {
                             //Percolator files are missing retention times. So we have to load them ahead of time. Dynamic scan access is time cost prohibitive.
-                            foreach (KeyValuePair<string,SpectraFileInfo> item in rawFileDictionary)
+                            foreach (KeyValuePair<string, SpectraFileInfo> item in rawFileDictionary)
                             {
                                 _scanHeaderInfo.AddRange(ScanInfoRecovery.FileScanHeaderInfo(item.Value.FullFilePathWithExtension));
                             }
@@ -352,11 +354,11 @@ namespace Util
                         ids.Add(ident);
                     }
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     if (!silent)
                     {
-                        Console.WriteLine("Problem reading line " + lineNum + " of the identification file");
+                        Console.WriteLine("Problem reading line " + lineNum + " of the identification file" + "; " + e.Message);
                     }
                     return new List<Identification>();
                 }

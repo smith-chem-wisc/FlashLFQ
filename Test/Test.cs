@@ -1,5 +1,6 @@
 ﻿using CMD;
 using FlashLFQ;
+using MzLibUtil;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -215,6 +216,23 @@ namespace Test
             {
                 Assert.IsTrue(Double.IsFinite(rt));
             }
+        }
+
+        [Test]
+        public static void TestPercolatorErrorHandling()
+        {
+            string search = "Percolator";
+            string psmFilename = "BadPercolatorSmallCalibratableYeast.txt";
+
+            string myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
+            string pathOfIdentificationFile = Path.Combine(myDirectory, search, psmFilename);
+            string pathOfMzml = Path.Combine(myDirectory, "SmallCalibratible_Yeast.mzML");
+            SpectraFileInfo sfi = new SpectraFileInfo(pathOfMzml, "A", 1, 1, 1);
+
+            List<Identification> ids = PsmReader.ReadPsms(pathOfIdentificationFile, false, new List<SpectraFileInfo> { sfi });
+
+            //would like better assertion with message but can't get it to return exception message...
+            Assert.IsEmpty(ids);
         }
 
         [Test]

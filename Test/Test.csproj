@@ -45,6 +45,9 @@
     <None Update="SampleFiles\PeptideShaker\Default PSM Report.tabular">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="SampleFiles\Percolator\BadPercolatorSmallCalibratableYeast.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="SampleFiles\Percolator\PercolatorSmallCalibratableYeast.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
