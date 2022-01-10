@@ -195,6 +195,7 @@ namespace Util
                         }
                         else if (double.TryParse(param[_msmsRetnCol], NumberStyles.Number, CultureInfo.InvariantCulture, out double retentionTime))
                         {
+                            ms2RetentionTime = retentionTime;
                             if (fileType == PsmFileType.PeptideShaker)
                             {
                                 // peptide shaker RT is in seconds - convert to minutes
