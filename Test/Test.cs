@@ -198,6 +198,26 @@ namespace Test
         }
 
         [Test]
+        public static void TestPercolatorReadPsmsGetsRTsFromFileHeader()
+        {
+            string search = "Percolator";
+            string psmFilename = "PercolatorSmallCalibratableYeast.txt";
+
+            string myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
+            string pathOfIdentificationFile = Path.Combine(myDirectory, search, psmFilename);
+            string pathOfMzml = Path.Combine(myDirectory, "SmallCalibratible_Yeast.mzML");
+            SpectraFileInfo sfi = new SpectraFileInfo(pathOfMzml, "A", 1, 1, 1);
+
+            List<Identification> ids = PsmReader.ReadPsms(pathOfIdentificationFile, true, new List<SpectraFileInfo> { sfi });
+            Assert.AreEqual(89, ids.Count);
+            List<double> rts = ids.Select(t => t.Ms2RetentionTimeInMinutes).ToList();
+            foreach (double rt in rts)
+            {
+                Assert.IsTrue(Double.IsFinite(rt));
+            }
+        }
+
+        [Test]
         public static void TestGenericOutput()
         {
             string search = "Generic";
