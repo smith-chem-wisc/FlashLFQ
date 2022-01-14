@@ -1,5 +1,6 @@
 ﻿using CMD;
 using FlashLFQ;
+using IO.MzML;
 using MzLibUtil;
 using NUnit.Framework;
 using System;
@@ -202,20 +203,25 @@ namespace Test
         public static void TestPercolatorReadPsmsGetsRTsFromFileHeader()
         {
             string search = "Percolator";
-            string psmFilename = "PercolatorSmallCalibratableYeast.txt";
+            string psmFilename = "Percolator.txt";
+            string mzMLFilename = "percolator.mzML";
 
             string myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
             string pathOfIdentificationFile = Path.Combine(myDirectory, search, psmFilename);
-            string pathOfMzml = Path.Combine(myDirectory, "SmallCalibratible_Yeast.mzML");
+            string pathOfMzml = Path.Combine(myDirectory, mzMLFilename);
             SpectraFileInfo sfi = new SpectraFileInfo(pathOfMzml, "A", 1, 1, 1);
 
+            //Mzml ok = Mzml.LoadAllStaticData(pathOfMzml);
+            List<double> expectedRetentionTimes = new List<double> { 7.54, 7.54, 7.56, 7.58, 7.61, 7.63 };
             List<Identification> ids = PsmReader.ReadPsms(pathOfIdentificationFile, true, new List<SpectraFileInfo> { sfi });
-            Assert.AreEqual(89, ids.Count);
-            List<double> rts = ids.Select(t => t.Ms2RetentionTimeInMinutes).ToList();
-            foreach (double rt in rts)
+            Assert.AreEqual(6, ids.Count);
+            List<double> actualRetentionTimes = ids.Select(t => Math.Round(t.Ms2RetentionTimeInMinutes,2)).ToList();
+  
+            foreach (double rt in actualRetentionTimes)
             {
                 Assert.IsTrue(Double.IsFinite(rt));
             }
+            CollectionAssert.AreEquivalent(expectedRetentionTimes, actualRetentionTimes);
         }
 
         [Test]
