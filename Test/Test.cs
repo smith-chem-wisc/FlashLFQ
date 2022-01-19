@@ -165,12 +165,12 @@ namespace Test
         [Test]
         public static void TestPercolatorOutput()
         {
-            string search = "Percolator";
-            string psmFilename = "PercolatorSmallCalibratableYeast.txt";
+            string psmFilename = "Percolator.txt";
+            string mzMLFilename = "percolator.mzML";
 
-            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
-            var pathOfIdentificationFile = Path.Combine(myDirectory, search, psmFilename);
-            var pathOfMzml = Path.Combine(myDirectory, "SmallCalibratible_Yeast.mzML");
+            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles", "Percolator");
+            var pathOfIdentificationFile = Path.Combine(myDirectory, psmFilename);
+            string pathOfMzml = Path.Combine(myDirectory, mzMLFilename);
             Assert.That(File.Exists(pathOfIdentificationFile));
             Assert.That(File.Exists(pathOfMzml));
 
@@ -186,18 +186,19 @@ namespace Test
 
             CMD.FlashLfqExecutable.Main(myargs);
 
-            string peaksPath = Path.Combine(myDirectory, search, "QuantifiedPeaks.tsv");
+            string peaksPath = Path.Combine(myDirectory, "QuantifiedPeaks.tsv");
             Assert.That(File.Exists(peaksPath));
             File.Delete(peaksPath);
 
-            string peptidesPath = Path.Combine(myDirectory, search, "QuantifiedPeptides.tsv");
+            string peptidesPath = Path.Combine(myDirectory, "QuantifiedPeptides.tsv");
             Assert.That(File.Exists(peptidesPath));
             File.Delete(peptidesPath);
 
-            string proteinsPath = Path.Combine(myDirectory, search, "QuantifiedProteins.tsv");
+            string proteinsPath = Path.Combine(myDirectory, "QuantifiedProteins.tsv");
             Assert.That(File.Exists(proteinsPath));
             File.Delete(proteinsPath);
         }
+
 
         [Test]
         public static void TestPercolatorReadPsmsGetsRTsFromFileHeader()
