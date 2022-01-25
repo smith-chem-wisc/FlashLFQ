@@ -138,7 +138,12 @@ namespace Util
                         string fileName = param[_fileNameCol];
 
                         // base sequence
-                        string baseSequence = param[_baseSequCol];
+                        string baseSequence = null;
+                        if (fileType != PsmFileType.Percolator)
+                        {
+                            baseSequence = param[_baseSequCol];
+                        }
+                        
 
                         // modified sequence
                         string modSequence = param[_fullSequCol];
@@ -489,12 +494,9 @@ namespace Util
                 && split.Contains("charge".ToLowerInvariant())
                 && split.Contains("spectrum neutral mass".ToLowerInvariant()) //experimental neutral mass
                 && split.Contains("peptide mass".ToLowerInvariant()) //theoretical neutral (uncharged) peptide mass
-                && split.Contains("percolator q-value".ToLowerInvariant())
                 && split.Contains("sequence".ToLowerInvariant())
                 && split.Contains("protein id".ToLowerInvariant()))
             {
-                //_fileNameCol = Array.IndexOf(split, "File Name".ToLowerInvariant());
-                _baseSequCol = Array.IndexOf(split, "sequence".ToLowerInvariant());
                 _fullSequCol = Array.IndexOf(split, "sequence".ToLowerInvariant());
                 _monoMassCol = Array.IndexOf(split, "peptide mass".ToLowerInvariant()); //TODO: see if this needs to be theoretical or experimental mass AND if it is neutral or monoisotopic(H+)
                 _msmsScanCol = Array.IndexOf(split, "scan".ToLowerInvariant());

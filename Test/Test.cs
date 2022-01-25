@@ -209,7 +209,7 @@ namespace Test
 
             string myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
             string pathOfIdentificationFile = Path.Combine(myDirectory, search, psmFilename);
-            string pathOfMzml = Path.Combine(myDirectory, mzMLFilename);
+            string pathOfMzml = Path.Combine(myDirectory, search, mzMLFilename);
             SpectraFileInfo sfi = new SpectraFileInfo(pathOfMzml, "A", 1, 1, 1);
 
             //Mzml ok = Mzml.LoadAllStaticData(pathOfMzml);

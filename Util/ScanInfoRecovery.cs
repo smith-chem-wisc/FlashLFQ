@@ -16,7 +16,7 @@ namespace Util
 
         public static List<ScanHeaderInfo> FileScanHeaderInfo(string fullFilePathWithExtension)
         {
-            string filename = Path.GetFileNameWithoutExtension(fullFilePathWithExtension);
+            string filename = Path.GetFileName(fullFilePathWithExtension);
             List<ScanHeaderInfo> scanHeaderInfoList = new();
             switch (GetDataFileType(fullFilePathWithExtension))
             {
