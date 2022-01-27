@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using UsefulProteomicsDatabases;
 
 namespace Util
 {
@@ -143,7 +144,6 @@ namespace Util
                         {
                             baseSequence = param[_baseSequCol];
                         }
-                        
 
                         // modified sequence
                         string modSequence = param[_fullSequCol];
@@ -281,68 +281,95 @@ namespace Util
 
                         // protein groups
                         // use all proteins listed
-                        List<ProteinGroup> proteinGroups = new List<ProteinGroup>();
-                        var proteins = param[_protNameCol].Split(delimiters[fileType], StringSplitOptions.None);
-
+                        string[] proteins = null;
                         string[] genes = null;
-                        if (_geneNameCol >= 0)
-                        {
-                            genes = param[_geneNameCol].Split(delimiters[fileType], StringSplitOptions.None);
-                        }
-
                         string[] organisms = null;
-                        if (_organismCol >= 0)
+                        List<ProteinGroup> proteinGroups = new List<ProteinGroup>();
+
+                        if (fileType == PsmFileType.Percolator)
                         {
-                            organisms = param[_organismCol].Split(delimiters[fileType], StringSplitOptions.None);
+                            string[] proteinFastaHeaders = param[_protNameCol].Split(',');
+                            foreach (string fastHeader in proteinFastaHeaders)
+                            {
+                                string[] fastaHeaderFields = fastHeader.Split('|');
+                                string accession = fastaHeaderFields[1];
+                                string geneNameString = fastaHeaderFields[2];
+
+                                if (allProteinGroups.TryGetValue(accession, out ProteinGroup pg))
+                                {
+                                    proteinGroups.Add(pg);
+                                }
+                                else
+                                {
+                                    ProteinGroup newPg = new ProteinGroup(accession, geneNameString, null);
+                                    allProteinGroups.Add(accession, newPg);
+                                    proteinGroups.Add(newPg);
+                                }
+
+                            }
                         }
-
-                        for (int pr = 0; pr < proteins.Length; pr++)
+                        else
                         {
-                            string proteinName = proteins[pr];
-                            string gene = "";
-                            string organism = "";
+                            proteins = param[_protNameCol].Split(delimiters[fileType], StringSplitOptions.None);
 
-                            if (genes != null)
+                            if (_geneNameCol >= 0)
                             {
-                                if (genes.Length == 1)
-                                {
-                                    gene = genes[0];
-                                }
-                                else if (genes.Length == proteins.Length)
-                                {
-                                    gene = genes[pr];
-                                }
-                                else if (proteins.Length == 1)
-                                {
-                                    gene = param[_geneNameCol];
-                                }
+                                genes = param[_geneNameCol].Split(delimiters[fileType], StringSplitOptions.None);
                             }
 
-                            if (organisms != null)
+                            if (_organismCol >= 0)
                             {
-                                if (organisms.Length == 1)
-                                {
-                                    organism = organisms[0];
-                                }
-                                else if (organisms.Length == proteins.Length)
-                                {
-                                    organism = organisms[pr];
-                                }
-                                else if (proteins.Length == 1)
-                                {
-                                    organism = param[_organismCol];
-                                }
+                                organisms = param[_organismCol].Split(delimiters[fileType], StringSplitOptions.None);
                             }
 
-                            if (allProteinGroups.TryGetValue(proteinName, out ProteinGroup pg))
+                            for (int pr = 0; pr < proteins.Length; pr++)
                             {
-                                proteinGroups.Add(pg);
-                            }
-                            else
-                            {
-                                ProteinGroup newPg = new ProteinGroup(proteinName, gene, organism);
-                                allProteinGroups.Add(proteinName, newPg);
-                                proteinGroups.Add(newPg);
+                                string proteinName = proteins[pr];
+                                string gene = "";
+                                string organism = "";
+
+                                if (genes != null)
+                                {
+                                    if (genes.Length == 1)
+                                    {
+                                        gene = genes[0];
+                                    }
+                                    else if (genes.Length == proteins.Length)
+                                    {
+                                        gene = genes[pr];
+                                    }
+                                    else if (proteins.Length == 1)
+                                    {
+                                        gene = param[_geneNameCol];
+                                    }
+                                }
+
+                                if (organisms != null)
+                                {
+                                    if (organisms.Length == 1)
+                                    {
+                                        organism = organisms[0];
+                                    }
+                                    else if (organisms.Length == proteins.Length)
+                                    {
+                                        organism = organisms[pr];
+                                    }
+                                    else if (proteins.Length == 1)
+                                    {
+                                        organism = param[_organismCol];
+                                    }
+                                }
+
+                                if (allProteinGroups.TryGetValue(proteinName, out ProteinGroup pg))
+                                {
+                                    proteinGroups.Add(pg);
+                                }
+                                else
+                                {
+                                    ProteinGroup newPg = new ProteinGroup(proteinName, gene, organism);
+                                    allProteinGroups.Add(proteinName, newPg);
+                                    proteinGroups.Add(newPg);
+                                }
                             }
                         }
 
@@ -531,6 +558,20 @@ namespace Util
             }
 
             return type;
+        }
+
+        private static string ApplyRegex(FastaHeaderFieldRegex regex, string line)
+        {
+            string result = null;
+            if (regex != null)
+            {
+                var matches = regex.Regex.Matches(line);
+                if (matches.Count > regex.Match && matches[regex.Match].Groups.Count > regex.Group)
+                {
+                    result = matches[regex.Match].Groups[regex.Group].Value;
+                }
+            }
+            return result;
         }
     }
 }
