@@ -223,6 +223,10 @@ namespace Test
                 Assert.IsTrue(Double.IsFinite(rt));
             }
             CollectionAssert.AreEquivalent(expectedRetentionTimes, actualRetentionTimes);
+
+            List<int> proteinGroupCounts = new List<int> { 11, 6,3,2,15,3 };
+            CollectionAssert.AreEquivalent(proteinGroupCounts, ids.Select(i=>i.ProteinGroups.Count).ToList());
+
         }
 
         [Test]
