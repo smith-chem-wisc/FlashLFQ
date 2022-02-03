@@ -137,7 +137,7 @@ namespace Util
 
                         // spectrum file name
                         string fileName = param[_fileNameCol];
-                        Console.WriteLine(fileName);
+
                         // base sequence
                         string baseSequence = null;
                         if (fileType != PsmFileType.Percolator)
