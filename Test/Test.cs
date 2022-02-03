@@ -205,11 +205,15 @@ namespace Test
         //{
         //    string search = "Percolator";
         //    string psmFilename = "percolatorTestData.txt";
-        //    string mzMLFilename = "percolator.mzML";
 
-        //    string myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
-        //    string pathOfIdentificationFile = Path.Combine(myDirectory, search, psmFilename);
-        //    string pathOfMzml = Path.Combine(myDirectory, search, mzMLFilename);
+        //    var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles", search);
+        //    var pathOfIdentificationFile = Path.Combine(myDirectory, psmFilename);
+        //    var pathOfMzml = Path.Combine(myDirectory, "percolatorMzml.mzML");
+        //    Assert.That(File.Exists(pathOfIdentificationFile));
+        //    Assert.That(File.Exists(pathOfMzml));
+
+
+
         //    SpectraFileInfo sfi = new SpectraFileInfo(pathOfMzml, "A", 1, 1, 1);
 
         //    List<double> expectedRetentionTimes = new List<double> { 7.54, 7.54, 7.56, 7.58, 7.61, 7.63 };

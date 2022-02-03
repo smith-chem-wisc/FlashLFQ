@@ -137,12 +137,12 @@ namespace Util
 
                         // spectrum file name
                         string fileName = param[_fileNameCol];
-
+                        Console.WriteLine(fileName);
                         // base sequence
                         string baseSequence = null;
                         if (fileType != PsmFileType.Percolator)
                         {
-                            baseSequence = param[_baseSequCol];
+                            baseSequence = null;
                         }
 
                         // modified sequence
@@ -195,7 +195,7 @@ namespace Util
                         {
                             if (int.TryParse(param[_msmsScanCol], NumberStyles.Number, CultureInfo.InvariantCulture, out int scanNumber))
                             {
-                                ms2RetentionTime = _scanHeaderInfo.Where(i => i.FileName == fileName && i.ScanNumber == scanNumber).FirstOrDefault().RetentionTime;
+                                ms2RetentionTime = _scanHeaderInfo.Where(i => Path.GetFileNameWithoutExtension(i.FileName) == Path.GetFileNameWithoutExtension(fileName) && i.ScanNumber == scanNumber).FirstOrDefault().RetentionTime;
                             }
                         }
                         else if (double.TryParse(param[_msmsRetnCol], NumberStyles.Number, CultureInfo.InvariantCulture, out double retentionTime))
@@ -524,6 +524,7 @@ namespace Util
                 && split.Contains("sequence".ToLowerInvariant())
                 && split.Contains("protein id".ToLowerInvariant()))
             {
+                _fileNameCol = Array.IndexOf(split, "file_idx".ToLowerInvariant());
                 _fullSequCol = Array.IndexOf(split, "sequence".ToLowerInvariant());
                 _monoMassCol = Array.IndexOf(split, "peptide mass".ToLowerInvariant()); //TODO: see if this needs to be theoretical or experimental mass AND if it is neutral or monoisotopic(H+)
                 _msmsScanCol = Array.IndexOf(split, "scan".ToLowerInvariant());
