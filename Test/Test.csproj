@@ -48,13 +48,13 @@
     <None Update="SampleFiles\Percolator\ExperimentalDesign.tsv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="SampleFiles\Percolator\percolator.mzML">
+    <None Update="SampleFiles\Percolator\percolatorMzml.mzML">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="SampleFiles\Percolator\BadPercolatorSmallCalibratableYeast.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="SampleFiles\Percolator\Percolator.txt">
+    <None Update="SampleFiles\Percolator\percolatorTestData.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="SampleFiles\SmallCalibratible_Yeast.mzML">
