@@ -1,0 +1,2 @@
+﻿file_idx	scan	charge	spectrum precursor m/z	spectrum neutral mass	peptide mass	percolator score	percolator q-value	percolator PEP	distinct matches/spectrum	sequence	protein id	flanking aa
+SmallCalibratible_Yeast	9999	2	549.79791	1097.58127	1097.58292	18.268	0	0	18	KAPAGGAADAAAK	P46672	A

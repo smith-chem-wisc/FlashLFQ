@@ -1,5 +1,7 @@
 ﻿using CMD;
 using FlashLFQ;
+using IO.MzML;
+using MzLibUtil;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -158,6 +160,93 @@ namespace Test
             string proteinsPath = Path.Combine(myDirectory, search, "QuantifiedProteins.tsv");
             Assert.That(File.Exists(proteinsPath));
             File.Delete(proteinsPath);
+        }
+
+        [Test]
+        public static void TestPercolatorOutput()
+        {
+            string search = "Percolator";
+            string psmFilename = "percolatorTestData.txt";
+
+            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles", search);
+            var pathOfIdentificationFile = Path.Combine(myDirectory, psmFilename);
+            var pathOfMzml = Path.Combine(myDirectory, "percolatorMzml.mzML");
+            Assert.That(File.Exists(pathOfIdentificationFile));
+            Assert.That(File.Exists(pathOfMzml));
+
+            string[] myargs = new string[]
+            {
+                "--rep",
+                myDirectory,
+                "--idt",
+                pathOfIdentificationFile,
+                "--ppm",
+                "5"
+            };
+
+            CMD.FlashLfqExecutable.Main(myargs);
+
+            string peaksPath = Path.Combine(myDirectory, "QuantifiedPeaks.tsv");
+            Assert.That(File.Exists(peaksPath));
+            File.Delete(peaksPath);
+
+            string peptidesPath = Path.Combine(myDirectory, "QuantifiedPeptides.tsv");
+            Assert.That(File.Exists(peptidesPath));
+            File.Delete(peptidesPath);
+
+            string proteinsPath = Path.Combine(myDirectory, "QuantifiedProteins.tsv");
+            Assert.That(File.Exists(proteinsPath));
+            File.Delete(proteinsPath);
+        }
+
+
+        [Test]
+        public void TestPercolatorReadPsmsGetsRTsFromFileHeader()
+        {
+            string search = "Percolator";
+            string psmFilename = "percolatorTestData.txt";
+
+            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles", search);
+            var pathOfIdentificationFile = Path.Combine(myDirectory, psmFilename);
+            var pathOfMzml = Path.Combine(myDirectory, "percolatorMzml.mzML");
+            Assert.That(File.Exists(pathOfIdentificationFile));
+            Assert.That(File.Exists(pathOfMzml));
+
+
+
+            SpectraFileInfo sfi = new SpectraFileInfo(pathOfMzml, "A", 1, 1, 1);
+
+            List<double> expectedRetentionTimes = new List<double> { 7.54, 7.54, 7.56, 7.58, 7.61, 7.63 };
+
+            List<Identification> ids = PsmReader.ReadPsms(pathOfIdentificationFile, true, new List<SpectraFileInfo> { sfi });
+            Assert.AreEqual(6, ids.Count);
+            List<double> actualRetentionTimes = ids.Select(t => Math.Round(t.Ms2RetentionTimeInMinutes, 2)).ToList();
+
+            foreach (double rt in actualRetentionTimes)
+            {
+                Assert.IsTrue(Double.IsFinite(rt));
+            }
+            CollectionAssert.AreEquivalent(expectedRetentionTimes, actualRetentionTimes);
+
+            List<int> proteinGroupCounts = new List<int> { 11, 6, 3, 2, 15, 3 };
+            CollectionAssert.AreEquivalent(proteinGroupCounts, ids.Select(i => i.ProteinGroups.Count).ToList());
+        }
+
+        [Test]
+        public static void TestPercolatorErrorHandling()
+        {
+            string search = "Percolator";
+            string psmFilename = "BadPercolatorSmallCalibratableYeast.txt";
+
+            string myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
+            string pathOfIdentificationFile = Path.Combine(myDirectory, search, psmFilename);
+            string pathOfMzml = Path.Combine(myDirectory, "SmallCalibratible_Yeast.mzML");
+            SpectraFileInfo sfi = new SpectraFileInfo(pathOfMzml, "A", 1, 1, 1);
+
+            List<Identification> ids = PsmReader.ReadPsms(pathOfIdentificationFile, false, new List<SpectraFileInfo> { sfi });
+
+            //would like better assertion with message but can't get it to return exception message...
+            Assert.IsEmpty(ids);
         }
 
         [Test]

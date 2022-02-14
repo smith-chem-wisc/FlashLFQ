@@ -4,10 +4,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using UsefulProteomicsDatabases;
 
 namespace Util
 {
-    enum PsmFileType { MetaMorpheus, Morpheus, MaxQuant, PeptideShaker, Generic, Unknown }
+    internal enum PsmFileType
+    { MetaMorpheus, Morpheus, MaxQuant, PeptideShaker, Generic, Percolator, Unknown }
 
     public class PsmReader
     {
@@ -16,6 +18,7 @@ namespace Util
         private static int _fullSequCol;
         private static int _monoMassCol;
         private static int _msmsRetnCol;
+        private static int _msmsScanCol;
         private static int _chargeStCol;
         private static int _protNameCol;
         private static int _decoyCol;
@@ -24,16 +27,20 @@ namespace Util
 
         // optional columns
         private static int _geneNameCol;
+
         private static int _organismCol;
 
         private static Dictionary<string, double> _modSequenceToMonoMass;
         private static Dictionary<string, ProteinGroup> allProteinGroups;
+        private static List<ScanHeaderInfo> _scanHeaderInfo = new List<ScanHeaderInfo>();
 
+        //Delimiters refere to contents of one field, not the delimiter between fields
         private static readonly Dictionary<PsmFileType, string[]> delimiters = new Dictionary<PsmFileType, string[]>
         {
             { PsmFileType.MetaMorpheus, new string[] { "|", " or " } },
             { PsmFileType.Morpheus, new string[] { ";" } },
             { PsmFileType.MaxQuant, new string[] { ";" } },
+            { PsmFileType.Percolator, new string[] { "|", "," } },
             { PsmFileType.Generic, new string[] { ";" } },
             { PsmFileType.PeptideShaker, new string[] { ", " } },
         };
@@ -91,12 +98,20 @@ namespace Util
                         {
                             throw new Exception("Could not interpret PSM header labels from file: " + filepath);
                         }
+                        if (fileType == PsmFileType.Percolator)
+                        {
+                            //Percolator files are missing retention times. So we have to load them ahead of time. Dynamic scan access is time cost prohibitive.
+                            foreach (KeyValuePair<string, SpectraFileInfo> item in rawFileDictionary)
+                            {
+                                _scanHeaderInfo.AddRange(ScanInfoRecovery.FileScanHeaderInfo(item.Value.FullFilePathWithExtension));
+                            }
+                        }
                     }
                     else
                     {
                         var param = line.Split('\t');
 
-                        // only quantify PSMs below 1% FDR
+                        // only quantify PSMs below 1% FDR with MetaMorpheus/Morpheus results
                         if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueCol], CultureInfo.InvariantCulture) > 0.01)
                         {
                             break;
@@ -106,13 +121,14 @@ namespace Util
                             break;
                         }
 
-                        // only quantify PSMs below 1% notch FDR
+                        // only quantify PSMs below 1% notch FDR with MetaMorpheus/Morpheus results
                         if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture) > 0.01)
                         {
                             continue;
                         }
 
-                        // skip decoys
+                        // skip decoys with MetaMorpheus/Morpheus results
+                        //TODO: what about decoys from other input types?
                         if ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus) &&
                             param[_decoyCol].Contains("D"))
                         {
@@ -123,7 +139,11 @@ namespace Util
                         string fileName = param[_fileNameCol];
 
                         // base sequence
-                        string baseSequence = param[_baseSequCol];
+                        string baseSequence = null;
+                        if (fileType != PsmFileType.Percolator)
+                        {
+                            baseSequence = null;
+                        }
 
                         // modified sequence
                         string modSequence = param[_fullSequCol];
@@ -169,12 +189,22 @@ namespace Util
                         }
 
                         // retention time
-                        if (double.TryParse(param[_msmsRetnCol], NumberStyles.Number, CultureInfo.InvariantCulture, out double ms2RetentionTime))
+                        double ms2RetentionTime = -1;
+                        //percolator input files do not have retention times. So, we have to get them from the data file using the scan number.
+                        if (fileType == PsmFileType.Percolator)
                         {
+                            if (int.TryParse(param[_msmsScanCol], NumberStyles.Number, CultureInfo.InvariantCulture, out int scanNumber))
+                            {
+                                ms2RetentionTime = _scanHeaderInfo.Where(i => Path.GetFileNameWithoutExtension(i.FileName) == Path.GetFileNameWithoutExtension(fileName) && i.ScanNumber == scanNumber).FirstOrDefault().RetentionTime;
+                            }
+                        }
+                        else if (double.TryParse(param[_msmsRetnCol], NumberStyles.Number, CultureInfo.InvariantCulture, out double retentionTime))
+                        {
+                            ms2RetentionTime = retentionTime;
                             if (fileType == PsmFileType.PeptideShaker)
                             {
                                 // peptide shaker RT is in seconds - convert to minutes
-                                ms2RetentionTime = ms2RetentionTime / 60.0;
+                                ms2RetentionTime = retentionTime / 60.0;
                             }
 
                             if (ms2RetentionTime < 0)
@@ -251,68 +281,95 @@ namespace Util
 
                         // protein groups
                         // use all proteins listed
-                        List<ProteinGroup> proteinGroups = new List<ProteinGroup>();
-                        var proteins = param[_protNameCol].Split(delimiters[fileType], StringSplitOptions.None);
-
+                        string[] proteins = null;
                         string[] genes = null;
-                        if (_geneNameCol >= 0)
-                        {
-                            genes = param[_geneNameCol].Split(delimiters[fileType], StringSplitOptions.None);
-                        }
-
                         string[] organisms = null;
-                        if (_organismCol >= 0)
+                        List<ProteinGroup> proteinGroups = new List<ProteinGroup>();
+
+                        if (fileType == PsmFileType.Percolator)
                         {
-                            organisms = param[_organismCol].Split(delimiters[fileType], StringSplitOptions.None);
+                            string[] proteinFastaHeaders = param[_protNameCol].Split(',');
+                            foreach (string fastHeader in proteinFastaHeaders)
+                            {
+                                string[] fastaHeaderFields = fastHeader.Split('|');
+                                string accession = fastaHeaderFields[1];
+                                string geneNameString = fastaHeaderFields[2];
+
+                                if (allProteinGroups.TryGetValue(accession, out ProteinGroup pg))
+                                {
+                                    proteinGroups.Add(pg);
+                                }
+                                else
+                                {
+                                    ProteinGroup newPg = new ProteinGroup(accession, geneNameString, null);
+                                    allProteinGroups.Add(accession, newPg);
+                                    proteinGroups.Add(newPg);
+                                }
+
+                            }
                         }
-
-                        for (int pr = 0; pr < proteins.Length; pr++)
+                        else
                         {
-                            string proteinName = proteins[pr];
-                            string gene = "";
-                            string organism = "";
+                            proteins = param[_protNameCol].Split(delimiters[fileType], StringSplitOptions.None);
 
-                            if (genes != null)
+                            if (_geneNameCol >= 0)
                             {
-                                if (genes.Length == 1)
-                                {
-                                    gene = genes[0];
-                                }
-                                else if (genes.Length == proteins.Length)
-                                {
-                                    gene = genes[pr];
-                                }
-                                else if (proteins.Length == 1)
-                                {
-                                    gene = param[_geneNameCol];
-                                }
+                                genes = param[_geneNameCol].Split(delimiters[fileType], StringSplitOptions.None);
                             }
 
-                            if (organisms != null)
+                            if (_organismCol >= 0)
                             {
-                                if (organisms.Length == 1)
-                                {
-                                    organism = organisms[0];
-                                }
-                                else if (organisms.Length == proteins.Length)
-                                {
-                                    organism = organisms[pr];
-                                }
-                                else if (proteins.Length == 1)
-                                {
-                                    organism = param[_organismCol];
-                                }
+                                organisms = param[_organismCol].Split(delimiters[fileType], StringSplitOptions.None);
                             }
 
-                            if (allProteinGroups.TryGetValue(proteinName, out ProteinGroup pg))
+                            for (int pr = 0; pr < proteins.Length; pr++)
                             {
-                                proteinGroups.Add(pg);
-                            }
-                            else
-                            {
-                                ProteinGroup newPg = new ProteinGroup(proteinName, gene, organism);
-                                allProteinGroups.Add(proteinName, newPg);
-                                proteinGroups.Add(newPg);
+                                string proteinName = proteins[pr];
+                                string gene = "";
+                                string organism = "";
+
+                                if (genes != null)
+                                {
+                                    if (genes.Length == 1)
+                                    {
+                                        gene = genes[0];
+                                    }
+                                    else if (genes.Length == proteins.Length)
+                                    {
+                                        gene = genes[pr];
+                                    }
+                                    else if (proteins.Length == 1)
+                                    {
+                                        gene = param[_geneNameCol];
+                                    }
+                                }
+
+                                if (organisms != null)
+                                {
+                                    if (organisms.Length == 1)
+                                    {
+                                        organism = organisms[0];
+                                    }
+                                    else if (organisms.Length == proteins.Length)
+                                    {
+                                        organism = organisms[pr];
+                                    }
+                                    else if (proteins.Length == 1)
+                                    {
+                                        organism = param[_organismCol];
+                                    }
+                                }
+
+                                if (allProteinGroups.TryGetValue(proteinName, out ProteinGroup pg))
+                                {
+                                    proteinGroups.Add(pg);
+                                }
+                                else
+                                {
+                                    ProteinGroup newPg = new ProteinGroup(proteinName, gene, organism);
+                                    allProteinGroups.Add(proteinName, newPg);
+                                    proteinGroups.Add(newPg);
+                                }
                             }
                         }
 
@@ -330,11 +387,11 @@ namespace Util
                         ids.Add(ident);
                     }
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     if (!silent)
                     {
-                        Console.WriteLine("Problem reading line " + lineNum + " of the identification file");
+                        Console.WriteLine("Problem reading line " + lineNum + " of the identification file" + "; " + e.Message);
                     }
                     return new List<Identification>();
                 }
@@ -457,6 +514,27 @@ namespace Util
                 return PsmFileType.PeptideShaker;
             }
 
+            // Percolator Input
+            // Assume that no decoy are provided in this input
+            else if (split.Contains("file_idx".ToLowerInvariant())
+                && split.Contains("scan".ToLowerInvariant())
+                && split.Contains("charge".ToLowerInvariant())
+                && split.Contains("spectrum neutral mass".ToLowerInvariant()) //experimental neutral mass
+                && split.Contains("peptide mass".ToLowerInvariant()) //theoretical neutral (uncharged) peptide mass
+                && split.Contains("sequence".ToLowerInvariant())
+                && split.Contains("protein id".ToLowerInvariant()))
+            {
+                _fileNameCol = Array.IndexOf(split, "file_idx".ToLowerInvariant());
+                _fullSequCol = Array.IndexOf(split, "sequence".ToLowerInvariant());
+                _monoMassCol = Array.IndexOf(split, "peptide mass".ToLowerInvariant()); //TODO: see if this needs to be theoretical or experimental mass AND if it is neutral or monoisotopic(H+)
+                _msmsScanCol = Array.IndexOf(split, "scan".ToLowerInvariant());
+                _chargeStCol = Array.IndexOf(split, "charge".ToLowerInvariant());
+                _protNameCol = Array.IndexOf(split, "protein id".ToLowerInvariant());
+                _qValueCol = Array.IndexOf(split, "percolator q-value".ToLowerInvariant());
+
+                return PsmFileType.Percolator;
+            }
+
             // Generic MS/MS input
             if (split.Contains("File Name".ToLowerInvariant())
                         && split.Contains("Base Sequence".ToLowerInvariant())
@@ -481,6 +559,20 @@ namespace Util
             }
 
             return type;
+        }
+
+        private static string ApplyRegex(FastaHeaderFieldRegex regex, string line)
+        {
+            string result = null;
+            if (regex != null)
+            {
+                var matches = regex.Regex.Matches(line);
+                if (matches.Count > regex.Match && matches[regex.Match].Groups.Count > regex.Group)
+                {
+                    result = matches[regex.Match].Groups[regex.Group].Value;
+                }
+            }
+            return result;
         }
     }
 }
