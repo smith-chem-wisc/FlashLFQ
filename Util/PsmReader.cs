@@ -40,7 +40,7 @@ namespace Util
             { PsmFileType.MetaMorpheus, new string[] { "|", " or " } },
             { PsmFileType.Morpheus, new string[] { ";" } },
             { PsmFileType.MaxQuant, new string[] { ";" } },
-            { PsmFileType.Percolator, new string[] { "|", "," } },
+            { PsmFileType.Percolator, new string[] { "," } },
             { PsmFileType.Generic, new string[] { ";" } },
             { PsmFileType.PeptideShaker, new string[] { ", " } },
         };
@@ -289,26 +289,23 @@ namespace Util
                         if (fileType == PsmFileType.Percolator)
                         {
                             string[] proteinFastaHeaders = param[_protNameCol].Split(',');
-                            foreach (string fastHeader in proteinFastaHeaders)
+                            foreach (string proteinNameString in proteinFastaHeaders)
                             {
-                                string[] fastaHeaderFields = fastHeader.Split('|');
-                                string accession = fastaHeaderFields[1];
-                                string geneNameString = fastaHeaderFields[2];
 
-                                if (allProteinGroups.TryGetValue(accession, out ProteinGroup pg))
+                                if (allProteinGroups.TryGetValue(proteinNameString, out ProteinGroup pg))
                                 {
                                     proteinGroups.Add(pg);
                                 }
                                 else
                                 {
-                                    ProteinGroup newPg = new ProteinGroup(accession, geneNameString, null);
-                                    allProteinGroups.Add(accession, newPg);
+                                    ProteinGroup newPg = new ProteinGroup(proteinNameString, null, null);
+                                    allProteinGroups.Add(proteinNameString, newPg);
                                     proteinGroups.Add(newPg);
                                 }
 
                             }
                         }
-                        else
+                        else // non-percolator protein column
                         {
                             proteins = param[_protNameCol].Split(delimiters[fileType], StringSplitOptions.None);
 

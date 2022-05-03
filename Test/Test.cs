@@ -220,6 +220,14 @@ namespace Test
 
             List<Identification> ids = PsmReader.ReadPsms(pathOfIdentificationFile, true, new List<SpectraFileInfo> { sfi });
             Assert.AreEqual(6, ids.Count);
+
+            //strings separated by commas should be taken literally as protein names
+            Assert.AreEqual(11,ids[0].ProteinGroups.Count);
+            List<string> expectedProteinNameStrings = new() { "sp|Q13885|TBB2A_HUMAN", "tr|M0R1I1|M0R1I1_HUMAN", "tr|Q5JP53|Q5JP53_HUMAN", 
+                "tr|M0QZL7|M0QZL7_HUMAN", "sp|P04350|TBB4A_HUMAN", "sp|P07437|TBB5_HUMAN", "sp|Q9BVA1|TBB2B_HUMAN", "tr|M0R278|M0R278_HUMAN", 
+                "tr|Q5ST81|Q5ST81_HUMAN", "sp|P68371|TBB4B_HUMAN", "tr|M0QY85|M0QY85_HUMAN" };
+            CollectionAssert.AreEquivalent(ids[0].ProteinGroups.Select(n=>n.ProteinGroupName).ToList(), expectedProteinNameStrings);  
+
             List<double> actualRetentionTimes = ids.Select(t => Math.Round(t.Ms2RetentionTimeInMinutes, 2)).ToList();
 
             foreach (double rt in actualRetentionTimes)
