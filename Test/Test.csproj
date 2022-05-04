@@ -16,8 +16,8 @@
     <PackageReference Include="MathNet.Numerics" Version="4.9.0" />
     <PackageReference Include="mzLib" Version="1.0.528" />
     <PackageReference Include="NetSerializer" Version="4.1.1" />
-    <PackageReference Include="nunit" Version="3.12.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
+    <PackageReference Include="nunit" Version="3.13.3" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
   </ItemGroup>
 
