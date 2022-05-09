@@ -7,7 +7,7 @@
 [![](https://anaconda.org/bioconda/deeptools/badges/downloads.svg)](http://bioconda.github.io/recipes/flashlfq/README.html)
 
 ### Docker Image
-[![](https://images.microbadger.com/badges/version/smithchemwisc/flashlfq.svg)](https://hub.docker.com/r/smithchemwisc/flashlfq/tags)
+[![](https://img.shields.io/docker/pulls/smithchemwisc/flashlfq?style=flat-square)](https://hub.docker.com/r/smithchemwisc/flashlfq/tags)
 
 ## About
 FlashLFQ is an ultrafast label-free quantification algorithm for mass-spectrometry proteomics. 
