@@ -140,7 +140,7 @@ namespace Util
 
                         // base sequence
                         string baseSequence = null;
-                        if (fileType != PsmFileType.Percolator)
+                        if (fileType == PsmFileType.Percolator)
                         {
                             baseSequence = null;
                         }
