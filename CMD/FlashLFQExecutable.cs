@@ -69,11 +69,11 @@ namespace CMD
                 .Where(f => acceptedSpectrumFileFormats.Contains(Path.GetExtension(f).ToLowerInvariant())).ToList();
 
             // check for duplicate file names (agnostic of file extension)
-            foreach (var fileName in filePaths.GroupBy(p => Path.GetFileNameWithoutExtension(p)))
+            foreach (var fileNameWithoutExtension in filePaths.GroupBy(p => Path.GetFileNameWithoutExtension(p)))
             {
-                if (fileName.Count() > 1)
+                if (fileNameWithoutExtension.Count() > 1)
                 {
-                    var types = fileName.Select(p => Path.GetFileNameWithoutExtension(p)).Distinct();
+                    var types = fileNameWithoutExtension.Select(p => Path.GetFileNameWithoutExtension(p)).Distinct();
 
                     if (!settings.Silent)
                     {
@@ -142,9 +142,9 @@ namespace CMD
 
                 foreach (var file in filePaths)
                 {
-                    string filename = Path.GetFileNameWithoutExtension(file);
+                    string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file);
 
-                    var expDesignForThisFile = experimentalDesign[filename];
+                    var expDesignForThisFile = experimentalDesign[fileNameWithoutExtension];
                     var split = expDesignForThisFile.Split('\t');
 
                     string condition = split[1];
