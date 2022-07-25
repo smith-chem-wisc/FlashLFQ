@@ -54,6 +54,15 @@
     <None Update="SampleFiles\Parallel\ExperimentalDesign.tsv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="SampleFiles\Parallel\withExtensionsAndLinuxPath_AllPSMs.psmtsv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleFiles\Parallel\withExtensionsAndWindowsPath_AllPSMs.psmtsv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleFiles\Parallel\withExtensions_AllPSMs.psmtsv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="SampleFiles\PeptideShaker\Default PSM Report.tabular">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

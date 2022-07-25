@@ -332,6 +332,123 @@ namespace Test
         }
 
         [Test]
+        public static void TestParallelProcessingMetaMorpheusOutputWithExtensions()
+        {
+            string search = "Parallel";
+            string psmFilename = "withExtensions_AllPSMs.psmtsv";
+
+            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles", search);
+            var pathOfIdentificationFile = Path.Combine(myDirectory, psmFilename);
+            var pathOfMzml1 = Path.Combine(myDirectory, "20100614_Velos1_TaGe_SA_Jurkat_3.mzML");
+            var pathOfMzml2 = Path.Combine(myDirectory, "20100614_Velos1_TaGe_SA_Jurkat_4.mzML");
+            Assert.That(File.Exists(pathOfIdentificationFile));
+            Assert.That(File.Exists(pathOfMzml1));
+            Assert.That(File.Exists(pathOfMzml2));
+
+            string[] myargs = new string[]
+            {
+                "--rep",
+                myDirectory,
+                "--idt",
+                pathOfIdentificationFile,
+                "--ppm",
+                "5"
+            };
+
+            CMD.FlashLfqExecutable.Main(myargs);
+
+            string peaksPath = Path.Combine(myDirectory, "QuantifiedPeaks.tsv");
+            Assert.That(File.Exists(peaksPath));
+            File.Delete(peaksPath);
+
+            string peptidesPath = Path.Combine(myDirectory, "QuantifiedPeptides.tsv");
+            Assert.That(File.Exists(peptidesPath));
+            File.Delete(peptidesPath);
+
+            string proteinsPath = Path.Combine(myDirectory, "QuantifiedProteins.tsv");
+            Assert.That(File.Exists(proteinsPath));
+            File.Delete(proteinsPath);
+        }
+
+        [Test]
+        public static void TestParallelProcessingMetaMorpheusOutputWithExtensionsAndWindowsPath()
+        {
+            string search = "Parallel";
+            string psmFilename = "withExtensionsAndWindowsPath_AllPSMs.psmtsv";
+
+            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles", search);
+            var pathOfIdentificationFile = Path.Combine(myDirectory, psmFilename);
+            var pathOfMzml1 = Path.Combine(myDirectory, "20100614_Velos1_TaGe_SA_Jurkat_3.mzML");
+            var pathOfMzml2 = Path.Combine(myDirectory, "20100614_Velos1_TaGe_SA_Jurkat_4.mzML");
+            Assert.That(File.Exists(pathOfIdentificationFile));
+            Assert.That(File.Exists(pathOfMzml1));
+            Assert.That(File.Exists(pathOfMzml2));
+
+            string[] myargs = new string[]
+            {
+                "--rep",
+                myDirectory,
+                "--idt",
+                pathOfIdentificationFile,
+                "--ppm",
+                "5"
+            };
+
+            CMD.FlashLfqExecutable.Main(myargs);
+
+            string peaksPath = Path.Combine(myDirectory, "QuantifiedPeaks.tsv");
+            Assert.That(File.Exists(peaksPath));
+            File.Delete(peaksPath);
+
+            string peptidesPath = Path.Combine(myDirectory, "QuantifiedPeptides.tsv");
+            Assert.That(File.Exists(peptidesPath));
+            File.Delete(peptidesPath);
+
+            string proteinsPath = Path.Combine(myDirectory, "QuantifiedProteins.tsv");
+            Assert.That(File.Exists(proteinsPath));
+            File.Delete(proteinsPath);
+        }
+
+        [Test]
+        public static void TestParallelProcessingMetaMorpheusOutputWithExtensionsAndLinuxPath()
+        {
+            string search = "Parallel";
+            string psmFilename = "withExtensionsAndLinuxPath_AllPSMs.psmtsv";
+
+            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles", search);
+            var pathOfIdentificationFile = Path.Combine(myDirectory, psmFilename);
+            var pathOfMzml1 = Path.Combine(myDirectory, "20100614_Velos1_TaGe_SA_Jurkat_3.mzML");
+            var pathOfMzml2 = Path.Combine(myDirectory, "20100614_Velos1_TaGe_SA_Jurkat_4.mzML");
+            Assert.That(File.Exists(pathOfIdentificationFile));
+            Assert.That(File.Exists(pathOfMzml1));
+            Assert.That(File.Exists(pathOfMzml2));
+
+            string[] myargs = new string[]
+            {
+                "--rep",
+                myDirectory,
+                "--idt",
+                pathOfIdentificationFile,
+                "--ppm",
+                "5"
+            };
+
+            CMD.FlashLfqExecutable.Main(myargs);
+
+            string peaksPath = Path.Combine(myDirectory, "QuantifiedPeaks.tsv");
+            Assert.That(File.Exists(peaksPath));
+            File.Delete(peaksPath);
+
+            string peptidesPath = Path.Combine(myDirectory, "QuantifiedPeptides.tsv");
+            Assert.That(File.Exists(peptidesPath));
+            File.Delete(peptidesPath);
+
+            string proteinsPath = Path.Combine(myDirectory, "QuantifiedProteins.tsv");
+            Assert.That(File.Exists(proteinsPath));
+            File.Delete(proteinsPath);
+        }
+
+        [Test]
         public static void TestFlashLfqExecutableWithNormalization()
         {
             string search = "MetaMorpheus";
