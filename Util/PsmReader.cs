@@ -167,7 +167,7 @@ namespace Util
             return ids;
         }
 
-        private static Identification GetIdentification(string line, List<ScanHeaderInfo> shi, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary, PsmFileType fileType)
+        private static Identification GetIdentification(string line, List<ScanHeaderInfo> scanHeaderInfo, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary, PsmFileType fileType)
         {
             var param = line.Split('\t');
 
@@ -399,7 +399,7 @@ namespace Util
             return new Identification(spectraFileInfoToUse, baseSequence, modSequence, monoisotopicMass, ms2RetentionTime, chargeState, proteinGroups);
         }
 
-        private static Identification GetPercolatorIdentification(string line, List<ScanHeaderInfo> shi, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary)
+        private static Identification GetPercolatorIdentification(string line, List<ScanHeaderInfo> scanHeaderInfo, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary)
         {
             var param = line.Split('\t');
 
@@ -454,7 +454,7 @@ namespace Util
 
             if (int.TryParse(param[_msmsScanCol], NumberStyles.Number, CultureInfo.InvariantCulture, out int scanNumber))
             {
-                ms2RetentionTime = shi.Where(i => Path.GetFileNameWithoutExtension(i.FileNameWithoutExtension) == Path.GetFileNameWithoutExtension(fileName) && i.ScanNumber == scanNumber).FirstOrDefault().RetentionTime;
+                ms2RetentionTime = scanHeaderInfo.Where(i => Path.GetFileNameWithoutExtension(i.FileNameWithoutExtension) == Path.GetFileNameWithoutExtension(fileName) && i.ScanNumber == scanNumber).FirstOrDefault().RetentionTime;
             }
 
             // charge state
