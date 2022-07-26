@@ -155,7 +155,6 @@ namespace Util
                 }
                 lock (myLocks[myFileIndex])
                 {
-                    _scanHeaderInfo.AddRange(shi);
                     ids.AddRange(myFileIndentifications);
                 }
             });
