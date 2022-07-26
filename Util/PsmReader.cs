@@ -95,7 +95,7 @@ namespace Util
                 throw new Exception("Could not interpret PSM header labels from file: " + filepath);
             }
 
-            var psmsGroupedByFile = inputPsms.GroupBy(p => Path.GetFileNameWithoutExtension(p.Split('\t')[_fileNameCol]));
+            var psmsGroupedByFile = inputPsms.GroupBy(p => Path.GetFileNameWithoutExtension(p.Split('\t')[_fileNameCol])).ToList();
 
             // one lock for each file
             var myLocks = new object[psmsGroupedByFile.Count()];
