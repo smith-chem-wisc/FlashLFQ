@@ -24,6 +24,8 @@ namespace Util
         private static int _decoyCol;
         private static int _qValueCol;
         private static int _qValueNotchCol;
+        private static int _pep;
+        private static int _pepQvalue;
 
         // optional columns
         private static int _geneNameCol;
@@ -111,8 +113,16 @@ namespace Util
                     {
                         var param = line.Split('\t');
 
-                        // only quantify PSMs below 1% FDR with MetaMorpheus/Morpheus results
-                        if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueCol], CultureInfo.InvariantCulture) > 0.01)
+                        // pre-filter MetaMorpheus/Morpheus results
+                        if(fileType == PsmFileType.MetaMorpheus)
+                        {
+                            //apply PEP filter if available
+                            if (double.Parse(param[_pep], CultureInfo.InvariantCulture) > 0.5 && double.Parse(param[_pepQvalue], CultureInfo.InvariantCulture) > 0.01)
+                            {
+                                break;
+                            }
+                        }
+                        else if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueCol], CultureInfo.InvariantCulture) > 0.01)
                         {
                             break;
                         }
@@ -397,7 +407,9 @@ namespace Util
                         && split.Contains("Protein Accession".ToLowerInvariant())
                         && split.Contains("Decoy/Contaminant/Target".ToLowerInvariant())
                         && split.Contains("QValue".ToLowerInvariant())
-                        && split.Contains("QValue Notch".ToLowerInvariant()))
+                        && split.Contains("QValue Notch".ToLowerInvariant())
+                        && split.Contains("PEP".ToLowerInvariant())
+                        && split.Contains("PEP_QValue".ToLowerInvariant()))
             {
                 _fileNameCol = Array.IndexOf(split, "File Name".ToLowerInvariant());
                 _baseSequCol = Array.IndexOf(split, "Base Sequence".ToLowerInvariant());
@@ -411,6 +423,8 @@ namespace Util
                 _qValueNotchCol = Array.IndexOf(split, "QValue Notch".ToLowerInvariant());
                 _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant());
                 _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
+                _pep = Array.IndexOf(split, "PEP".ToLowerInvariant());
+                _pepQvalue = Array.IndexOf(split, "PEP_QValue".ToLowerInvariant());
 
                 return PsmFileType.MetaMorpheus;
             }
