@@ -97,14 +97,7 @@ namespace Util
 
             var psmsGroupedByFile = inputPsms.GroupBy(p => Path.GetFileNameWithoutExtension(p.Split('\t')[_fileNameCol]));
 
-            // one lock for each file
-            var myLocks = new object[psmsGroupedByFile.Count()];
-            for (int i = 0; i < myLocks.Length; i++)
-            {
-                myLocks[i] = new object();
-            }
-
-            Parallel.ForEach(psmsGroupedByFile, (fileSpecificPsms) =>
+            foreach (var fileSpecificPsms in psmsGroupedByFile)
             {
                 int myFileIndex = rawFileDictionary.Keys.ToList().IndexOf(fileSpecificPsms.Key);
                 string fullFilePathWithExtension = rawFileDictionary[fileSpecificPsms.Key].FullFilePathWithExtension;
@@ -153,12 +146,9 @@ namespace Util
                         }
                     }
                 }
-                lock (myLocks[myFileIndex])
-                {
                     _scanHeaderInfo.AddRange(shi);
                     ids.AddRange(myFileIndentifications);
-                }
-            });
+            }
 
             if (!silent)
             {
