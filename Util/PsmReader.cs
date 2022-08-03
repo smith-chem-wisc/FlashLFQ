@@ -59,7 +59,7 @@ namespace Util
             }
 
             var rawFileDictionary = rawfiles.ToDictionary(p => p.FilenameWithoutExtension, v => v);
-            List<Identification> ids = new();
+            List<Identification> flashLfqIdentifications = new();
             PsmFileType fileType = PsmFileType.Unknown;
 
             if (!silent)
@@ -95,22 +95,22 @@ namespace Util
                 throw new Exception("Could not interpret PSM header labels from file: " + filepath);
             }
 
-            var psmsGroupedByFile = inputPsms.GroupBy(p => Path.GetFileNameWithoutExtension(p.Split('\t')[_fileNameCol]));
+            var psmsGroupedByFile = inputPsms.GroupBy(p => Path.GetFileNameWithoutExtension(p.Split('\t')[_fileNameCol])).ToList();
 
             foreach (var fileSpecificPsms in psmsGroupedByFile)
             {
                 int myFileIndex = rawFileDictionary.Keys.ToList().IndexOf(fileSpecificPsms.Key);
                 string fullFilePathWithExtension = rawFileDictionary[fileSpecificPsms.Key].FullFilePathWithExtension;
-                List<ScanHeaderInfo> shi = ScanInfoRecovery.FileScanHeaderInfo(fullFilePathWithExtension);
-                List<Identification> myFileIndentifications = new List<Identification>();
+                List<Identification> myFileIndentifications = new();
 
                 if (fileType == PsmFileType.Percolator)
                 {
+                    List<ScanHeaderInfo> scanHeaderInfo = scanHeaderInfo = ScanInfoRecovery.FileScanHeaderInfo(fullFilePathWithExtension);
                     foreach (var psm in fileSpecificPsms)
                     {
                         try
                         {
-                            Identification id = GetPercolatorIdentification(psm, shi, silent, rawFileDictionary);
+                            Identification id = GetPercolatorIdentification(psm, scanHeaderInfo, silent, rawFileDictionary);
                             if (id != null)
                             {
                                 myFileIndentifications.Add(id);
@@ -131,7 +131,7 @@ namespace Util
                     {
                         try
                         {
-                            Identification id = GetIdentification(psm, shi, silent, rawFileDictionary, fileType);
+                            Identification id = GetIdentification(psm, silent, rawFileDictionary, fileType);
                             if (id != null)
                             {
                                 myFileIndentifications.Add(id);
@@ -146,19 +146,22 @@ namespace Util
                         }
                     }
                 }
+                lock (myLocks[myFileIndex])
+                {
                     _scanHeaderInfo.AddRange(shi);
                     ids.AddRange(myFileIndentifications);
-            }
+                }
+            });
 
             if (!silent)
             {
-                Console.WriteLine("Done reading PSMs; found " + ids.Count);
+                Console.WriteLine("Done reading PSMs; found " + flashLfqIdentifications.Count);
             }
 
-            return ids;
+            return flashLfqIdentifications;
         }
 
-        private static Identification GetIdentification(string line, List<ScanHeaderInfo> shi, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary, PsmFileType fileType)
+        private static Identification GetIdentification(string line, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary, PsmFileType fileType)
         {
             var param = line.Split('\t');
 
@@ -390,7 +393,7 @@ namespace Util
             return new Identification(spectraFileInfoToUse, baseSequence, modSequence, monoisotopicMass, ms2RetentionTime, chargeState, proteinGroups);
         }
 
-        private static Identification GetPercolatorIdentification(string line, List<ScanHeaderInfo> shi, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary)
+        private static Identification GetPercolatorIdentification(string line, List<ScanHeaderInfo> scanHeaderInfo, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary)
         {
             var param = line.Split('\t');
 
@@ -445,7 +448,7 @@ namespace Util
 
             if (int.TryParse(param[_msmsScanCol], NumberStyles.Number, CultureInfo.InvariantCulture, out int scanNumber))
             {
-                ms2RetentionTime = shi.Where(i => Path.GetFileNameWithoutExtension(i.FileNameWithoutExtension) == Path.GetFileNameWithoutExtension(fileName) && i.ScanNumber == scanNumber).FirstOrDefault().RetentionTime;
+                ms2RetentionTime = scanHeaderInfo.Where(i => Path.GetFileNameWithoutExtension(i.FileNameWithoutExtension) == Path.GetFileNameWithoutExtension(fileName) && i.ScanNumber == scanNumber).FirstOrDefault().RetentionTime;
             }
 
             // charge state
