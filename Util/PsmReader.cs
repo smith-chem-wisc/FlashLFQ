@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using UsefulProteomicsDatabases;
 
 namespace Util
@@ -102,10 +101,10 @@ namespace Util
                 int myFileIndex = rawFileDictionary.Keys.ToList().IndexOf(fileSpecificPsms.Key);
                 string fullFilePathWithExtension = rawFileDictionary[fileSpecificPsms.Key].FullFilePathWithExtension;
                 List<Identification> myFileIndentifications = new();
-
+                List<ScanHeaderInfo> scanHeaderInfo = new();
                 if (fileType == PsmFileType.Percolator)
                 {
-                    List<ScanHeaderInfo> scanHeaderInfo = scanHeaderInfo = ScanInfoRecovery.FileScanHeaderInfo(fullFilePathWithExtension);
+                    scanHeaderInfo = scanHeaderInfo = ScanInfoRecovery.FileScanHeaderInfo(fullFilePathWithExtension);
                     foreach (var psm in fileSpecificPsms)
                     {
                         try
@@ -146,12 +145,10 @@ namespace Util
                         }
                     }
                 }
-                lock (myLocks[myFileIndex])
-                {
-                    _scanHeaderInfo.AddRange(shi);
-                    ids.AddRange(myFileIndentifications);
-                }
-            });
+
+                _scanHeaderInfo.AddRange(scanHeaderInfo);
+                flashLfqIdentifications.AddRange(myFileIndentifications);
+            }
 
             if (!silent)
             {
