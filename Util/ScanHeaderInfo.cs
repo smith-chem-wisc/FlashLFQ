@@ -11,12 +11,12 @@ namespace Util
         public ScanHeaderInfo(string fullFilePathWithExtension, string filename, int scanNumber, double retentionTime)
         {
             FullFilePathWithExtension = fullFilePathWithExtension;
-            FileName = filename;
+            FileNameWithoutExtension = filename;
             ScanNumber = scanNumber;
             RetentionTime = retentionTime;
         }
         public string FullFilePathWithExtension { get; private set; }
-        public string FileName { get; private set; }
+        public string FileNameWithoutExtension { get; private set; }
         public int ScanNumber { get; private set; }
         public double RetentionTime { get; private set; }
     }
