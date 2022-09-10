@@ -532,7 +532,7 @@ namespace Util
                 }
             }
 
-            if (!rawFileDictionary.TryGetValue(fileName, out SpectraFileInfo spectraFileInfoToUse))
+            if (!rawFileDictionary.TryGetValue(Path.GetFileNameWithoutExtension(fileName), out SpectraFileInfo spectraFileInfoToUse))
             {
                 // skip PSMs for files with no spectrum data input
                 return null;
