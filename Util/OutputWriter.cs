@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using FlashLFQ;
@@ -16,7 +15,7 @@ namespace Util
                 outputPath = Path.GetDirectoryName(inputPath);
             }
 
-            string inputFileName = Path.GetFileNameWithoutExtension(inputPath);
+            string inputFileName = PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(inputPath);
 
             if (!Directory.Exists(outputPath))
             {
@@ -41,7 +40,7 @@ namespace Util
                 outputPath = Path.GetDirectoryName(inputPath);
             }
 
-            string inputFileName = Path.GetFileNameWithoutExtension(inputPath);
+            string inputFileName = PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(inputPath);
 
             if (!Directory.Exists(outputPath))
             {

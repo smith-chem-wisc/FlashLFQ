@@ -2,9 +2,9 @@
 using CommandLine.Text;
 using FlashLFQ;
 using IO.ThermoRawFileReader;
+using MzLibUtil;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Util;
@@ -69,11 +69,11 @@ namespace CMD
                 .Where(f => acceptedSpectrumFileFormats.Contains(Path.GetExtension(f).ToLowerInvariant())).ToList();
 
             // check for duplicate file names (agnostic of file extension)
-            foreach (var fileNameWithoutExtension in filePaths.GroupBy(p => Path.GetFileNameWithoutExtension(p)))
+            foreach (var fileNameWithoutExtension in filePaths.GroupBy(p => PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(p)))
             {
                 if (fileNameWithoutExtension.Count() > 1)
                 {
-                    var types = fileNameWithoutExtension.Select(p => Path.GetFileNameWithoutExtension(p)).Distinct();
+                    var types = fileNameWithoutExtension.Select(p => PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(p)).Distinct();
 
                     if (!settings.Silent)
                     {
@@ -142,7 +142,7 @@ namespace CMD
 
                 foreach (var file in filePaths)
                 {
-                    string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file);
+                    string fileNameWithoutExtension = PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(file);
 
                     var expDesignForThisFile = experimentalDesign[fileNameWithoutExtension];
                     var split = expDesignForThisFile.Split('\t');
