@@ -1,4 +1,5 @@
 ﻿using FlashLFQ;
+using MzLibUtil;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -93,7 +94,8 @@ namespace Util
             {
                 throw new Exception("Could not interpret PSM header labels from file: " + filepath);
             }
-
+            var j = Path.GetFileNameWithoutExtension();
+            var j = MzLibUtil. PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension();
             var psmsGroupedByFile = inputPsms.GroupBy(p => Path.GetFileNameWithoutExtension(p.Split('\t')[_fileNameCol])).ToList();
 
             foreach (var fileSpecificPsms in psmsGroupedByFile)
