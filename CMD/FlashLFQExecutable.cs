@@ -140,9 +140,9 @@ namespace CMD
                 var experimentalDesign = File.ReadAllLines(assumedPathToExpDesign)
                     .ToDictionary(v => v.Split('\t')[0], v => v);
 
-                foreach (var file in filePaths)
+                foreach (var filePath in filePaths)
                 {
-                    string fileNameWithoutExtension = PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(file);
+                    string fileNameWithoutExtension = PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(filePath);
 
                     var expDesignForThisFile = experimentalDesign[fileNameWithoutExtension];
                     var split = expDesignForThisFile.Split('\t');
@@ -153,7 +153,7 @@ namespace CMD
                     int techrep = int.Parse(split[4]);
 
                     // experimental design info passed in here for each spectra file
-                    spectraFileInfos.Add(new SpectraFileInfo(fullFilePathWithExtension: file,
+                    spectraFileInfos.Add(new SpectraFileInfo(fullFilePathWithExtension: filePath,
                         condition: condition,
                         biorep: biorep - 1,
                         fraction: fraction - 1,
