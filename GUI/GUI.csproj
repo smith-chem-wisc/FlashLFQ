@@ -12,12 +12,13 @@
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
     <ApplicationIcon>FlashLFQ_Icon.ico</ApplicationIcon>
+    <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MathNet.Numerics" Version="4.9.0" />
-    <PackageReference Include="mzLib" Version="1.0.529" />
-    <PackageReference Include="NetSerializer" Version="4.1.1" />
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+    <PackageReference Include="mzLib" Version="1.0.535" />
+    <PackageReference Include="NetSerializer" Version="4.1.2" />
     <PackageReference Include="Nett" Version="0.15.0" />
     <PackageReference Include="SharpLearning.Common.Interfaces" Version="0.28.0" />
     <PackageReference Include="SharpLearning.Containers" Version="0.28.0" />

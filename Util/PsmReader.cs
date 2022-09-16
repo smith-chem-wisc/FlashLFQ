@@ -1,4 +1,5 @@
 ﻿using FlashLFQ;
+using MzLibUtil;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -94,7 +95,7 @@ namespace Util
                 throw new Exception("Could not interpret PSM header labels from file: " + filepath);
             }
 
-            var psmsGroupedByFile = inputPsms.GroupBy(p => Path.GetFileNameWithoutExtension(p.Split('\t')[_fileNameCol])).ToList();
+            var psmsGroupedByFile = inputPsms.GroupBy(p => PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(p.Split('\t')[_fileNameCol])).ToList();
 
             foreach (var fileSpecificPsms in psmsGroupedByFile)
             {
@@ -187,7 +188,7 @@ namespace Util
             }
 
             // spectrum file name
-            string fileName = Path.GetFileNameWithoutExtension(param[_fileNameCol]);
+            string fileName = PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(param[_fileNameCol]);
 
             // base sequence
             string baseSequence = param[_baseSequCol];
@@ -445,7 +446,7 @@ namespace Util
 
             if (int.TryParse(param[_msmsScanCol], NumberStyles.Number, CultureInfo.InvariantCulture, out int scanNumber))
             {
-                ms2RetentionTime = scanHeaderInfo.Where(i => Path.GetFileNameWithoutExtension(i.FileNameWithoutExtension) == Path.GetFileNameWithoutExtension(fileName) && i.ScanNumber == scanNumber).FirstOrDefault().RetentionTime;
+                ms2RetentionTime = scanHeaderInfo.Where(i => PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(i.FileNameWithoutExtension) == PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(fileName) && i.ScanNumber == scanNumber).FirstOrDefault().RetentionTime;
             }
 
             // charge state
@@ -532,7 +533,7 @@ namespace Util
                 }
             }
 
-            if (!rawFileDictionary.TryGetValue(fileName, out SpectraFileInfo spectraFileInfoToUse))
+            if (!rawFileDictionary.TryGetValue(PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(fileName), out SpectraFileInfo spectraFileInfoToUse))
             {
                 // skip PSMs for files with no spectrum data input
                 return null;

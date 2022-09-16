@@ -184,7 +184,7 @@ namespace Test
                 "5"
             };
 
-            CMD.FlashLfqExecutable.Main(myargs);
+            FlashLfqExecutable.Main(myargs);
 
             string peaksPath = Path.Combine(myDirectory, "QuantifiedPeaks.tsv");
             Assert.That(File.Exists(peaksPath));
@@ -214,7 +214,7 @@ namespace Test
 
             SpectraFileInfo sfi = new SpectraFileInfo(pathOfMzml, "A", 1, 1, 1);
 
-            List<double> expectedRetentionTimes = new List<double> { 7.54, 7.54, 7.56, 7.58, 7.61, 7.63 };
+            List<double> expectedRetentionTimes = new() { 7.54, 7.54, 7.56, 7.58, 7.61, 7.63 };
 
             List<Identification> ids = PsmReader.ReadPsms(pathOfIdentificationFile, true, new List<SpectraFileInfo> { sfi });
             Assert.AreEqual(6, ids.Count);
@@ -234,7 +234,7 @@ namespace Test
             }
             CollectionAssert.AreEquivalent(expectedRetentionTimes, actualRetentionTimes);
 
-            List<int> proteinGroupCounts = new List<int> { 11, 6, 3, 2, 15, 3 };
+            List<int> proteinGroupCounts = new() { 11, 6, 3, 2, 15, 3 };
             CollectionAssert.AreEquivalent(proteinGroupCounts, ids.Select(i => i.ProteinGroups.Count).ToList());
         }
 
