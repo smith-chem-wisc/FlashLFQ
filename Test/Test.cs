@@ -184,7 +184,7 @@ namespace Test
                 "5"
             };
 
-            CMD.FlashLfqExecutable.Main(myargs);
+            FlashLfqExecutable.Main(myargs);
 
             string peaksPath = Path.Combine(myDirectory, "QuantifiedPeaks.tsv");
             Assert.That(File.Exists(peaksPath));
