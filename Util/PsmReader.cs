@@ -684,7 +684,7 @@ namespace Util
                 _chargeStCol = Array.IndexOf(split, "z".ToLowerInvariant());
                 _monoMassCol = Array.IndexOf(split, "Calc. mass (M+H)".ToLowerInvariant()); //Theoretical monoisotopic(H+)
                 _fullSequCol = Array.IndexOf(split, "Peptide".ToLowerInvariant());
-                _protNameCol = Array.IndexOf(split, "protein id".ToLowerInvariant());
+                _protNameCol = Array.IndexOf(split, "Protein Name".ToLowerInvariant());
 
                 return PsmFileType.Byonic;
             }

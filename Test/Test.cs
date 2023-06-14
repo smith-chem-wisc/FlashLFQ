@@ -238,6 +238,8 @@ namespace Test
             CollectionAssert.AreEquivalent(proteinGroupCounts, ids.Select(i => i.ProteinGroups.Count).ToList());
         }
 
+
+
         [Test]
         public static void TestPercolatorErrorHandling()
         {
@@ -253,6 +255,44 @@ namespace Test
 
             //would like better assertion with message but can't get it to return exception message...
             Assert.IsEmpty(ids);
+        }
+
+        [Test]
+        public static void TestByonicOutput()
+        {
+            string search = "Byonic";
+            string psmFilename = "byonic.tsv";
+            string dataFilename = "EX1_LC10_HeLa_100ng_Fos_2800V_Direct_inj_TFA_10min_push_3_27B_240523_01.mzML";
+
+            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles", search);
+            var pathOfIdentificationFile = Path.Combine(myDirectory, psmFilename);
+            var pathOfMzml = Path.Combine(myDirectory, dataFilename);
+            Assert.That(File.Exists(pathOfIdentificationFile));
+            Assert.That(File.Exists(pathOfMzml));
+
+            string[] myargs = new string[]
+            {
+                "--rep",
+                myDirectory,
+                "--idt",
+                pathOfIdentificationFile,
+                "--ppm",
+                "5"
+            };
+
+            CMD.FlashLfqExecutable.Main(myargs);
+
+            string peaksPath = Path.Combine(myDirectory, search, "QuantifiedPeaks.tsv");
+            Assert.That(File.Exists(peaksPath));
+            File.Delete(peaksPath);
+
+            string peptidesPath = Path.Combine(myDirectory, search, "QuantifiedPeptides.tsv");
+            Assert.That(File.Exists(peptidesPath));
+            File.Delete(peptidesPath);
+
+            string proteinsPath = Path.Combine(myDirectory, search, "QuantifiedProteins.tsv");
+            Assert.That(File.Exists(proteinsPath));
+            File.Delete(proteinsPath);
         }
 
         [Test]

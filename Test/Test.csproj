@@ -28,6 +28,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="SampleFiles\Byonic\byonic.tsv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleFiles\Byonic\EX1_LC10_HeLa_100ng_Fos_2800V_Direct_inj_TFA_10min_push_3_27B_240523_01.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="SampleFiles\Parallel\20100614_Velos1_TaGe_SA_Jurkat_3.mzML">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
