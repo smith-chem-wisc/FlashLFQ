@@ -10,7 +10,7 @@ using UsefulProteomicsDatabases;
 namespace Util
 {
     internal enum PsmFileType
-    { MetaMorpheus, Morpheus, MaxQuant, PeptideShaker, Generic, Percolator, Unknown }
+    { MetaMorpheus, Morpheus, MaxQuant, PeptideShaker, Generic, Percolator, Byonic, Unknown }
 
     public class PsmReader
     {
@@ -552,7 +552,7 @@ namespace Util
             if (split.Contains("File Name".ToLowerInvariant())
                         && split.Contains("Base Sequence".ToLowerInvariant())
                         && split.Contains("Full Sequence".ToLowerInvariant())
-                        && split.Contains("Peptide Monoisotopic Mass".ToLowerInvariant())
+                        && split.Contains("Peptide Monoisotopic Mass".ToLowerInvariant()) //theoretical mass
                         && split.Contains("Scan Retention Time".ToLowerInvariant())
                         && split.Contains("Precursor Charge".ToLowerInvariant())
                         && split.Contains("Protein Accession".ToLowerInvariant())
@@ -668,6 +668,25 @@ namespace Util
                 _qValueCol = Array.IndexOf(split, "percolator q-value".ToLowerInvariant());
 
                 return PsmFileType.Percolator;
+            }
+
+            // Byonic Input
+            // Assume that no decoy are provided in this input
+            else if (split.Contains("Filename".ToLowerInvariant())
+                && split.Contains("Scan Time".ToLowerInvariant())
+                && split.Contains("z".ToLowerInvariant())
+                && split.Contains("Calc. mass (M+H)".ToLowerInvariant()) //theoretical monoisotopic mass
+                && split.Contains("Peptide".ToLowerInvariant())
+                && split.Contains("Protein Name".ToLowerInvariant()))
+            {
+                _fileNameCol = Array.IndexOf(split, "Filename".ToLowerInvariant());
+                _msmsRetnCol = Array.IndexOf(split, "Scan Time".ToLowerInvariant());
+                _chargeStCol = Array.IndexOf(split, "z".ToLowerInvariant());
+                _monoMassCol = Array.IndexOf(split, "Calc. mass (M+H)".ToLowerInvariant()); //Theoretical monoisotopic(H+)
+                _fullSequCol = Array.IndexOf(split, "Peptide".ToLowerInvariant());
+                _protNameCol = Array.IndexOf(split, "protein id".ToLowerInvariant());
+
+                return PsmFileType.Byonic;
             }
 
             // Generic MS/MS input
