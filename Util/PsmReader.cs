@@ -44,6 +44,7 @@ namespace Util
             { PsmFileType.Percolator, new string[] { "," } },
             { PsmFileType.Generic, new string[] { ";" } },
             { PsmFileType.PeptideShaker, new string[] { ", " } },
+            { PsmFileType.Byonic, new string[] { "###" } },
         };
 
         public static List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles)
@@ -191,7 +192,11 @@ namespace Util
             string fileName = PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(param[_fileNameCol]);
 
             // base sequence
-            string baseSequence = param[_baseSequCol];
+            string baseSequence = "";
+            if (_baseSequCol >= 0) 
+            {
+                baseSequence = param[_baseSequCol];
+            }
 
             // modified sequence
             string modSequence = param[_fullSequCol];
@@ -685,6 +690,10 @@ namespace Util
                 _monoMassCol = Array.IndexOf(split, "Calc. mass (M+H)".ToLowerInvariant()); //Theoretical monoisotopic(H+)
                 _fullSequCol = Array.IndexOf(split, "Peptide".ToLowerInvariant());
                 _protNameCol = Array.IndexOf(split, "Protein Name".ToLowerInvariant());
+
+                _geneNameCol = -1; // probably doesn't exist
+                _organismCol = -1;
+                _baseSequCol = -1;
 
                 return PsmFileType.Byonic;
             }
