@@ -693,7 +693,7 @@ namespace Util
 
                 _geneNameCol = -1; // probably doesn't exist
                 _organismCol = -1;
-                _baseSequCol = -1;
+                
 
                 return PsmFileType.Byonic;
             }

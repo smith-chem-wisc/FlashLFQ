@@ -298,7 +298,7 @@ namespace Test
         [Test]
         public static void TestDavidsByonicOutput()
         {
-            string psmFilename = "sampleBionicOutput.tsv";
+            string psmFilename = "result.txt";
             string dataFilename = "EX1_LC10_HeLa_100ng_Fos_2800V_Direct_inj_TFA_10min_push_3_27B_240523_01.mzML";
 
             var myDirectory = @"C:\Users\Michael Shortreed\Downloads\bubba";
