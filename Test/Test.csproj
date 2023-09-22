@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    <PackageReference Include="mzLib" Version="1.0.535" />
+    <PackageReference Include="mzLib" Version="1.0.541" />
     <PackageReference Include="NetSerializer" Version="4.1.2" />
     <PackageReference Include="nunit" Version="3.13.3" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
@@ -28,6 +28,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="SampleFiles\Byonic\byonic.tsv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleFiles\Byonic\EX1_LC10_HeLa_100ng_Fos_2800V_Direct_inj_TFA_10min_push_3_27B_240523_01.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="SampleFiles\Parallel\20100614_Velos1_TaGe_SA_Jurkat_3.mzML">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

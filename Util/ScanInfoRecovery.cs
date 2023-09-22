@@ -21,7 +21,7 @@ namespace Util
             switch (GetDataFileType(fullFilePathWithExtension))
             {
                 case DataFileType.Thermo:
-                    ThermoRawFileReader staticRaw = ThermoRawFileReader.LoadAllStaticData(fullFilePathWithExtension);
+                    MsDataFile staticRaw = ThermoRawFileReader.LoadAllStaticData(fullFilePathWithExtension);
                     foreach (MsDataScan item in staticRaw)
                     {
                         scanHeaderInfoList.Add(new ScanHeaderInfo(fullFilePathWithExtension, filename, item.OneBasedScanNumber, item.RetentionTime));
