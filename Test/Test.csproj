@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    <PackageReference Include="mzLib" Version="1.0.541" />
+    <PackageReference Include="mzLib" Version="1.0.543" />
     <PackageReference Include="NetSerializer" Version="4.1.2" />
     <PackageReference Include="nunit" Version="3.13.3" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
