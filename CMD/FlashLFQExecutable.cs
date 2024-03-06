@@ -191,7 +191,7 @@ namespace CMD
             List<Identification> ids;
             try
             {
-                ids = PsmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos);
+                ids = PsmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos, settings.DonorQValueThreshold);
             }
             catch (Exception e)
             {

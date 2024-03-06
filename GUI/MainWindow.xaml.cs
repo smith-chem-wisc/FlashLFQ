@@ -498,12 +498,19 @@ namespace GUI
         {
             // read IDs
             var ids = new List<Identification>();
+            List<string> peptidesForMbr = null;
 
             try
             {
-                foreach (var identFile in idFiles)
+                var allPepFile = idFiles.FirstOrDefault(idFile => idFile.FilePath.Contains("AllPeptides.psmtsv"));
+                if(allPepFile!=null)
                 {
-                    ids = ids.Concat(PsmReader.ReadPsms(identFile.FilePath, false, spectraFiles.Select(p => p.SpectraFileInfo).ToList())).ToList();
+                    List<Identification> idsForMbr = PsmReader.ReadPsms(allPepFile.FilePath, false, spectraFiles.Select(p => p.SpectraFileInfo).ToList(), settings.DonorQValueThreshold);
+                    peptidesForMbr = idsForMbr.Select(id => id.ModifiedSequence).ToList();
+                }
+                foreach (var identFile in idFiles.Where(idFile => idFile != allPepFile))
+                {
+                    ids = ids.Concat(PsmReader.ReadPsms(identFile.FilePath, false, spectraFiles.Select(p => p.SpectraFileInfo).ToList(), settings.DonorQValueThreshold)).ToList();
                 }
             }
             catch (Exception e)
@@ -557,7 +564,7 @@ namespace GUI
             // run FlashLFQ engine
             try
             {
-                flashLfqEngine = FlashLfqSettings.CreateEngineWithSettings(settings, ids);
+                flashLfqEngine = FlashLfqSettings.CreateEngineWithSettings(settings, ids, peptidesForMbr);
 
                 results = flashLfqEngine.Run();
             }

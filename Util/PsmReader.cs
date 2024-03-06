@@ -23,6 +23,7 @@ namespace Util
         private static int _chargeStCol;
         private static int _protNameCol;
         private static int _decoyCol;
+        private static int _scoreCol;
         private static int _qValueCol;
         private static int _qValueNotchCol;
 
@@ -46,7 +47,7 @@ namespace Util
             { PsmFileType.PeptideShaker, new string[] { ", " } },
         };
 
-        public static List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles)
+        public static List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles, double qValueThreshold = 0.01)
         {
             if (_modSequenceToMonoMass == null)
             {
@@ -131,7 +132,7 @@ namespace Util
                     {
                         try
                         {
-                            Identification id = GetIdentification(psm, silent, rawFileDictionary, fileType);
+                            Identification id = GetIdentification(psm, silent, rawFileDictionary, fileType, qValueThreshold);
                             if (id != null)
                             {
                                 myFileIndentifications.Add(id);
@@ -159,32 +160,40 @@ namespace Util
             return flashLfqIdentifications;
         }
 
-        private static Identification GetIdentification(string line, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary, PsmFileType fileType)
+        private static Identification GetIdentification(string line, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary, PsmFileType fileType, double qValueThreshold = 0.01)
         {
             var param = line.Split('\t');
+            double qValue= 0;
+            qValueThreshold = Math.Max(qValueThreshold, 0.01);
 
             // only quantify PSMs below 1% FDR with MetaMorpheus/Morpheus results
-            if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueCol], CultureInfo.InvariantCulture) > 0.01)
+            if (fileType == PsmFileType.MetaMorpheus)
             {
-                return null;
+                qValue = double.Parse(param[_qValueCol], CultureInfo.InvariantCulture);
+                if(qValue > qValueThreshold)
+                {
+                    return null;
+                }
             }
             else if (fileType == PsmFileType.Morpheus && double.Parse(param[_qValueCol], CultureInfo.InvariantCulture) > 1.00)
             {
                 return null;
             }
+            
 
             // only quantify PSMs below 1% notch FDR with MetaMorpheus/Morpheus results
-            if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture) > 0.01)
+            if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture) > qValueThreshold)
             {
                 return null;
             }
 
             // skip decoys with MetaMorpheus/Morpheus results
             //TODO: what about decoys from other input types?
+            bool decoy = false;
             if ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus) &&
                 param[_decoyCol].Contains("D"))
             {
-                return null;
+                decoy = true;
             }
 
             // spectrum file name
@@ -387,8 +396,20 @@ namespace Util
                 return null;
             }
 
+            double score;
+            if(_scoreCol > 0)
+            {
+                double.TryParse(param[_scoreCol], out score);
+            }
+            else
+            {
+                score = 0;
+            }
+
             // construct id
-            return new Identification(spectraFileInfoToUse, baseSequence, modSequence, monoisotopicMass, ms2RetentionTime, chargeState, proteinGroups);
+            return new Identification(spectraFileInfoToUse, baseSequence, modSequence, 
+                monoisotopicMass, ms2RetentionTime, chargeState, proteinGroups, 
+                decoy: decoy, qValue: qValue, psmScore: score);
         }
 
         private static Identification GetPercolatorIdentification(string line, List<ScanHeaderInfo> scanHeaderInfo, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary)
@@ -568,6 +589,7 @@ namespace Util
                 _chargeStCol = Array.IndexOf(split, "Precursor Charge".ToLowerInvariant());
                 _protNameCol = Array.IndexOf(split, "Protein Accession".ToLowerInvariant());
                 _decoyCol = Array.IndexOf(split, "Decoy/Contaminant/Target".ToLowerInvariant());
+                _scoreCol = Array.IndexOf(split, "Score".ToLowerInvariant());
                 _qValueCol = Array.IndexOf(split, "QValue".ToLowerInvariant());
                 _qValueNotchCol = Array.IndexOf(split, "QValue Notch".ToLowerInvariant());
                 _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant());

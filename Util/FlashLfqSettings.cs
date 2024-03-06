@@ -54,7 +54,7 @@ namespace Util
         public int MaxThreads { get; set; }
 
         // MBR settings
-        [Option("mbr", Default = false, HelpText = "bool; match between runs")]
+        [Option("mbr", Default = true, HelpText = "bool; match between runs")]
         public bool MatchBetweenRuns { get; set; }
 
         [Option("mrt", Default = 2.5, HelpText = "double; maximum MBR window in minutes")]
@@ -86,6 +86,8 @@ namespace Util
         public int? RandomSeed { get; set; }
         //TODO: paired samples
 
+        public double DonorQValueThreshold = 0.01;
+
         public FlashLfqSettings()
         {
             FlashLfqEngine f = new FlashLfqEngine(new List<Identification>());
@@ -113,7 +115,7 @@ namespace Util
             RandomSeed = bayesianSettings.RandomSeed;
         }
 
-        public static FlashLfqEngine CreateEngineWithSettings(FlashLfqSettings settings, List<Identification> ids)
+        public static FlashLfqEngine CreateEngineWithSettings(FlashLfqSettings settings, List<Identification> ids, List<string> peptidesForMbr = null)
         {
             return new FlashLfqEngine(
                 allIdentifications: ids,
@@ -128,8 +130,12 @@ namespace Util
                 maxThreads: settings.MaxThreads,
 
                 matchBetweenRuns: settings.MatchBetweenRuns,
-                matchBetweenRunsPpmTolerance: settings.PpmTolerance,
+                //matchBetweenRunsPpmTolerance: settings.PpmTolerance,
+                matchBetweenRunsPpmTolerance: 15,
                 maxMbrWindow: settings.MbrRtWindow,
+                donorCriterion: 'S',
+                donorQValueThreshold: settings.DonorQValueThreshold,
+                peptidesForMbr: peptidesForMbr,
                 requireMsmsIdInCondition: settings.RequireMsmsIdInCondition,
 
                 bayesianProteinQuant: settings.BayesianProteinQuant,
