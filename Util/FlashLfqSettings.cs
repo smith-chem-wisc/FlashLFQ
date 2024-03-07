@@ -135,7 +135,6 @@ namespace Util
                 maxMbrWindow: settings.MbrRtWindow,
                 donorCriterion: 'S',
                 donorQValueThreshold: settings.DonorQValueThreshold,
-                peptidesForMbr: peptidesForMbr,
                 requireMsmsIdInCondition: settings.RequireMsmsIdInCondition,
 
                 bayesianProteinQuant: settings.BayesianProteinQuant,
