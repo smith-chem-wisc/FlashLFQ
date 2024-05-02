@@ -13,6 +13,9 @@ namespace Util
         [Option("idt", Required = true, HelpText = "string; identification file path")]
         public string PsmIdentificationPath { get; set; }
 
+        [Option("pep", Required = false, HelpText = "string; all peptide file path")]
+        public string PeptideIdentificationPath { get; set; }
+
         [Option("rep", Required = true, HelpText = "string; directory containing spectral data files")]
         public string SpectraFileRepository { get; set; }
 
@@ -86,7 +89,11 @@ namespace Util
         public int? RandomSeed { get; set; }
         //TODO: paired samples
 
-        public double DonorQValueThreshold = 0.01;
+        [Option("donorq", HelpText = "double; donor q value threshold")]
+        public double DonorQValueThreshold  { get; set; }
+
+        [Option("pipfdr", HelpText = "double; fdr cutoff for pip")]
+        public double MbrFdrThreshold  { get; set; }
 
         public FlashLfqSettings()
         {
@@ -104,6 +111,8 @@ namespace Util
             MatchBetweenRuns = f.MatchBetweenRuns;
             MbrRtWindow = f.MbrRtWindow;
             RequireMsmsIdInCondition = f.RequireMsmsIdInCondition;
+            DonorQValueThreshold = f.DonorQValueThreshold;
+            MbrFdrThreshold = f.MbrDetectionQValueThreshold;
 
             BayesianProteinQuant = f.BayesianProteinQuant;
             ProteinQuantBaseCondition = f.ProteinQuantBaseCondition;
@@ -130,11 +139,11 @@ namespace Util
                 maxThreads: settings.MaxThreads,
 
                 matchBetweenRuns: settings.MatchBetweenRuns,
-                //matchBetweenRunsPpmTolerance: settings.PpmTolerance,
-                matchBetweenRunsPpmTolerance: 15,
+                matchBetweenRunsPpmTolerance: 10,
                 maxMbrWindow: settings.MbrRtWindow,
                 donorCriterion: 'S',
                 donorQValueThreshold: settings.DonorQValueThreshold,
+                matchBetweenRunsFdrThreshold: settings.MbrFdrThreshold,
                 requireMsmsIdInCondition: settings.RequireMsmsIdInCondition,
 
                 bayesianProteinQuant: settings.BayesianProteinQuant,
@@ -143,7 +152,8 @@ namespace Util
                 mcmcSteps: settings.McmcSteps,
                 mcmcBurninSteps: settings.McmcBurninSteps,
                 useSharedPeptidesForProteinQuant: settings.UseSharedPeptidesForProteinQuant,
-                randomSeed: settings.RandomSeed
+                randomSeed: settings.RandomSeed,
+                peptidesForMbr: peptidesForMbr
                 );
         }
 

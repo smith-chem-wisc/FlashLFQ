@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using CommandLine.Text;
+using Easy.Common.Extensions;
 using FlashLFQ;
 using IO.ThermoRawFileReader;
 using MzLibUtil;
@@ -191,11 +192,27 @@ namespace CMD
             List<Identification> ids;
             try
             {
-                ids = PsmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos, settings.DonorQValueThreshold);
+                ids = PsmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos, settings.DonorQValueThreshold)
+                    .Where(id => id.QValue <= 0.01).ToList();
+                var test = ids.MaxBy(id => id.QValue);
             }
             catch (Exception e)
             {
                 Console.WriteLine("Problem reading PSMs: " + e.Message);
+                return;
+            }
+
+            // set up IDs
+            List<string> peptidesForPip;
+            try
+            {
+                var peptideIds = PsmReader.ReadPsms(settings.PeptideIdentificationPath, settings.Silent, spectraFileInfos, settings.DonorQValueThreshold)
+                    .Where(id => id.QValue <= settings.DonorQValueThreshold).ToList();
+                peptidesForPip = peptideIds.Select(id => id.ModifiedSequence).ToList();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Problem reading Peptidess: " + e.Message);
                 return;
             }
 
@@ -218,7 +235,10 @@ namespace CMD
                 FlashLfqResults results = null;
                 try
                 {
-                    engine = FlashLfqSettings.CreateEngineWithSettings(settings, ids);
+                    if (peptidesForPip != null && peptidesForPip.IsNotNullOrEmpty())
+                        engine = FlashLfqSettings.CreateEngineWithSettings(settings, ids, peptidesForPip);
+                    else
+                        engine = FlashLfqSettings.CreateEngineWithSettings(settings, ids);
 
                     // run
                     results = engine.Run();
