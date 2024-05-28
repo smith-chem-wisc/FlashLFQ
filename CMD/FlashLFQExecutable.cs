@@ -25,6 +25,8 @@ namespace CMD
               .WithNotParsed(errs => DisplayHelp(parserResult, errs));
         }
 
+        public static FlashLfqResults Results;
+
         static void DisplayHelp<T>(ParserResult<T> result, IEnumerable<Error> errs)
         {
             var helpText = HelpText.AutoBuild(result, h =>
@@ -192,9 +194,9 @@ namespace CMD
             List<Identification> ids;
             try
             {
-                ids = PsmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos, settings.DonorQValueThreshold)
-                    .Where(id => id.QValue <= 0.01).ToList();
+                ids = PsmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos, settings.DonorQValueThreshold).ToList();
                 var test = ids.MaxBy(id => id.QValue);
+                int placeholder = 0;
             }
             catch (Exception e)
             {
@@ -263,6 +265,7 @@ namespace CMD
                 // output
                 if (results != null)
                 {
+                    Results = results;
                     try
                     {
                         OutputWriter.WriteOutput(settings.PsmIdentificationPath, results, settings.Silent, settings.OutputPath);

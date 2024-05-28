@@ -182,10 +182,10 @@ namespace Util
             
 
             // only quantify PSMs below 1% notch FDR with MetaMorpheus/Morpheus results
-            if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture) > qValueThreshold)
-            {
-                return null;
-            }
+            //if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture) > qValueThreshold)
+            //{
+            //    return null;
+            //}
 
             // skip decoys with MetaMorpheus/Morpheus results
             //TODO: what about decoys from other input types?
@@ -590,8 +590,12 @@ namespace Util
                 _protNameCol = Array.IndexOf(split, "Protein Accession".ToLowerInvariant());
                 _decoyCol = Array.IndexOf(split, "Decoy/Contaminant/Target".ToLowerInvariant());
                 _scoreCol = Array.IndexOf(split, "Score".ToLowerInvariant());
-                _qValueCol = Array.IndexOf(split, "QValue".ToLowerInvariant());
-                _qValueNotchCol = Array.IndexOf(split, "QValue Notch".ToLowerInvariant());
+                //_qValueCol = Array.IndexOf(split, "QValue".ToLowerInvariant());
+                //_qValueNotchCol = Array.IndexOf(split, "QValue Notch".ToLowerInvariant());
+
+                // TODO: WARNING - this is a fucked up hack. I'm using pep-q value for both Q value and q value notch
+                _qValueCol = Array.IndexOf(split, "PEP_QValue".ToLowerInvariant());
+                _qValueNotchCol = Array.IndexOf(split, "PEP_QValue".ToLowerInvariant());
                 _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant());
                 _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 
