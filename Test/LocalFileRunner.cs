@@ -22,7 +22,7 @@ namespace Test
 
             var mzmlDirectoy = @"D:\GygiTwoProteome_PXD014415\MM105_Calibration_Search_MBR\Task1-CalibrateTask";
 
-            string outputPath = @"D:\GygiTwoProteome_PXD014415\FlashLFQ_218_DonorPepQ_0pt2";
+            string outputPath = @"D:\GygiTwoProteome_PXD014415\FlashLFQ_301_DonorPepQ_0pt2";
 
             string[] myargs = new string[]
             {
@@ -65,7 +65,7 @@ namespace Test
 
             var mzmlDirectoy = @"D:\GygiTwoProteome_PXD014415\CensoredDataFiles";
 
-            string outputPath = @"D:\GygiTwoProteome_PXD014415\CensoredData_FlashLFQ_218_DonorPepQ_0pt2";
+            string outputPath = @"D:\GygiTwoProteome_PXD014415\CensoredData_FlashLFQ_301_DonorPepQ_0pt2";
 
             string[] myargs = new string[]
             {
@@ -100,48 +100,48 @@ namespace Test
             //File.Delete(proteinsPath);
         }
 
-        [Test]
-        public static void InHouseTwoProteomeEcoli()
-        {
-            string psmFile = @"D:\Human_Ecoli_TwoProteome_60minGradient\mm105_Ecoli_Mixed\Task1-SearchTask\AllPSMs.psmtsv";
-            string peptideFile = @"D:\Human_Ecoli_TwoProteome_60minGradient\mm105_Ecoli_Mixed\Task1-SearchTask\AllPeptides.psmtsv";
+        //[Test]
+        //public static void InHouseTwoProteomeEcoli()
+        //{
+        //    string psmFile = @"D:\Human_Ecoli_TwoProteome_60minGradient\mm105_Ecoli_Mixed\Task1-SearchTask\AllPSMs.psmtsv";
+        //    string peptideFile = @"D:\Human_Ecoli_TwoProteome_60minGradient\mm105_Ecoli_Mixed\Task1-SearchTask\AllPeptides.psmtsv";
 
-            var mzmlDirectoy = @"D:\Human_Ecoli_TwoProteome_60minGradient\CalibrateSearch_4_19_24\EColi_Calibrated_Files";
+        //    var mzmlDirectoy = @"D:\Human_Ecoli_TwoProteome_60minGradient\CalibrateSearch_4_19_24\EColi_Calibrated_Files";
 
-            string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\Ecoli_FlashLFQ_218_DonorPepQ_0pt2";
+        //    string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\Ecoli_FlashLFQ_301_DonorPepQ_0pt2";
 
-            string[] myargs = new string[]
-            {
-                "--rep",
-                mzmlDirectoy,
-                "--idt",
-                psmFile,
-                "--pep",
-                peptideFile,
-                "--out",
-                outputPath,
-                "--donorq",
-                "0.002",
-                "--pipfdr",
-                "0.01",
-                "--ppm",
-                "10"
-            };
+        //    string[] myargs = new string[]
+        //    {
+        //        "--rep",
+        //        mzmlDirectoy,
+        //        "--idt",
+        //        psmFile,
+        //        "--pep",
+        //        peptideFile,
+        //        "--out",
+        //        outputPath,
+        //        "--donorq",
+        //        "0.002",
+        //        "--pipfdr",
+        //        "0.01",
+        //        "--ppm",
+        //        "10"
+        //    };
 
-            CMD.FlashLfqExecutable.Main(myargs);
+        //    CMD.FlashLfqExecutable.Main(myargs);
 
-            string peaksPath = Path.Combine(outputPath, "QuantifiedPeaks.tsv");
-            Assert.That(File.Exists(peaksPath));
-            //File.Delete(peaksPath);
+        //    string peaksPath = Path.Combine(outputPath, "QuantifiedPeaks.tsv");
+        //    Assert.That(File.Exists(peaksPath));
+        //    //File.Delete(peaksPath);
 
-            string peptidesPath = Path.Combine(outputPath, "QuantifiedPeptides.tsv");
-            Assert.That(File.Exists(peptidesPath));
-            //File.Delete(peptidesPath);
+        //    string peptidesPath = Path.Combine(outputPath, "QuantifiedPeptides.tsv");
+        //    Assert.That(File.Exists(peptidesPath));
+        //    //File.Delete(peptidesPath);
 
-            string proteinsPath = Path.Combine(outputPath, "QuantifiedProteins.tsv");
-            Assert.That(File.Exists(proteinsPath));
-            //File.Delete(proteinsPath);
-        }
+        //    string proteinsPath = Path.Combine(outputPath, "QuantifiedProteins.tsv");
+        //    Assert.That(File.Exists(proteinsPath));
+        //    //File.Delete(proteinsPath);
+        //}
 
         [Test]
         public static void InHouseTwoProteomeHumanCensored()
@@ -151,7 +151,7 @@ namespace Test
 
             var mzmlDirectoy = @"D:\Human_Ecoli_TwoProteome_60minGradient\CensoredHumanData";
 
-            string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\CensoredHuman_FlashLFQ_218_DonorPepQ_0pt2";
+            string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\CensoredHuman_FlashLFQ_301_DonorPepQ_0pt2";
 
             string[] myargs = new string[]
             {
@@ -194,7 +194,7 @@ namespace Test
 
             var mzmlDirectoy = @"D:\Human_Ecoli_TwoProteome_60minGradient\CalibrateSearch_4_19_24\Human_Calibrated_Files";
 
-            string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\Human_FlashLFQ_218_DonorPepQ_0pt2";
+            string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\Human_FlashLFQ_301_DonorPepQ_0pt2";
 
             string[] myargs = new string[]
             {
@@ -237,7 +237,7 @@ namespace Test
 
             var mzmlDirectoy = @"D:\Kelly_TwoProteomeData\TenFile_NewDataMM105\Task1-CalibrateTask";
 
-            string outputPath = @"D:\Kelly_TwoProteomeData\FlashLFQ_218_DonorPepQ_0pt2";
+            string outputPath = @"D:\Kelly_TwoProteomeData\FlashLFQ_301_DonorPepQ_0pt2";
 
             string[] myargs = new string[]
             {
@@ -280,7 +280,7 @@ namespace Test
 
             var mzmlDirectoy = @"D:\Kelly_TwoProteomeData\CensoredDataFiles";
 
-            string outputPath = @"D:\Kelly_TwoProteomeData\CensoredData_FlashLFQ_218_DonorPepQ_0pt2";
+            string outputPath = @"D:\Kelly_TwoProteomeData\CensoredData_FlashLFQ_301_DonorPepQ_0pt2";
 
             string[] myargs = new string[]
             {
@@ -327,9 +327,9 @@ namespace Test
 
             var mzmlDirectoy = @"D:\PXD003881_IonStar_SpikeIn\MM105_Cal_Search_Quant\Task1-CalibrateTask";
 
-            string outputBase = @"D:\PXD003881_IonStar_SpikeIn\FlashLFQ_218_Donor" + donorQ;
+            string outputBase = @"D:\PXD003881_IonStar_SpikeIn\FlashLFQ_302_Normed_Donor" + donorQ;
 
-            string outputPath = outputBase + "_Pip2";
+            string outputPath = outputBase + "_Pip5";
 
             string[] myargs = new string[]
             {
@@ -344,9 +344,13 @@ namespace Test
                 "--donorq",
                 "0.0" + donorQ,
                 "--pipfdr",
-                "0.02",
+                "0.05",
                 "--ppm",
-                "10"
+                "10",
+                "--thr",
+                "10",
+                "--nor",
+                "true"
             };
 
             CMD.FlashLfqExecutable.Main(myargs);
@@ -366,10 +370,11 @@ namespace Test
 
             var results = FlashLfqExecutable.Results;
 
-            //PIP PEP Threshold 0.01
-            outputPath = outputBase + "_Pip1";
+            //PIP PEP Threshold 0.02
+            outputPath = outputBase + "_Pip2";
             Directory.CreateDirectory(outputPath);
-            results.MbrQValueThreshold = 0.01;
+            results.MbrQValueThreshold = 0.02;
+            results.ReNormalizeResults();
             results.CalculatePeptideResults(false);
             results.CalculateProteinResultsMedianPolish(false);
             results.WriteResults(
@@ -389,6 +394,7 @@ namespace Test
             outputPath = outputBase + "_Pip10";
             Directory.CreateDirectory(outputPath);
             results.MbrQValueThreshold = 0.1;
+            results.ReNormalizeResults();
             results.CalculatePeptideResults(false);
             results.CalculateProteinResultsMedianPolish(false);
             results.WriteResults(
@@ -408,6 +414,7 @@ namespace Test
             outputPath = outputBase + "_Pip100";
             Directory.CreateDirectory(outputPath);
             results.MbrQValueThreshold = 1.0;
+            results.ReNormalizeResults();
             results.CalculatePeptideResults(false);
             results.CalculateProteinResultsMedianPolish(false);
             results.WriteResults(
@@ -426,8 +433,8 @@ namespace Test
 
 
         [Test]
-        //[TestCase("02")]
-        //[TestCase("1")]
+        [TestCase("02")]
+        [TestCase("1")]
         [TestCase("5")]
         public static void TestMetaMorpheusOutputSc(string donorQ)
         {
@@ -436,9 +443,9 @@ namespace Test
 
             var mzmlDirectoy = @"D:\pepDesc_spikeIn\MM105_CalSearch\Task1-CalibrateTask\mzMLs";
 
-            string outputBase = @"D:\pepDesc_spikeIn\FlashLFQ_218_Donor" + donorQ;
+            string outputBase = @"D:\pepDesc_spikeIn\FlashLFQ_301_Donor" + donorQ;
 
-            string outputPath = outputBase + "_Pip2";
+            string outputPath = outputBase + "_Pip5";
 
             string[] myargs = new string[]
             {
@@ -453,7 +460,7 @@ namespace Test
                 "--donorq",
                 "0.0" + donorQ,
                 "--pipfdr",
-                "0.02",
+                "0.05",
                 "--ppm",
                 "10"
             };
@@ -472,64 +479,64 @@ namespace Test
             Assert.That(File.Exists(proteinsPath));
             //File.Delete(proteinsPath);
 
-            var results = FlashLfqExecutable.Results;
+            //var results = FlashLfqExecutable.Results;
 
-            //PIP PEP Threshold 0.01
-            outputPath = outputBase + "_Pip1";
-            Directory.CreateDirectory(outputPath);
-            results.MbrQValueThreshold = 0.01;
-            results.CalculatePeptideResults(false);
-            results.CalculateProteinResultsMedianPolish(false);
-            results.WriteResults(
-                peaksOutputPath: null,
-                modPeptideOutputPath: Path.Combine(outputPath, "QuantifiedPeptides.tsv"),
-                    proteinOutputPath: null,
-                    bayesianProteinQuantOutput: null,
-                    silent: false);
-            results.WriteResults(
-                peaksOutputPath: null,
-                modPeptideOutputPath: null,
-                proteinOutputPath: Path.Combine(outputPath, "QuantifiedProteins.tsv"),
-                bayesianProteinQuantOutput: null,
-                silent: false);
+            ////PIP PEP Threshold 0.01
+            //outputPath = outputBase + "_Pip1";
+            //Directory.CreateDirectory(outputPath);
+            //results.MbrQValueThreshold = 0.01;
+            //results.CalculatePeptideResults(false);
+            //results.CalculateProteinResultsMedianPolish(false);
+            //results.WriteResults(
+            //    peaksOutputPath: null,
+            //    modPeptideOutputPath: Path.Combine(outputPath, "QuantifiedPeptides.tsv"),
+            //        proteinOutputPath: null,
+            //        bayesianProteinQuantOutput: null,
+            //        silent: false);
+            //results.WriteResults(
+            //    peaksOutputPath: null,
+            //    modPeptideOutputPath: null,
+            //    proteinOutputPath: Path.Combine(outputPath, "QuantifiedProteins.tsv"),
+            //    bayesianProteinQuantOutput: null,
+            //    silent: false);
 
-            //PIP PEP Threshold 0.10
-            outputPath = outputBase + "_Pip10";
-            Directory.CreateDirectory(outputPath);
-            results.MbrQValueThreshold = 0.1;
-            results.CalculatePeptideResults(false);
-            results.CalculateProteinResultsMedianPolish(false);
-            results.WriteResults(
-                peaksOutputPath: null,
-                modPeptideOutputPath: Path.Combine(outputPath, "QuantifiedPeptides.tsv"),
-                proteinOutputPath: null,
-                bayesianProteinQuantOutput: null,
-                silent: false);
-            results.WriteResults(
-                peaksOutputPath: null,
-                modPeptideOutputPath: null,
-                proteinOutputPath: Path.Combine(outputPath, "QuantifiedProteins.tsv"),
-                bayesianProteinQuantOutput: null,
-                silent: false);
+            ////PIP PEP Threshold 0.10
+            //outputPath = outputBase + "_Pip10";
+            //Directory.CreateDirectory(outputPath);
+            //results.MbrQValueThreshold = 0.1;
+            //results.CalculatePeptideResults(false);
+            //results.CalculateProteinResultsMedianPolish(false);
+            //results.WriteResults(
+            //    peaksOutputPath: null,
+            //    modPeptideOutputPath: Path.Combine(outputPath, "QuantifiedPeptides.tsv"),
+            //    proteinOutputPath: null,
+            //    bayesianProteinQuantOutput: null,
+            //    silent: false);
+            //results.WriteResults(
+            //    peaksOutputPath: null,
+            //    modPeptideOutputPath: null,
+            //    proteinOutputPath: Path.Combine(outputPath, "QuantifiedProteins.tsv"),
+            //    bayesianProteinQuantOutput: null,
+            //    silent: false);
 
-            // PIP PEP Threshold 1.00
-            outputPath = outputBase + "_Pip100";
-            Directory.CreateDirectory(outputPath);
-            results.MbrQValueThreshold = 1.0;
-            results.CalculatePeptideResults(false);
-            results.CalculateProteinResultsMedianPolish(false);
-            results.WriteResults(
-                peaksOutputPath: null,
-                modPeptideOutputPath: Path.Combine(outputPath, "QuantifiedPeptides.tsv"),
-                proteinOutputPath: null,
-                bayesianProteinQuantOutput: null,
-                silent: false);
-            results.WriteResults(
-                peaksOutputPath: null,
-                modPeptideOutputPath: null,
-                proteinOutputPath: Path.Combine(outputPath, "QuantifiedProteins.tsv"),
-                bayesianProteinQuantOutput: null,
-                silent: false);
+            //// PIP PEP Threshold 1.00
+            //outputPath = outputBase + "_Pip100";
+            //Directory.CreateDirectory(outputPath);
+            //results.MbrQValueThreshold = 1.0;
+            //results.CalculatePeptideResults(false);
+            //results.CalculateProteinResultsMedianPolish(false);
+            //results.WriteResults(
+            //    peaksOutputPath: null,
+            //    modPeptideOutputPath: Path.Combine(outputPath, "QuantifiedPeptides.tsv"),
+            //    proteinOutputPath: null,
+            //    bayesianProteinQuantOutput: null,
+            //    silent: false);
+            //results.WriteResults(
+            //    peaksOutputPath: null,
+            //    modPeptideOutputPath: null,
+            //    proteinOutputPath: Path.Combine(outputPath, "QuantifiedProteins.tsv"),
+            //    bayesianProteinQuantOutput: null,
+            //    silent: false);
         }
 
         //[Test]
