@@ -22,7 +22,7 @@ namespace Test
 
             var mzmlDirectoy = @"D:\GygiTwoProteome_PXD014415\MM105_Calibration_Search_MBR\Task1-CalibrateTask";
 
-            string outputPath = @"D:\GygiTwoProteome_PXD014415\FlashLFQ_301_DonorPepQ_0pt2";
+            string outputPath = @"D:\GygiTwoProteome_PXD014415\FlashLFQ_301_DonorPepQ_0pt1";
 
             string[] myargs = new string[]
             {
@@ -35,7 +35,7 @@ namespace Test
                 "--out",
                 outputPath,
                 "--donorq",
-                "0.002",
+                "0.001",
                 "--pipfdr",
                 "0.01",
                 "--ppm",
@@ -65,7 +65,7 @@ namespace Test
 
             var mzmlDirectoy = @"D:\GygiTwoProteome_PXD014415\CensoredDataFiles";
 
-            string outputPath = @"D:\GygiTwoProteome_PXD014415\CensoredData_FlashLFQ_301_DonorPepQ_0pt2";
+            string outputPath = @"D:\GygiTwoProteome_PXD014415\CensoredData_FlashLFQ_302_DonorPepQ_0pt1";
 
             string[] myargs = new string[]
             {
@@ -78,7 +78,7 @@ namespace Test
                 "--out",
                 outputPath,
                 "--donorq",
-                "0.002",
+                "0.001",
                 "--pipfdr",
                 "0.01",
                 "--ppm",
@@ -108,7 +108,7 @@ namespace Test
 
         //    var mzmlDirectoy = @"D:\Human_Ecoli_TwoProteome_60minGradient\CalibrateSearch_4_19_24\EColi_Calibrated_Files";
 
-        //    string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\Ecoli_FlashLFQ_301_DonorPepQ_0pt2";
+        //    string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\Ecoli_FlashLFQ_301_DonorPepQ_0pt1";
 
         //    string[] myargs = new string[]
         //    {
@@ -121,7 +121,7 @@ namespace Test
         //        "--out",
         //        outputPath,
         //        "--donorq",
-        //        "0.002",
+        //        "0.001",
         //        "--pipfdr",
         //        "0.01",
         //        "--ppm",
@@ -151,7 +151,7 @@ namespace Test
 
             var mzmlDirectoy = @"D:\Human_Ecoli_TwoProteome_60minGradient\CensoredHumanData";
 
-            string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\CensoredHuman_FlashLFQ_301_DonorPepQ_0pt2";
+            string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\CensoredHuman_FlashLFQ_302_DonorPepQ_0pt1";
 
             string[] myargs = new string[]
             {
@@ -164,7 +164,7 @@ namespace Test
                 "--out",
                 outputPath,
                 "--donorq",
-                "0.002",
+                "0.001",
                 "--pipfdr",
                 "0.01",
                 "--ppm",
@@ -194,7 +194,7 @@ namespace Test
 
             var mzmlDirectoy = @"D:\Human_Ecoli_TwoProteome_60minGradient\CalibrateSearch_4_19_24\Human_Calibrated_Files";
 
-            string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\Human_FlashLFQ_301_DonorPepQ_0pt2";
+            string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\Human_FlashLFQ_302_DonorPepQ_0pt1";
 
             string[] myargs = new string[]
             {
@@ -207,7 +207,7 @@ namespace Test
                 "--out",
                 outputPath,
                 "--donorq",
-                "0.002",
+                "0.001",
                 "--pipfdr",
                 "0.01",
                 "--ppm",
@@ -237,7 +237,7 @@ namespace Test
 
             var mzmlDirectoy = @"D:\Kelly_TwoProteomeData\TenFile_NewDataMM105\Task1-CalibrateTask";
 
-            string outputPath = @"D:\Kelly_TwoProteomeData\FlashLFQ_301_DonorPepQ_0pt2";
+            string outputPath = @"D:\Kelly_TwoProteomeData\FlashLFQ_302_DonorPepQ_0pt1";
 
             string[] myargs = new string[]
             {
@@ -250,7 +250,7 @@ namespace Test
                 "--out",
                 outputPath,
                 "--donorq",
-                "0.002",
+                "0.001",
                 "--pipfdr",
                 "0.01",
                 "--ppm",
@@ -280,7 +280,7 @@ namespace Test
 
             var mzmlDirectoy = @"D:\Kelly_TwoProteomeData\CensoredDataFiles";
 
-            string outputPath = @"D:\Kelly_TwoProteomeData\CensoredData_FlashLFQ_301_DonorPepQ_0pt2";
+            string outputPath = @"D:\Kelly_TwoProteomeData\CensoredData_FlashLFQ_302_DonorPepQ_0pt1";
 
             string[] myargs = new string[]
             {
@@ -293,7 +293,7 @@ namespace Test
                 "--out",
                 outputPath,
                 "--donorq",
-                "0.002",
+                "0.001",
                 "--pipfdr",
                 "0.01",
                 "--ppm",
