@@ -15,7 +15,7 @@
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.7.82" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    <PackageReference Include="mzLib" Version="5.329.0" />
+    <PackageReference Include="mzLib" Version="5.330.0" />
     <PackageReference Include="NetSerializer" Version="4.1.2" />
     <PackageReference Include="Nett" Version="0.15.0" />
   </ItemGroup>

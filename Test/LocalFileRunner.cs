@@ -19,23 +19,17 @@ namespace Test
     {
 
         [Test]
-        [TestCase("01")]
         [TestCase("02")]
         [TestCase("05")]
         [TestCase("1")]
         public static void GygiTwoProteome(string donorQ)
         {
-            //string psmFile = @"D:\GygiTwoProteome_PXD014415\Yeast_Human_Arabad_Contam_search\AllPSMs.psmtsv";
-            //string peptideFile = @"D:\GygiTwoProteome_PXD014415\Yeast_Human_Arabad_Contam_search\AllPeptides.psmtsv";
-
-            //var mzmlDirectoy = @"D:\GygiTwoProteome_PXD014415\MM105_Calibration_Search_MBR\Task1-CalibrateTask";
-
-            string psmFile = @"D:\GygiTwoProteome_PXD014415\MsConvertmzMLs\MM_NewPep_NewDB\Task1-SearchTask\AllPSMs.psmtsv";
-            string peptideFile = @"D:\GygiTwoProteome_PXD014415\MsConvertmzMLs\MM_NewPep_NewDB\Task1-SearchTask\AllPeptides.psmtsv";
+            string psmFile = @"D:\GygiTwoProteome_PXD014415\MsConvertmzMLs\MM_ConcatenatedHumanDb_Search\Task1-SearchTask\AllPSMs.psmtsv";
+            string peptideFile = @"D:\GygiTwoProteome_PXD014415\MsConvertmzMLs\MM_ConcatenatedHumanDb_Search\Task1-SearchTask\AllPeptides.psmtsv";
             var mzmlDirectoy = @"D:\GygiTwoProteome_PXD014415\MsConvertmzMLs\MM_NewPepSearch\Task1-CalibrateTask";
 
 
-            string outputPath = @"D:\GygiTwoProteome_PXD014415\FlashLFQ_329_DonorPepQ_" + donorQ + "_NewDb";
+            string outputPath = @"D:\GygiTwoProteome_PXD014415\FlashLFQ_330_DonorPepQ_" + donorQ + "_ConcatenatedDb";
 
             string[] myargs = new string[]
             {
@@ -71,18 +65,17 @@ namespace Test
         }
 
         [Test]
-        [TestCase("01")]
         [TestCase("02")]
         [TestCase("05")]
         [TestCase("1")]
         public static void GygiTwoProteomeCensored(string donorQ)
         {
 
-            string psmFile = @"D:\GygiTwoProteome_PXD014415\MsConvertmzMLs\MM_NewPep_CensoredMzmls\NewDbSearch\Task1-SearchTask\AllPSMs.psmtsv";
-            string peptideFile = @"D:\GygiTwoProteome_PXD014415\MsConvertmzMLs\MM_NewPep_CensoredMzmls\NewDbSearch\Task1-SearchTask\AllPeptides.psmtsv";
+            string psmFile = @"D:\GygiTwoProteome_PXD014415\MsConvertmzMLs\MM_ConcatenatedHumanDb_Search_CensoredFiles\Task1-SearchTask\AllPSMs.psmtsv";
+            string peptideFile = @"D:\GygiTwoProteome_PXD014415\MsConvertmzMLs\MM_ConcatenatedHumanDb_Search_CensoredFiles\Task1-SearchTask\AllPeptides.psmtsv";
             var mzmlDirectoy = @"D:\GygiTwoProteome_PXD014415\MsConvertmzMLs\MM_NewPep_CensoredMzmls";
 
-            string outputPath = @"D:\GygiTwoProteome_PXD014415\CensoredData_FlashLFQ_329_DonorPepQ_" + donorQ + "_NewDb";
+            string outputPath = @"D:\GygiTwoProteome_PXD014415\CensoredData_FlashLFQ_330_DonorPepQ_" + donorQ + "_ConcatenatedDb";
 
             string[] myargs = new string[]
             {
@@ -119,18 +112,17 @@ namespace Test
 
 
         [Test]
-        [TestCase("01")]
         [TestCase("02")]
         [TestCase("05")]
         [TestCase("1")]
         public static void InHouseTwoProteomeHuman(string donorQ)
         {
-            string psmFile = @"D:\Human_Ecoli_TwoProteome_60minGradient\RawData\MM_NewPep_NewEntrapment\Task1-SearchTask\AllPSMs.psmtsv";
-            string peptideFile = @"D:\Human_Ecoli_TwoProteome_60minGradient\RawData\MM_NewPep_NewEntrapment\Task1-SearchTask\AllPeptides.psmtsv";
+            string psmFile = @"D:\Human_Ecoli_TwoProteome_60minGradient\RawData\MM_ConcatenatedHumanDb_Search\Task1-SearchTask\AllPSMs.psmtsv";
+            string peptideFile = @"D:\Human_Ecoli_TwoProteome_60minGradient\RawData\MM_ConcatenatedHumanDb_Search\Task1-SearchTask\AllPeptides.psmtsv"; ;
 
             var mzmlDirectoy = @"D:\Human_Ecoli_TwoProteome_60minGradient\RawData\MMNewPep_CalSearch\Task1-CalibrateTask";
 
-            string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\Human_FlashLFQ_329_DonorPepQ_" + donorQ + "_NewDb";
+            string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\Human_FlashLFQ_330_DonorPepQ_" + donorQ + "_ConcatenatedDb";
 
             string[] myargs = new string[]
             {
@@ -166,18 +158,17 @@ namespace Test
         }
 
         [Test]
-        [TestCase("01")]
         [TestCase("02")]
         [TestCase("05")]
         [TestCase("1")]
         public static void InHouseTwoProteomeHumanCensored(string donorQ)
         {
-            string psmFile = @"D:\Human_Ecoli_TwoProteome_60minGradient\RawData\MM_CensoredMzml_8_3_24\NewDbSearch\Task1-SearchTask\AllPSMs.psmtsv";
-            string peptideFile = @"D:\Human_Ecoli_TwoProteome_60minGradient\RawData\MM_CensoredMzml_8_3_24\NewDbSearch\Task1-SearchTask\AllPeptides.psmtsv";
+            string psmFile = @"D:\Human_Ecoli_TwoProteome_60minGradient\RawData\MM_ConcatenatedHumanDb_Search_CensoredFiles\Task1-SearchTask\AllPSMs.psmtsv";
+            string peptideFile = @"D:\Human_Ecoli_TwoProteome_60minGradient\RawData\MM_ConcatenatedHumanDb_Search_CensoredFiles\Task1-SearchTask\AllPeptides.psmtsv";
 
             var mzmlDirectoy = @"D:\Human_Ecoli_TwoProteome_60minGradient\RawData\MM_CensoredMzml_8_3_24";
 
-            string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\CensoredHuman_FlashLFQ_329_DonorPepQ_" + donorQ + "_NewDb";
+            string outputPath = @"D:\Human_Ecoli_TwoProteome_60minGradient\CensoredHuman_FlashLFQ_330_DonorPepQ_" + donorQ + "_ConcatenatedDb";
 
             string[] myargs = new string[]
             {
@@ -213,20 +204,17 @@ namespace Test
         }
 
         [Test]
-        [TestCase("01")]
         [TestCase("02")]
         [TestCase("05")]
         [TestCase("1")]
         public static void KellyTwoProteome(string donorQ)
         {
-            //string psmFile = @"D:\Kelly_TwoProteomeData\NineFileSearch_MM105\Task1-SearchTask\AllPSMs.psmtsv";
-            string psmFile = @"D:\Kelly_TwoProteomeData\MsConvertMzMls\MM_NewPEP_NewEntrapment\Task1-SearchTask\AllPSMs.psmtsv";
-            //string peptideFile = @"D:\Kelly_TwoProteomeData\NineFileSearch_MM105\Task1-SearchTask\AllPeptides.psmtsv";
-            string peptideFile = @"D:\Kelly_TwoProteomeData\MsConvertMzMls\MM_NewPEP_NewEntrapment\Task1-SearchTask\AllPeptides.psmtsv";
+            string psmFile = @"D:\Kelly_TwoProteomeData\MsConvertMzMls\MM_ConcatenatedHumanDb_Search\Task1-SearchTask\AllPSMs.psmtsv";
+            string peptideFile = @"D:\Kelly_TwoProteomeData\MsConvertMzMls\MM_ConcatenatedHumanDb_Search\Task1-SearchTask\AllPeptides.psmtsv";
 
             var mzmlDirectoy = @"D:\Kelly_TwoProteomeData\MsConvertMzMls\MetaMorpheusNewPepSearch\Task1-CalibrateTask";
 
-            string outputPath = @"D:\Kelly_TwoProteomeData\FlashLFQ_329_DonorPepQ_" + donorQ + "_NewDb";
+            string outputPath = @"D:\Kelly_TwoProteomeData\FlashLFQ_330_DonorPepQ_" + donorQ + "_ConcatenatedDb";
 
             string[] myargs = new string[]
             {
@@ -261,21 +249,17 @@ namespace Test
         }
 
         [Test]
-        [TestCase("01")]
         [TestCase("02")]
         [TestCase("05")]
         [TestCase("1")]
         public static void KellyTwoProteomeCensored(string donorQ)
         {
-            //string psmFile = @"D:\Kelly_TwoProteomeData\CensoredDataFiles_7_22_24\MM105_Search\Task1-SearchTask\AllPSMs.psmtsv";
-            //string peptideFile = @"D:\Kelly_TwoProteomeData\CensoredDataFiles_7_22_24\MM105_Search\Task1-SearchTask\AllPeptides.psmtsv";
-
-            string psmFile = @"D:\Kelly_TwoProteomeData\MsConvertMzMls\MM_Censored_8_2_24\NewPep_NewEntrapment\Task1-SearchTask\AllPSMs.psmtsv";
-            string peptideFile = @"D:\Kelly_TwoProteomeData\MsConvertMzMls\MM_Censored_8_2_24\NewPep_NewEntrapment\Task1-SearchTask\AllPeptides.psmtsv";
+            string psmFile = @"D:\Kelly_TwoProteomeData\MsConvertMzMls\MM_ConcatenatedHumanDb_Search_CensoredFiles\Task1-SearchTask\AllPSMs.psmtsv";
+            string peptideFile = @"D:\Kelly_TwoProteomeData\MsConvertMzMls\MM_ConcatenatedHumanDb_Search_CensoredFiles\Task1-SearchTask\AllPeptides.psmtsv";
 
             var mzmlDirectoy = @"D:\Kelly_TwoProteomeData\MsConvertMzMls\MM_Censored_8_2_24";
 
-            string outputPath = @"D:\Kelly_TwoProteomeData\CensoredData_FlashLFQ_329_DonorPepQ_" + donorQ + "_NewDb";
+            string outputPath = @"D:\Kelly_TwoProteomeData\CensoredData_FlashLFQ_330_DonorPepQ_" + donorQ + "_ConcatenatedDb";
 
             string[] myargs = new string[]
             {
@@ -322,7 +306,7 @@ namespace Test
 
             var mzmlDirectoy = @"D:\PXD003881_IonStar_SpikeIn\MM_NewPEP_CalSearch\Task1-CalibrateTask";
 
-            string outputBase = @"D:\PXD003881_IonStar_SpikeIn\FlashLFQ_329_Normed_Donor" + donorQ + "_NewSearch";
+            string outputBase = @"D:\PXD003881_IonStar_SpikeIn\FlashLFQ_330_Normed_Donor" + donorQ + "_NewSearch";
 
             string outputPath = outputBase + "_Pip5";
 
