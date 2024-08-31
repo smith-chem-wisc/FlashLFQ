@@ -63,9 +63,6 @@ namespace Util
         [Option("mrt", Default = 1.5, HelpText = "double; maximum MBR window in minutes")]
         public double MbrRtWindow { get; set; }
 
-        [Option("dew", Default = 0, HelpText = "double; MBR donor exclusion window (in minutes)")]
-        public double MbrDonorExclusionWindow { get; set; }
-
         [Option("rmc", Default = false, HelpText = "bool; require MS/MS ID in condition")]
         public bool RequireMsmsIdInCondition { get; set; }
 
@@ -147,7 +144,6 @@ namespace Util
                 donorCriterion: 'S',
                 donorQValueThreshold: settings.DonorQValueThreshold,
                 matchBetweenRunsFdrThreshold: settings.MbrFdrThreshold,
-                mbrDonorExclusionWindow: settings.MbrDonorExclusionWindow,
                 requireMsmsIdInCondition: settings.RequireMsmsIdInCondition,
 
                 bayesianProteinQuant: settings.BayesianProteinQuant,
