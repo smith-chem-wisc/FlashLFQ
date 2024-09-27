@@ -188,9 +188,10 @@ namespace Util
                 throw new Exception("The isotope PPM tolerance must be greater than 0");
             }
 
-            if (NumIsotopesRequired < 2)
+            if (NumIsotopesRequired < 1)
             {
-                throw new Exception("The number of isotopes required must be at least 2");
+                //We leave the default setting to 2. But some applications, such as single-cell analysis, require operation with fewer isotope peaks.
+                throw new Exception("The number of isotopes required must be at least 1");
             }
 
             if (MbrRtWindow <= 0)
