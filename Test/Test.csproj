@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-
+    <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
@@ -12,7 +10,6 @@
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
     <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     <PackageReference Include="mzLib" Version="5.331.0" />
@@ -21,12 +18,10 @@
     <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\CMD\CMD.csproj" />
     <ProjectReference Include="..\Util\Util.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <None Update="SampleFiles\Parallel\20100614_Velos1_TaGe_SA_Jurkat_3.mzML">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -80,5 +75,4 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
 </Project>
