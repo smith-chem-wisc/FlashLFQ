@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Version>1.0.0.0</Version>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
@@ -13,11 +12,10 @@
     <ApplicationIcon>FlashLFQ_Icon.ico</ApplicationIcon>
     <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.7.82" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    <PackageReference Include="mzLib" Version="1.0.545" />
+    <PackageReference Include="mzLib" Version="1.0.552" />
     <PackageReference Include="NetSerializer" Version="4.1.2" />
     <PackageReference Include="Nett" Version="0.15.0" />
     <PackageReference Include="SharpLearning.Common.Interfaces" Version="0.28.0" />
@@ -30,11 +28,9 @@
     <PackageReference Include="SharpLearning.Optimization" Version="0.28.0" />
     <PackageReference Include="SharpLearning.RandomForest" Version="0.28.0" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Util\Util.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <None Update="FlashLFQ_Icon.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -43,5 +39,4 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
 </Project>
