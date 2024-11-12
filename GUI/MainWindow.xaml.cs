@@ -1,6 +1,7 @@
 ﻿using FlashLFQ;
 using GUI.DataGridObjects;
 using IO.ThermoRawFileReader;
+using MzLibUtil;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -66,6 +67,7 @@ namespace GUI
 
             BayesianSettings1.Visibility = Visibility.Hidden;
             BayesianSettings2.Visibility = Visibility.Hidden;
+            MbrFdrPanel.Visibility = Visibility.Hidden;
 
             var _writer = new TextBoxWriter(notificationsTextBox);
             Console.SetOut(_writer);
@@ -80,6 +82,7 @@ namespace GUI
             ppmToleranceTextBox.Text = settings.PpmTolerance.ToString("F1");
             normalizeCheckbox.IsChecked = settings.Normalize;
             mbrCheckbox.IsChecked = settings.MatchBetweenRuns;
+            mbrFDRTextBox.Text = "0.01";
             sharedPeptideCheckbox.IsChecked = settings.UseSharedPeptidesForProteinQuant;
             bayesianCheckbox.IsChecked = settings.BayesianProteinQuant;
             FoldChangeCutoffManualTextBox.Text = "0.5";
@@ -123,6 +126,16 @@ namespace GUI
             else
             {
                 throw new Exception("The PPM tolerance must be a decimal number");
+            }
+
+            // MBR FDR
+            if (double.TryParse(mbrFDRTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out double mbrFdr))
+            {
+                settings.MbrFdrThreshold = mbrFdr;
+            }
+            else
+            {
+                throw new Exception("The PIP FDR must be a decimal number");
             }
 
             settings.Normalize = normalizeCheckbox.IsChecked.Value;
@@ -428,6 +441,7 @@ namespace GUI
                 ppmToleranceTextBox.IsEnabled = false;
                 normalizeCheckbox.IsEnabled = false;
                 mbrCheckbox.IsEnabled = false;
+                MbrFdrPanel.IsEnabled = false;
                 sharedPeptideCheckbox.IsEnabled = false;
                 bayesianCheckbox.IsEnabled = false;
                 BayesianSettings1.IsEnabled = false;
@@ -847,6 +861,18 @@ namespace GUI
             {
                 BayesianSettings1.Visibility = Visibility.Hidden;
                 BayesianSettings2.Visibility = Visibility.Hidden;
+            }
+        }
+
+        private void MbrCheckbox_Checked(object sender, RoutedEventArgs e)
+        {
+            if (mbrCheckbox.IsChecked.Value)
+            {
+                MbrFdrPanel.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                MbrFdrPanel.Visibility = Visibility.Hidden;
             }
         }
     }

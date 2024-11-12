@@ -30,8 +30,7 @@ namespace Util
                 Path.Combine(outputPath, "QuantifiedPeptides.tsv"),
                 Path.Combine(outputPath, "QuantifiedProteins.tsv"),
                 bayesianResults ? Path.Combine(outputPath, "BayesianFoldChangeAnalysis.tsv") : null,
-                silent,
-                Path.Combine(outputPath, "DecoyPeaks.tsv")
+                silent
                 );
         }
 

@@ -141,7 +141,7 @@ namespace Util
                 matchBetweenRuns: settings.MatchBetweenRuns,
                 matchBetweenRunsPpmTolerance: 10,
                 maxMbrWindow: settings.MbrRtWindow,
-                donorCriterion: 'S',
+                donorCriterion: DonorCriterion.Score,
                 donorQValueThreshold: settings.DonorQValueThreshold,
                 matchBetweenRunsFdrThreshold: settings.MbrFdrThreshold,
                 requireMsmsIdInCondition: settings.RequireMsmsIdInCondition,
@@ -153,7 +153,7 @@ namespace Util
                 mcmcBurninSteps: settings.McmcBurninSteps,
                 useSharedPeptidesForProteinQuant: settings.UseSharedPeptidesForProteinQuant,
                 randomSeed: settings.RandomSeed,
-                peptidesForMbr: peptidesForMbr
+                peptideSequencesToQuantify: peptidesForMbr
                 );
         }
 
