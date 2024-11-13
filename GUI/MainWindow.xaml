@@ -355,6 +355,7 @@
                             <RowDefinition Height="28" />
                             <RowDefinition Height="28" />
                             <RowDefinition Height="28" />
+                            <RowDefinition Height="28" />
                             <RowDefinition Height="29" />
                             <RowDefinition Height="1*" />
                         </Grid.RowDefinitions>
@@ -403,7 +404,7 @@
                         
                         <CheckBox Name="pepQValueCheckbox" Content="Use PEP Q Values" Foreground="DarkGray" 
                                   Grid.Row="5" Style="{StaticResource SquareCheckbox}" 
-                                  ToolTip="Determines how FlashLFQ chooses which peptides to quantify (only applies to MetaMorpheus identifications). Using PEP Q generally gives better results" />         
+                                  ToolTip="Determines how FlashLFQ chooses which peptides to quantify (only applies to MetaMorpheus identifications). Using PEP Q generally yields more peptide IDs" />         
 
                         <CheckBox Name="sharedPeptideCheckbox" Content="Use shared peptides for protein quantification" Foreground="DarkGray" 
                                   Grid.Row="6" 
@@ -422,14 +423,14 @@
                         </StackPanel>
 
                         <StackPanel Name="BayesianSettings2" Orientation="Horizontal" 
-                                    Grid.Row="8" Margin="20,0,0,0" IsEnabled="{Binding IsEnabled, ElementName=bayesianCheckbox}"
+                                    Grid.Row="9" Margin="20,0,0,0" IsEnabled="{Binding IsEnabled, ElementName=bayesianCheckbox}"
                                     ToolTip="The protein log2-transformed fold-change that is considered to be not important, or background">
                             <Label Content="Log2 Fold-change cutoff:" Foreground="DarkGray" />
                             <TextBox Name="FoldChangeCutoffManualTextBox" Width="40" Height="21" Foreground="DarkGray" Background="Transparent" 
                                          BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
                         </StackPanel>
 
-                        <Expander Header="Advanced Settings" Foreground="DarkGray" Grid.Row="9" Margin="0,20,0,0" >
+                        <Expander Header="Advanced Settings" Foreground="DarkGray" Grid.Row="10" Margin="0,20,0,0" >
                             <Grid Margin="20,0,0,0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
