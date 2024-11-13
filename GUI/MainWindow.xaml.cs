@@ -514,7 +514,7 @@ namespace GUI
         {
             // read IDs
             var ids = new List<Identification>();
-            List<string> peptidesForMbr = null;
+            List<string> peptidesToQuantify = null;
 
             try
             {
@@ -522,7 +522,7 @@ namespace GUI
                 if(allPepFile!=null)
                 {
                     // Read in the peptide file, select only the peptdies that pass the q-value threshold
-                    peptidesForMbr = PsmReader.ReadPsms(allPepFile.FilePath, false,
+                    peptidesToQuantify = PsmReader.ReadPsms(allPepFile.FilePath, false,
                             spectraFiles.Select(p => p.SpectraFileInfo).ToList(), 
                             usePepQValue: settings.UsePepQValue)
                         .Select(id => id.ModifiedSequence).ToList();
@@ -585,7 +585,7 @@ namespace GUI
             // run FlashLFQ engine
             try
             {
-                flashLfqEngine = FlashLfqSettings.CreateEngineWithSettings(settings, ids, peptidesForMbr);
+                flashLfqEngine = FlashLfqSettings.CreateEngineWithSettings(settings, ids, peptidesToQuantify);
 
                 results = flashLfqEngine.Run();
             }

@@ -89,9 +89,6 @@ namespace Util
         public int? RandomSeed { get; set; }
         //TODO: paired samples
 
-        [Option("donorq", HelpText = "double; donor q value threshold")]
-        public double DonorQValueThreshold  { get; set; }
-
         [Option("pipfdr", HelpText = "double; fdr cutoff for pip")]
         public double MbrFdrThreshold  { get; set; }
 
@@ -114,7 +111,6 @@ namespace Util
             MatchBetweenRuns = f.MatchBetweenRuns;
             MbrRtWindow = f.MbrRtWindow;
             RequireMsmsIdInCondition = f.RequireMsmsIdInCondition;
-            DonorQValueThreshold = f.DonorQValueThreshold;
             MbrFdrThreshold = f.MbrDetectionQValueThreshold;
             UsePepQValue = false;
 
@@ -146,7 +142,7 @@ namespace Util
                 matchBetweenRunsPpmTolerance: 10,
                 maxMbrWindow: settings.MbrRtWindow,
                 donorCriterion: DonorCriterion.Score,
-                donorQValueThreshold: settings.DonorQValueThreshold,
+                donorQValueThreshold: settings.MbrFdrThreshold / 5.0, // The donor q-value threshold is 1/5 of the MBR FDR threshold, as having the two values equal would result in no MBR hits at the desired MBR FDR threshold
                 matchBetweenRunsFdrThreshold: settings.MbrFdrThreshold,
                 requireMsmsIdInCondition: settings.RequireMsmsIdInCondition,
 
