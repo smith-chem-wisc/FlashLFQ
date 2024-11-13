@@ -95,6 +95,9 @@ namespace Util
         [Option("pipfdr", HelpText = "double; fdr cutoff for pip")]
         public double MbrFdrThreshold  { get; set; }
 
+        [Option("usepepq", Default = false, HelpText = "bool; determines whether PEP Q Value should be used to determine which peptides to quantify")]
+        public bool UsePepQValue { get; set; }
+
         public FlashLfqSettings()
         {
             FlashLfqEngine f = new FlashLfqEngine(new List<Identification>());
@@ -113,6 +116,7 @@ namespace Util
             RequireMsmsIdInCondition = f.RequireMsmsIdInCondition;
             DonorQValueThreshold = f.DonorQValueThreshold;
             MbrFdrThreshold = f.MbrDetectionQValueThreshold;
+            UsePepQValue = false;
 
             BayesianProteinQuant = f.BayesianProteinQuant;
             ProteinQuantBaseCondition = f.ProteinQuantBaseCondition;

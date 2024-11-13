@@ -254,7 +254,8 @@
                             </DataGrid.Resources>
                             <DataGrid.Columns>
                                 <!--The rest of the columns-->
-                                <DataGridTextColumn Header="File" Binding="{Binding FilePath}" Width="590" />
+                                <DataGridTextColumn Header="File" Binding="{Binding FilePath}" Width="510" />
+                                <DataGridCheckBoxColumn Header="Peptide IDs" Binding="{Binding PeptideFile}" Width="90" />
 
                                 <!--Defines the "delete" column-->
                                 <DataGridTemplateColumn>
@@ -396,20 +397,25 @@
                             </StackPanel>
                         </Grid>
 
-                        <CheckBox Name="normalizeCheckbox" Content="Normalize Intensities" Foreground="DarkGray" Grid.Row="4" Style="{StaticResource SquareCheckbox}" 
+                        <CheckBox Name="normalizeCheckbox" Content="Normalize Intensities" Foreground="DarkGray" 
+                                  Grid.Row="4" Style="{StaticResource SquareCheckbox}" 
                                   ToolTip="Corrects systematic intensity errors with median normalization. The main assumption is that most proteins do not change in abundance between samples" />
+                        
+                        <CheckBox Name="pepQValueCheckbox" Content="Use PEP Q Values" Foreground="DarkGray" 
+                                  Grid.Row="5" Style="{StaticResource SquareCheckbox}" 
+                                  ToolTip="Determines how FlashLFQ chooses which peptides to quantify (only applies to MetaMorpheus identifications). Using PEP Q generally gives better results" />         
 
                         <CheckBox Name="sharedPeptideCheckbox" Content="Use shared peptides for protein quantification" Foreground="DarkGray" 
-                                  Grid.Row="5" 
+                                  Grid.Row="6" 
                                   Style="{StaticResource SquareCheckbox}" 
                                   ToolTip="Uses peptide sequences shared between proteins for protein quantification" />
 
                         <CheckBox Name="bayesianCheckbox" Content="Bayesian Protein Fold-Change Analysis" Foreground="DarkGray" 
-                                  Grid.Row="6" Style="{StaticResource SquareCheckbox}" Checked="BayesianCheckbox_Checked" Unchecked="BayesianCheckbox_Checked"
+                                  Grid.Row="7" Style="{StaticResource SquareCheckbox}" Checked="BayesianCheckbox_Checked" Unchecked="BayesianCheckbox_Checked"
                                   ToolTip="This estimates each protein's fold-change relative to the control condition using Bayesian statistics. Also calculates posterior error probability (PEP) and false discovery rate (FDR)"/>
 
                         <StackPanel Name="BayesianSettings1" Orientation="Horizontal" Margin="20,0,0,0" 
-                                    Grid.Row="7" IsEnabled="{Binding IsEnabled, ElementName=bayesianCheckbox}"
+                                    Grid.Row="8" IsEnabled="{Binding IsEnabled, ElementName=bayesianCheckbox}"
                                     ToolTip="The condition to calculate protein fold-changes relative to">
                             <ComboBox Name="ControlConditionComboBox" ItemsSource="{Binding}" MinWidth="80" IsEnabledChanged="BaseConditionComboBox_IsEnabledChanged" />
                             <Label Content="Control Condition" Foreground="DarkGray" />

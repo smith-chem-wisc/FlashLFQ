@@ -47,7 +47,7 @@ namespace Util
             { PsmFileType.PeptideShaker, new string[] { ", " } },
         };
 
-        public static List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles, double qValueThreshold = 0.01)
+        public static List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles, double qValueThreshold = 0.01, bool usePepQValue = false)
         {
             if (_modSequenceToMonoMass == null)
             {
@@ -88,7 +88,7 @@ namespace Util
 
             try
             {
-                fileType = GetFileTypeFromHeader(inputPsms[0]);
+                fileType = GetFileTypeFromHeader(inputPsms[0], usePepQValue);
                 inputPsms.RemoveAt(0);
             }
             catch
@@ -160,6 +160,15 @@ namespace Util
             return flashLfqIdentifications;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="line"></param>
+        /// <param name="silent"></param>
+        /// <param name="rawFileDictionary"></param>
+        /// <param name="fileType"></param>
+        /// <param name="qValueThreshold"> Minimum is 0.01. </param>
+        /// <returns></returns>
         private static Identification GetIdentification(string line, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary, PsmFileType fileType, double qValueThreshold = 0.01)
         {
             var param = line.Split('\t');
@@ -169,8 +178,8 @@ namespace Util
             // only quantify PSMs below 1% FDR with MetaMorpheus/Morpheus results
             if (fileType == PsmFileType.MetaMorpheus)
             {
-                qValue = double.Parse(param[_qValueCol], CultureInfo.InvariantCulture);
-                if(qValue > qValueThreshold)
+                qValue = double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture);
+                if (qValue > qValueThreshold)
                 {
                     return null;
                 }
@@ -179,15 +188,8 @@ namespace Util
             {
                 return null;
             }
-            
 
-            // only quantify PSMs below 1% notch FDR with MetaMorpheus/Morpheus results
-            //if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture) > qValueThreshold)
-            //{
-            //    return null;
-            //}
-
-            // skip decoys with MetaMorpheus/Morpheus results
+            // find and label decoys in MetaMorpheus results
             //TODO: what about decoys from other input types?
             bool decoy = false;
             if ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus) &&
@@ -563,7 +565,11 @@ namespace Util
             return new Identification(spectraFileInfoToUse, baseSequence, modSequence, monoisotopicMass, ms2RetentionTime, chargeState, proteinGroups);
         }
 
-        private static PsmFileType GetFileTypeFromHeader(string header)
+        /// <summary>
+        /// In addition to determining the file type based off of the header, this also sets the column indices for all the fields 
+        /// that will be read when reading in the Identificatoin
+        /// </summary>
+        private static PsmFileType GetFileTypeFromHeader(string header, bool usePepQValue = false)
         {
             PsmFileType type = PsmFileType.Unknown;
 
@@ -590,12 +596,17 @@ namespace Util
                 _protNameCol = Array.IndexOf(split, "Protein Accession".ToLowerInvariant());
                 _decoyCol = Array.IndexOf(split, "Decoy/Contaminant/Target".ToLowerInvariant());
                 _scoreCol = Array.IndexOf(split, "Score".ToLowerInvariant());
-                //_qValueCol = Array.IndexOf(split, "QValue".ToLowerInvariant());
-                //_qValueNotchCol = Array.IndexOf(split, "QValue Notch".ToLowerInvariant());
 
-                // TODO: WARNING - this is a fucked up hack. I'm using pep-q value for both Q value and q value notch
-                _qValueCol = Array.IndexOf(split, "PEP_QValue".ToLowerInvariant());
-                _qValueNotchCol = Array.IndexOf(split, "PEP_QValue".ToLowerInvariant());
+                if(usePepQValue)
+                {
+                    _qValueCol = Array.IndexOf(split, "PEP_QValue".ToLowerInvariant());
+                    _qValueNotchCol = Array.IndexOf(split, "PEP_QValue".ToLowerInvariant());
+                }
+                else
+                {
+                    _qValueCol = Array.IndexOf(split, "QValue".ToLowerInvariant());
+                    _qValueNotchCol = Array.IndexOf(split, "QValue Notch".ToLowerInvariant());
+                }
                 _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant());
                 _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 

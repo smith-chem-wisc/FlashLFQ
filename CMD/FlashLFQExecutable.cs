@@ -194,9 +194,7 @@ namespace CMD
             List<Identification> ids;
             try
             {
-                ids = PsmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos, settings.DonorQValueThreshold).ToList();
-                var test = ids.MaxBy(id => id.QValue);
-                int placeholder = 0;
+                ids = PsmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos, usePepQValue: settings.UsePepQValue).ToList();
             }
             catch (Exception e)
             {
@@ -204,13 +202,12 @@ namespace CMD
                 return;
             }
 
-            // set up IDs
-            List<string> peptidesForPip;
+            // determine which peptides should be quantified and used as donors for MBR
+            List<string> peptidesToQuantify;
             try
             {
-                var peptideIds = PsmReader.ReadPsms(settings.PeptideIdentificationPath, settings.Silent, spectraFileInfos, settings.DonorQValueThreshold)
-                    .Where(id => id.QValue <= settings.DonorQValueThreshold).ToList();
-                peptidesForPip = peptideIds.Select(id => id.ModifiedSequence).ToList();
+                peptidesToQuantify = PsmReader.ReadPsms(settings.PeptideIdentificationPath, settings.Silent, spectraFileInfos, usePepQValue: settings.UsePepQValue)
+                    .Select(id => id.ModifiedSequence).ToList();
             }
             catch (Exception e)
             {
@@ -237,8 +234,8 @@ namespace CMD
                 FlashLfqResults results = null;
                 try
                 {
-                    if (peptidesForPip != null && peptidesForPip.IsNotNullOrEmpty())
-                        engine = FlashLfqSettings.CreateEngineWithSettings(settings, ids, peptidesForPip);
+                    if (peptidesToQuantify != null && peptidesToQuantify.IsNotNullOrEmpty())
+                        engine = FlashLfqSettings.CreateEngineWithSettings(settings, ids, peptidesToQuantify);
                     else
                         engine = FlashLfqSettings.CreateEngineWithSettings(settings, ids);
 

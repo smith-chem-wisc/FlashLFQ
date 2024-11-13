@@ -84,6 +84,7 @@ namespace GUI
             mbrCheckbox.IsChecked = settings.MatchBetweenRuns;
             mbrFDRTextBox.Text = "0.01";
             sharedPeptideCheckbox.IsChecked = settings.UseSharedPeptidesForProteinQuant;
+            pepQValueCheckbox.IsChecked = settings.UsePepQValue;
             bayesianCheckbox.IsChecked = settings.BayesianProteinQuant;
             FoldChangeCutoffManualTextBox.Text = "0.5";
 
@@ -141,6 +142,7 @@ namespace GUI
             settings.Normalize = normalizeCheckbox.IsChecked.Value;
             settings.MatchBetweenRuns = mbrCheckbox.IsChecked.Value;
             settings.UseSharedPeptidesForProteinQuant = sharedPeptideCheckbox.IsChecked.Value;
+            settings.UsePepQValue = pepQValueCheckbox.IsChecked.Value;
             settings.BayesianProteinQuant = bayesianCheckbox.IsChecked.Value;
 
             settings.Integrate = integrateCheckBox.IsChecked.Value;
@@ -516,15 +518,20 @@ namespace GUI
 
             try
             {
-                var allPepFile = idFiles.FirstOrDefault(idFile => idFile.FilePath.Contains("AllPeptides.psmtsv"));
+                var allPepFile = idFiles.FirstOrDefault(idFile => idFile.PeptideFile);
                 if(allPepFile!=null)
                 {
-                    List<Identification> idsForMbr = PsmReader.ReadPsms(allPepFile.FilePath, false, spectraFiles.Select(p => p.SpectraFileInfo).ToList(), settings.DonorQValueThreshold);
-                    peptidesForMbr = idsForMbr.Select(id => id.ModifiedSequence).ToList();
+                    // Read in the peptide file, select only the peptdies that pass the q-value threshold
+                    peptidesForMbr = PsmReader.ReadPsms(allPepFile.FilePath, false,
+                            spectraFiles.Select(p => p.SpectraFileInfo).ToList(), 
+                            usePepQValue: settings.UsePepQValue)
+                        .Select(id => id.ModifiedSequence).ToList();
                 }
                 foreach (var identFile in idFiles.Where(idFile => idFile != allPepFile))
                 {
-                    ids = ids.Concat(PsmReader.ReadPsms(identFile.FilePath, false, spectraFiles.Select(p => p.SpectraFileInfo).ToList(), settings.DonorQValueThreshold)).ToList();
+                    ids = ids.Concat(PsmReader.ReadPsms(identFile.FilePath, false,
+                        spectraFiles.Select(p => p.SpectraFileInfo).ToList(), 
+                        usePepQValue: settings.UsePepQValue)).ToList();
                 }
             }
             catch (Exception e)
