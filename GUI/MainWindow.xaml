@@ -229,7 +229,9 @@
                         <!--Tutorial text-->
                         <TextBlock Foreground="DarkGray" Grid.Row="1" TextWrapping="WrapWithOverflow" >
                             Add your identification (PSM) files here. Accepted file formats are MetaMorpheus .psmtsv, Morpheus .tsv, 
-                            MaxQuant msms.txt, PeptideShaker .tabular, or generic .txt/.tsv
+                            MaxQuant msms.txt, PeptideShaker .tabular, or generic .txt/.tsv. For MetaMorpheus results, we recommend including 
+                            the AllPeptides.psmtsv file as well.
+                          
                         </TextBlock>
 
                         <!--Button to add ID files-->

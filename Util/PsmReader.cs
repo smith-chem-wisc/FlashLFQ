@@ -192,7 +192,7 @@ namespace Util
             // find and label decoys in MetaMorpheus results
             //TODO: what about decoys from other input types?
             bool decoy = false;
-            if ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus) &&
+            if ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus || fileType == PsmFileType.Generic) &&
                 param[_decoyCol].Contains("D"))
             {
                 decoy = true;
@@ -726,6 +726,8 @@ namespace Util
 
                 _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant()); // probably doesn't exist
                 _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
+
+                _decoyCol = Array.IndexOf(split, "Target/Decoy".ToLowerInvariant());
 
                 return PsmFileType.Generic;
             }
