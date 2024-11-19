@@ -90,7 +90,7 @@ namespace Util
         //TODO: paired samples
 
         [Option("pipfdr", HelpText = "double; fdr cutoff for pip")]
-        public double MbrFdrThreshold  { get; set; }
+        public double MbrDetectionQValueThreshold  { get; set; }
 
         [Option("usepepq", Default = false, HelpText = "bool; determines whether PEP Q Value should be used to determine which peptides to quantify")]
         public bool UsePepQValue { get; set; }
@@ -111,7 +111,7 @@ namespace Util
             MatchBetweenRuns = f.MatchBetweenRuns;
             MbrRtWindow = f.MbrRtWindow;
             RequireMsmsIdInCondition = f.RequireMsmsIdInCondition;
-            MbrFdrThreshold = f.MbrDetectionQValueThreshold;
+            MbrDetectionQValueThreshold = f.MbrDetectionQValueThreshold;
             UsePepQValue = false;
 
             BayesianProteinQuant = f.BayesianProteinQuant;
@@ -142,8 +142,8 @@ namespace Util
                 matchBetweenRunsPpmTolerance: 10,
                 maxMbrWindow: settings.MbrRtWindow,
                 donorCriterion: DonorCriterion.Score,
-                donorQValueThreshold: settings.MbrFdrThreshold / 5.0, // The donor q-value threshold is 1/5 of the MBR FDR threshold, as having the two values equal would result in no MBR hits at the desired MBR FDR threshold
-                matchBetweenRunsFdrThreshold: settings.MbrFdrThreshold,
+                donorQValueThreshold: settings.MbrDetectionQValueThreshold / 5.0, // The donor q-value threshold is 1/5 of the MBR FDR threshold, as having the two values equal would result in no MBR hits at the desired MBR FDR threshold
+                matchBetweenRunsFdrThreshold: settings.MbrDetectionQValueThreshold,
                 requireMsmsIdInCondition: settings.RequireMsmsIdInCondition,
 
                 bayesianProteinQuant: settings.BayesianProteinQuant,

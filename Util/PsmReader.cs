@@ -122,6 +122,8 @@ namespace Util
                             if (!silent)
                             {
                                 Console.WriteLine("Problem reading line in the identification file" + "; " + e.Message);
+                                Console.WriteLine("Decoy column set to: " + _decoyCol);
+
                             }
                         }
                     }
@@ -143,6 +145,7 @@ namespace Util
                             if (!silent)
                             {
                                 Console.WriteLine("Problem reading line in the identification file" + "; " + e.Message);
+                                Console.WriteLine("Decoy column set to: " + _decoyCol);
                             }
                         }
                     }
@@ -192,8 +195,9 @@ namespace Util
             // find and label decoys in MetaMorpheus results
             //TODO: what about decoys from other input types?
             bool decoy = false;
-            if ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus || fileType == PsmFileType.Generic) &&
-                param[_decoyCol].Contains("D"))
+            if ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus || fileType == PsmFileType.Generic) 
+                && _decoyCol >= 0
+                && param[_decoyCol].Contains("D"))
             {
                 decoy = true;
             }
@@ -399,7 +403,7 @@ namespace Util
             }
 
             double score;
-            if(_scoreCol > 0)
+            if(_scoreCol > 0 && fileType == PsmFileType.MetaMorpheus)
             {
                 double.TryParse(param[_scoreCol], out score);
             }

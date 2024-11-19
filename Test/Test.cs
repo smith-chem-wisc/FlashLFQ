@@ -372,7 +372,7 @@ namespace Test
             File.Delete(proteinsPath);
         }
 
-        [Test]
+        [Test]    
         public static void TestParallelProcessingMetaMorpheusOutputWithExtensionsAndWindowsPath()
         {
             string search = "Parallel";
@@ -553,17 +553,19 @@ namespace Test
                     || name == "OutputPath"
                     || name == "ReadOnlyFileSystem"
                     || name == "PrintThermoLicenceViaCommandLine"
-                    || name == "AcceptThermoLicenceViaCommandLine")
+                    || name == "AcceptThermoLicenceViaCommandLine"
+                    || name == "PeptideIdentificationPath"
+                    || name == "UsePepQValue")
                 {
                     continue;
                 }
 
-                var engineProperty = engineProperties.First(p => p.Name == name);
+                var engineProperty = engineProperties.FirstOrDefault(p => p.Name == name);
 
                 var settingsValue = property.GetValue(settings);
                 var engineValue = engineProperty.GetValue(e);
 
-                Assert.AreEqual(settingsValue, engineValue);
+                Assert.That(settingsValue, Is.EqualTo(engineValue));
             }
         }
     }

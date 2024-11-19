@@ -132,7 +132,7 @@ namespace GUI
             // MBR FDR
             if (double.TryParse(mbrFDRTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out double mbrFdr))
             {
-                settings.MbrFdrThreshold = mbrFdr;
+                settings.MbrDetectionQValueThreshold = mbrFdr;
             }
             else
             {
