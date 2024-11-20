@@ -2,9 +2,11 @@
 ### Download from GitHub:
 [![](https://img.shields.io/github/v/release/smith-chem-wisc/flashlfq?style=flat-square)](https://github.com/smith-chem-wisc/FlashLFQ/releases/latest)
 
-### Install with bioconda
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/flashlfq/README.html)
-[![](https://anaconda.org/bioconda/deeptools/badges/downloads.svg)](http://bioconda.github.io/recipes/flashlfq/README.html)
+### Install with anaconda/bioconda
+[![install with bioconda](https://anaconda.org/bioconda/flashlfq/badges/version.svg)](http://bioconda.github.io/recipes/flashlfq/README.html)
+[![](https://anaconda.org/bioconda/flashlfq/badges/latest_release_date.svg)]
+[![](https://anaconda.org/bioconda/flashlfq/badges/platforms.svg)
+[![](https://anaconda.org/bioconda/flashlfq/badges/downloads.svg)](http://bioconda.github.io/recipes/flashlfq/README.html)
 
 ### Docker Image
 [![](https://img.shields.io/docker/v/smithchemwisc/flashlfq/latest?style=flat-square)](https://hub.docker.com/r/smithchemwisc/flashlfq/tags?page=1&ordering=last_updated)
