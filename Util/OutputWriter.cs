@@ -24,6 +24,7 @@ namespace Util
             
             bool bayesianResults = results.ProteinGroups.Any(p => p.Value.ConditionToQuantificationResults.Any());
 
+            //results.WritePepResults(Path.Combine(outputPath, "PEPAnalysis.txt"));
             results.WriteResults(
                 Path.Combine(outputPath, "QuantifiedPeaks.tsv"),
                 Path.Combine(outputPath, "QuantifiedPeptides.tsv"),

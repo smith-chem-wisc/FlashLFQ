@@ -1,6 +1,7 @@
 ﻿using FlashLFQ;
 using GUI.DataGridObjects;
 using IO.ThermoRawFileReader;
+using MzLibUtil;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -66,6 +67,7 @@ namespace GUI
 
             BayesianSettings1.Visibility = Visibility.Hidden;
             BayesianSettings2.Visibility = Visibility.Hidden;
+            MbrFdrPanel.Visibility = Visibility.Hidden;
 
             var _writer = new TextBoxWriter(notificationsTextBox);
             Console.SetOut(_writer);
@@ -80,7 +82,9 @@ namespace GUI
             ppmToleranceTextBox.Text = settings.PpmTolerance.ToString("F1");
             normalizeCheckbox.IsChecked = settings.Normalize;
             mbrCheckbox.IsChecked = settings.MatchBetweenRuns;
+            mbrFDRTextBox.Text = "0.01";
             sharedPeptideCheckbox.IsChecked = settings.UseSharedPeptidesForProteinQuant;
+            pepQValueCheckbox.IsChecked = settings.UsePepQValue;
             bayesianCheckbox.IsChecked = settings.BayesianProteinQuant;
             FoldChangeCutoffManualTextBox.Text = "0.5";
 
@@ -125,9 +129,20 @@ namespace GUI
                 throw new Exception("The PPM tolerance must be a decimal number");
             }
 
+            // MBR FDR
+            if (double.TryParse(mbrFDRTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out double mbrFdr))
+            {
+                settings.MbrDetectionQValueThreshold = mbrFdr;
+            }
+            else
+            {
+                throw new Exception("The PIP FDR must be a decimal number");
+            }
+
             settings.Normalize = normalizeCheckbox.IsChecked.Value;
             settings.MatchBetweenRuns = mbrCheckbox.IsChecked.Value;
             settings.UseSharedPeptidesForProteinQuant = sharedPeptideCheckbox.IsChecked.Value;
+            settings.UsePepQValue = pepQValueCheckbox.IsChecked.Value;
             settings.BayesianProteinQuant = bayesianCheckbox.IsChecked.Value;
 
             settings.Integrate = integrateCheckBox.IsChecked.Value;
@@ -428,6 +443,7 @@ namespace GUI
                 ppmToleranceTextBox.IsEnabled = false;
                 normalizeCheckbox.IsEnabled = false;
                 mbrCheckbox.IsEnabled = false;
+                MbrFdrPanel.IsEnabled = false;
                 sharedPeptideCheckbox.IsEnabled = false;
                 bayesianCheckbox.IsEnabled = false;
                 BayesianSettings1.IsEnabled = false;
@@ -498,12 +514,24 @@ namespace GUI
         {
             // read IDs
             var ids = new List<Identification>();
+            List<string> peptidesToQuantify = null;
 
             try
             {
-                foreach (var identFile in idFiles)
+                var allPepFile = idFiles.FirstOrDefault(idFile => idFile.PeptideFile);
+                if(allPepFile!=null)
                 {
-                    ids = ids.Concat(PsmReader.ReadPsms(identFile.FilePath, false, spectraFiles.Select(p => p.SpectraFileInfo).ToList())).ToList();
+                    // Read in the peptide file, select only the peptdies that pass the q-value threshold
+                    peptidesToQuantify = PsmReader.ReadPsms(allPepFile.FilePath, false,
+                            spectraFiles.Select(p => p.SpectraFileInfo).ToList(), 
+                            usePepQValue: settings.UsePepQValue)
+                        .Select(id => id.ModifiedSequence).ToList();
+                }
+                foreach (var identFile in idFiles.Where(idFile => idFile != allPepFile))
+                {
+                    ids = ids.Concat(PsmReader.ReadPsms(identFile.FilePath, false,
+                        spectraFiles.Select(p => p.SpectraFileInfo).ToList(), 
+                        usePepQValue: settings.UsePepQValue)).ToList();
                 }
             }
             catch (Exception e)
@@ -557,7 +585,7 @@ namespace GUI
             // run FlashLFQ engine
             try
             {
-                flashLfqEngine = FlashLfqSettings.CreateEngineWithSettings(settings, ids);
+                flashLfqEngine = FlashLfqSettings.CreateEngineWithSettings(settings, ids, peptidesToQuantify);
 
                 results = flashLfqEngine.Run();
             }
@@ -840,6 +868,18 @@ namespace GUI
             {
                 BayesianSettings1.Visibility = Visibility.Hidden;
                 BayesianSettings2.Visibility = Visibility.Hidden;
+            }
+        }
+
+        private void MbrCheckbox_Checked(object sender, RoutedEventArgs e)
+        {
+            if (mbrCheckbox.IsChecked.Value)
+            {
+                MbrFdrPanel.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                MbrFdrPanel.Visibility = Visibility.Hidden;
             }
         }
     }

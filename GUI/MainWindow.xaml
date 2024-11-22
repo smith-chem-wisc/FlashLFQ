@@ -229,7 +229,9 @@
                         <!--Tutorial text-->
                         <TextBlock Foreground="DarkGray" Grid.Row="1" TextWrapping="WrapWithOverflow" >
                             Add your identification (PSM) files here. Accepted file formats are MetaMorpheus .psmtsv, Morpheus .tsv, 
-                            MaxQuant msms.txt, PeptideShaker .tabular, or generic .txt/.tsv
+                            MaxQuant msms.txt, PeptideShaker .tabular, or generic .txt/.tsv. For MetaMorpheus results, we recommend including 
+                            the AllPeptides.psmtsv file as well.
+                          
                         </TextBlock>
 
                         <!--Button to add ID files-->
@@ -254,7 +256,8 @@
                             </DataGrid.Resources>
                             <DataGrid.Columns>
                                 <!--The rest of the columns-->
-                                <DataGridTextColumn Header="File" Binding="{Binding FilePath}" Width="590" />
+                                <DataGridTextColumn Header="File" Binding="{Binding FilePath}" Width="510" />
+                                <DataGridCheckBoxColumn Header="Peptide IDs" Binding="{Binding PeptideFile}" Width="90" />
 
                                 <!--Defines the "delete" column-->
                                 <DataGridTemplateColumn>
@@ -354,6 +357,7 @@
                             <RowDefinition Height="28" />
                             <RowDefinition Height="28" />
                             <RowDefinition Height="28" />
+                            <RowDefinition Height="28" />
                             <RowDefinition Height="29" />
                             <RowDefinition Height="1*" />
                         </Grid.RowDefinitions>
@@ -376,34 +380,59 @@
                             <Label Content="PPM Tolerance" Foreground="DarkGray" />
                         </StackPanel>
 
-                        <CheckBox Name="normalizeCheckbox" Content="Normalize Intensities" Foreground="DarkGray" Grid.Row="3" Style="{StaticResource SquareCheckbox}" 
+                        <Grid Grid.Row= "3">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <CheckBox Name="mbrCheckbox" Content="Peptide-identity-propagation (Match-betweeen-runs)" Foreground="DarkGray" 
+                                      Grid.Row="3" Grid.Column= "0" Style="{StaticResource SquareCheckbox}" Checked="MbrCheckbox_Checked" Unchecked="MbrCheckbox_Checked" 
+                                      Height="21" 
+                                      ToolTip="Maps MS/MS identifications from one run onto other runs in which they were not identified, using retention time and isotopic envelope similarity"/>
+
+                            <StackPanel Name="MbrFdrPanel"  Orientation="Horizontal" 
+                                        Grid.Row="3" Grid.Column= "1" Margin="30,0,0,0" IsEnabled="{Binding IsEnabled, ElementName=mbrCheckbox}"
+                                        ToolTip="The false discovery rate threshold for reported PIP events. Default is 0.01.">
+                                <TextBox Name="mbrFDRTextBox" Width="50" Height="21" Background="Transparent" Foreground="DarkGray" 
+                                         BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
+                                <Label Content="PIP FDR Cutoff" Foreground="DarkGray" />
+                            </StackPanel>
+                        </Grid>
+
+                        <CheckBox Name="normalizeCheckbox" Content="Normalize Intensities" Foreground="DarkGray" 
+                                  Grid.Row="4" Style="{StaticResource SquareCheckbox}" 
                                   ToolTip="Corrects systematic intensity errors with median normalization. The main assumption is that most proteins do not change in abundance between samples" />
+                        
+                        <CheckBox Name="pepQValueCheckbox" Content="Use PEP Q Values" Foreground="DarkGray" 
+                                  Grid.Row="5" Style="{StaticResource SquareCheckbox}" 
+                                  ToolTip="Determines how FlashLFQ chooses which peptides to quantify (only applies to MetaMorpheus identifications). Using PEP Q generally yields more peptide IDs" />         
 
-                        <CheckBox Name="mbrCheckbox" Content="Match Between Runs" Foreground="DarkGray" Grid.Row="4" Style="{StaticResource SquareCheckbox}"
-                                  ToolTip="Maps MS/MS identifications from one run onto other runs in which they were not identified, using retention time and isotopic envelope similarity"/>
-
-                        <CheckBox Name="sharedPeptideCheckbox" Content="Use shared peptides for protein quantification" Foreground="DarkGray" Grid.Row="5" 
+                        <CheckBox Name="sharedPeptideCheckbox" Content="Use shared peptides for protein quantification" Foreground="DarkGray" 
+                                  Grid.Row="6" 
                                   Style="{StaticResource SquareCheckbox}" 
                                   ToolTip="Uses peptide sequences shared between proteins for protein quantification" />
 
                         <CheckBox Name="bayesianCheckbox" Content="Bayesian Protein Fold-Change Analysis" Foreground="DarkGray" 
-                                  Grid.Row="6" Style="{StaticResource SquareCheckbox}" Checked="BayesianCheckbox_Checked" Unchecked="BayesianCheckbox_Checked"
+                                  Grid.Row="7" Style="{StaticResource SquareCheckbox}" Checked="BayesianCheckbox_Checked" Unchecked="BayesianCheckbox_Checked"
                                   ToolTip="This estimates each protein's fold-change relative to the control condition using Bayesian statistics. Also calculates posterior error probability (PEP) and false discovery rate (FDR)"/>
 
-                        <StackPanel Name="BayesianSettings1" Orientation="Horizontal" Margin="20,0,0,0" Grid.Row="7" IsEnabled="{Binding IsEnabled, ElementName=bayesianCheckbox}"
+                        <StackPanel Name="BayesianSettings1" Orientation="Horizontal" Margin="20,0,0,0" 
+                                    Grid.Row="8" IsEnabled="{Binding IsEnabled, ElementName=bayesianCheckbox}"
                                     ToolTip="The condition to calculate protein fold-changes relative to">
                             <ComboBox Name="ControlConditionComboBox" ItemsSource="{Binding}" MinWidth="80" IsEnabledChanged="BaseConditionComboBox_IsEnabledChanged" />
                             <Label Content="Control Condition" Foreground="DarkGray" />
                         </StackPanel>
 
-                        <StackPanel Name="BayesianSettings2" Orientation="Horizontal" Grid.Row="8" Margin="20,0,0,0" IsEnabled="{Binding IsEnabled, ElementName=bayesianCheckbox}"
+                        <StackPanel Name="BayesianSettings2" Orientation="Horizontal" 
+                                    Grid.Row="9" Margin="20,0,0,0" IsEnabled="{Binding IsEnabled, ElementName=bayesianCheckbox}"
                                     ToolTip="The protein log2-transformed fold-change that is considered to be not important, or background">
                             <Label Content="Log2 Fold-change cutoff:" Foreground="DarkGray" />
                             <TextBox Name="FoldChangeCutoffManualTextBox" Width="40" Height="21" Foreground="DarkGray" Background="Transparent" 
                                          BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
                         </StackPanel>
 
-                        <Expander Header="Advanced Settings" Foreground="DarkGray" Grid.Row="9" Margin="0,20,0,0" >
+                        <Expander Header="Advanced Settings" Foreground="DarkGray" Grid.Row="10" Margin="0,20,0,0" >
                             <Grid Margin="20,0,0,0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />

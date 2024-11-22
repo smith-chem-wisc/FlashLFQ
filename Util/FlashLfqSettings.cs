@@ -13,6 +13,9 @@ namespace Util
         [Option("idt", Required = true, HelpText = "string; identification file path")]
         public string PsmIdentificationPath { get; set; }
 
+        [Option("pep", Required = false, HelpText = "string; all peptide file path")]
+        public string PeptideIdentificationPath { get; set; }
+
         [Option("rep", Required = true, HelpText = "string; directory containing spectral data files")]
         public string SpectraFileRepository { get; set; }
 
@@ -54,10 +57,10 @@ namespace Util
         public int MaxThreads { get; set; }
 
         // MBR settings
-        [Option("mbr", Default = false, HelpText = "bool; match between runs")]
+        [Option("mbr", Default = true, HelpText = "bool; match between runs")]
         public bool MatchBetweenRuns { get; set; }
 
-        [Option("mrt", Default = 2.5, HelpText = "double; maximum MBR window in minutes")]
+        [Option("mrt", Default = 1.5, HelpText = "double; maximum MBR window in minutes")]
         public double MbrRtWindow { get; set; }
 
         [Option("rmc", Default = false, HelpText = "bool; require MS/MS ID in condition")]
@@ -86,6 +89,12 @@ namespace Util
         public int? RandomSeed { get; set; }
         //TODO: paired samples
 
+        [Option("pipfdr", HelpText = "double; fdr cutoff for pip")]
+        public double MbrDetectionQValueThreshold  { get; set; }
+
+        [Option("usepepq", Default = false, HelpText = "bool; determines whether PEP Q Value should be used to determine which peptides to quantify")]
+        public bool UsePepQValue { get; set; }
+
         public FlashLfqSettings()
         {
             FlashLfqEngine f = new FlashLfqEngine(new List<Identification>());
@@ -102,6 +111,8 @@ namespace Util
             MatchBetweenRuns = f.MatchBetweenRuns;
             MbrRtWindow = f.MbrRtWindow;
             RequireMsmsIdInCondition = f.RequireMsmsIdInCondition;
+            MbrDetectionQValueThreshold = f.MbrDetectionQValueThreshold;
+            UsePepQValue = false;
 
             BayesianProteinQuant = f.BayesianProteinQuant;
             ProteinQuantBaseCondition = f.ProteinQuantBaseCondition;
@@ -113,7 +124,7 @@ namespace Util
             RandomSeed = bayesianSettings.RandomSeed;
         }
 
-        public static FlashLfqEngine CreateEngineWithSettings(FlashLfqSettings settings, List<Identification> ids)
+        public static FlashLfqEngine CreateEngineWithSettings(FlashLfqSettings settings, List<Identification> ids, List<string> peptidesForMbr = null)
         {
             return new FlashLfqEngine(
                 allIdentifications: ids,
@@ -128,8 +139,11 @@ namespace Util
                 maxThreads: settings.MaxThreads,
 
                 matchBetweenRuns: settings.MatchBetweenRuns,
-                matchBetweenRunsPpmTolerance: settings.PpmTolerance,
+                matchBetweenRunsPpmTolerance: 10,
                 maxMbrWindow: settings.MbrRtWindow,
+                donorCriterion: DonorCriterion.Score,
+                donorQValueThreshold: settings.MbrDetectionQValueThreshold / 5.0, // The donor q-value threshold is 1/5 of the MBR FDR threshold, as having the two values equal would result in no MBR hits at the desired MBR FDR threshold
+                matchBetweenRunsFdrThreshold: settings.MbrDetectionQValueThreshold,
                 requireMsmsIdInCondition: settings.RequireMsmsIdInCondition,
 
                 bayesianProteinQuant: settings.BayesianProteinQuant,
@@ -138,7 +152,8 @@ namespace Util
                 mcmcSteps: settings.McmcSteps,
                 mcmcBurninSteps: settings.McmcBurninSteps,
                 useSharedPeptidesForProteinQuant: settings.UseSharedPeptidesForProteinQuant,
-                randomSeed: settings.RandomSeed
+                randomSeed: settings.RandomSeed,
+                peptideSequencesToQuantify: peptidesForMbr
                 );
         }
 

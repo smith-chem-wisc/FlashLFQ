@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using CommandLine.Text;
+using Easy.Common.Extensions;
 using FlashLFQ;
 using IO.ThermoRawFileReader;
 using MzLibUtil;
@@ -23,6 +24,8 @@ namespace CMD
               .WithParsed<FlashLfqSettings>(options => Run(options))
               .WithNotParsed(errs => DisplayHelp(parserResult, errs));
         }
+
+        public static FlashLfqResults Results;
 
         static void DisplayHelp<T>(ParserResult<T> result, IEnumerable<Error> errs)
         {
@@ -191,11 +194,24 @@ namespace CMD
             List<Identification> ids;
             try
             {
-                ids = PsmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos);
+                ids = PsmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos, usePepQValue: settings.UsePepQValue).ToList();
             }
             catch (Exception e)
             {
                 Console.WriteLine("Problem reading PSMs: " + e.Message);
+                return;
+            }
+
+            // determine which peptides should be quantified and used as donors for MBR
+            List<string> peptidesToQuantify;
+            try
+            {
+                peptidesToQuantify = PsmReader.ReadPsms(settings.PeptideIdentificationPath, settings.Silent, spectraFileInfos, usePepQValue: settings.UsePepQValue)
+                    .Select(id => id.ModifiedSequence).ToList();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Problem reading Peptidess: " + e.Message);
                 return;
             }
 
@@ -218,7 +234,10 @@ namespace CMD
                 FlashLfqResults results = null;
                 try
                 {
-                    engine = FlashLfqSettings.CreateEngineWithSettings(settings, ids);
+                    if (peptidesToQuantify != null && peptidesToQuantify.IsNotNullOrEmpty())
+                        engine = FlashLfqSettings.CreateEngineWithSettings(settings, ids, peptidesToQuantify);
+                    else
+                        engine = FlashLfqSettings.CreateEngineWithSettings(settings, ids);
 
                     // run
                     results = engine.Run();
@@ -243,6 +262,7 @@ namespace CMD
                 // output
                 if (results != null)
                 {
+                    Results = results;
                     try
                     {
                         OutputWriter.WriteOutput(settings.PsmIdentificationPath, results, settings.Silent, settings.OutputPath);

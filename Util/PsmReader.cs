@@ -23,6 +23,7 @@ namespace Util
         private static int _chargeStCol;
         private static int _protNameCol;
         private static int _decoyCol;
+        private static int _scoreCol;
         private static int _qValueCol;
         private static int _qValueNotchCol;
 
@@ -46,7 +47,7 @@ namespace Util
             { PsmFileType.PeptideShaker, new string[] { ", " } },
         };
 
-        public static List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles)
+        public static List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles, double qValueThreshold = 0.01, bool usePepQValue = false)
         {
             if (_modSequenceToMonoMass == null)
             {
@@ -87,7 +88,7 @@ namespace Util
 
             try
             {
-                fileType = GetFileTypeFromHeader(inputPsms[0]);
+                fileType = GetFileTypeFromHeader(inputPsms[0], usePepQValue);
                 inputPsms.RemoveAt(0);
             }
             catch
@@ -121,6 +122,8 @@ namespace Util
                             if (!silent)
                             {
                                 Console.WriteLine("Problem reading line in the identification file" + "; " + e.Message);
+                                Console.WriteLine("Decoy column set to: " + _decoyCol);
+
                             }
                         }
                     }
@@ -131,7 +134,7 @@ namespace Util
                     {
                         try
                         {
-                            Identification id = GetIdentification(psm, silent, rawFileDictionary, fileType);
+                            Identification id = GetIdentification(psm, silent, rawFileDictionary, fileType, qValueThreshold);
                             if (id != null)
                             {
                                 myFileIndentifications.Add(id);
@@ -142,6 +145,7 @@ namespace Util
                             if (!silent)
                             {
                                 Console.WriteLine("Problem reading line in the identification file" + "; " + e.Message);
+                                Console.WriteLine("Decoy column set to: " + _decoyCol);
                             }
                         }
                     }
@@ -159,32 +163,43 @@ namespace Util
             return flashLfqIdentifications;
         }
 
-        private static Identification GetIdentification(string line, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary, PsmFileType fileType)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="line"></param>
+        /// <param name="silent"></param>
+        /// <param name="rawFileDictionary"></param>
+        /// <param name="fileType"></param>
+        /// <param name="qValueThreshold"> Minimum is 0.01. </param>
+        /// <returns></returns>
+        private static Identification GetIdentification(string line, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary, PsmFileType fileType, double qValueThreshold = 0.01)
         {
             var param = line.Split('\t');
+            double qValue= 0;
+            qValueThreshold = Math.Max(qValueThreshold, 0.01);
 
             // only quantify PSMs below 1% FDR with MetaMorpheus/Morpheus results
-            if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueCol], CultureInfo.InvariantCulture) > 0.01)
+            if (fileType == PsmFileType.MetaMorpheus)
             {
-                return null;
+                qValue = double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture);
+                if (qValue > qValueThreshold)
+                {
+                    return null;
+                }
             }
             else if (fileType == PsmFileType.Morpheus && double.Parse(param[_qValueCol], CultureInfo.InvariantCulture) > 1.00)
             {
                 return null;
             }
 
-            // only quantify PSMs below 1% notch FDR with MetaMorpheus/Morpheus results
-            if (fileType == PsmFileType.MetaMorpheus && double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture) > 0.01)
-            {
-                return null;
-            }
-
-            // skip decoys with MetaMorpheus/Morpheus results
+            // find and label decoys in MetaMorpheus results
             //TODO: what about decoys from other input types?
-            if ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus) &&
-                param[_decoyCol].Contains("D"))
+            bool decoy = false;
+            if ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus || fileType == PsmFileType.Generic) 
+                && _decoyCol >= 0
+                && param[_decoyCol].Contains("D"))
             {
-                return null;
+                decoy = true;
             }
 
             // spectrum file name
@@ -387,8 +402,20 @@ namespace Util
                 return null;
             }
 
+            double score;
+            if(_scoreCol > 0 && fileType == PsmFileType.MetaMorpheus)
+            {
+                double.TryParse(param[_scoreCol], out score);
+            }
+            else
+            {
+                score = 0;
+            }
+
             // construct id
-            return new Identification(spectraFileInfoToUse, baseSequence, modSequence, monoisotopicMass, ms2RetentionTime, chargeState, proteinGroups);
+            return new Identification(spectraFileInfoToUse, baseSequence, modSequence, 
+                monoisotopicMass, ms2RetentionTime, chargeState, proteinGroups, 
+                decoy: decoy, qValue: qValue, psmScore: score);
         }
 
         private static Identification GetPercolatorIdentification(string line, List<ScanHeaderInfo> scanHeaderInfo, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary)
@@ -542,7 +569,11 @@ namespace Util
             return new Identification(spectraFileInfoToUse, baseSequence, modSequence, monoisotopicMass, ms2RetentionTime, chargeState, proteinGroups);
         }
 
-        private static PsmFileType GetFileTypeFromHeader(string header)
+        /// <summary>
+        /// In addition to determining the file type based off of the header, this also sets the column indices for all the fields 
+        /// that will be read when reading in the Identificatoin
+        /// </summary>
+        private static PsmFileType GetFileTypeFromHeader(string header, bool usePepQValue = false)
         {
             PsmFileType type = PsmFileType.Unknown;
 
@@ -568,8 +599,18 @@ namespace Util
                 _chargeStCol = Array.IndexOf(split, "Precursor Charge".ToLowerInvariant());
                 _protNameCol = Array.IndexOf(split, "Protein Accession".ToLowerInvariant());
                 _decoyCol = Array.IndexOf(split, "Decoy/Contaminant/Target".ToLowerInvariant());
-                _qValueCol = Array.IndexOf(split, "QValue".ToLowerInvariant());
-                _qValueNotchCol = Array.IndexOf(split, "QValue Notch".ToLowerInvariant());
+                _scoreCol = Array.IndexOf(split, "Score".ToLowerInvariant());
+
+                if(usePepQValue)
+                {
+                    _qValueCol = Array.IndexOf(split, "PEP_QValue".ToLowerInvariant());
+                    _qValueNotchCol = Array.IndexOf(split, "PEP_QValue".ToLowerInvariant());
+                }
+                else
+                {
+                    _qValueCol = Array.IndexOf(split, "QValue".ToLowerInvariant());
+                    _qValueNotchCol = Array.IndexOf(split, "QValue Notch".ToLowerInvariant());
+                }
                 _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant());
                 _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 
@@ -689,6 +730,8 @@ namespace Util
 
                 _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant()); // probably doesn't exist
                 _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
+
+                _decoyCol = Array.IndexOf(split, "Target/Decoy".ToLowerInvariant());
 
                 return PsmFileType.Generic;
             }
