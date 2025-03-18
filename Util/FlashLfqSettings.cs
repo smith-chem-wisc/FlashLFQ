@@ -95,6 +95,9 @@ namespace Util
         [Option("usepepq", Default = false, HelpText = "bool; determines whether PEP Q Value should be used to determine which peptides to quantify")]
         public bool UsePepQValue { get; set; }
 
+        [Option("isoTrack", Default = false, HelpText = "bool; determines whether IsoTracker should be used to aid in the quantification of isobaric peptides")]
+        public bool IsoTracker { get; set; }
+
         public FlashLfqSettings()
         {
             FlashLfqEngine f = new FlashLfqEngine(new List<Identification>());
@@ -120,6 +123,7 @@ namespace Util
             McmcSteps = f.McmcSteps;
             McmcBurninSteps = f.McmcBurninSteps;
             UseSharedPeptidesForProteinQuant = f.UseSharedPeptidesForProteinQuant;
+            //IsoTracker = f.IsoTracker;
 
             RandomSeed = bayesianSettings.RandomSeed;
         }
@@ -153,7 +157,9 @@ namespace Util
                 mcmcBurninSteps: settings.McmcBurninSteps,
                 useSharedPeptidesForProteinQuant: settings.UseSharedPeptidesForProteinQuant,
                 randomSeed: settings.RandomSeed,
+                //isoTracker: settings.IsoTracker,
                 peptideSequencesToQuantify: peptidesForMbr
+                
                 );
         }
 
