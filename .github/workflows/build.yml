@@ -17,7 +17,7 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Restore dependencies
-      run: dotnet restore FlashLFQ.sln -verbosity quiet
+      run: dotnet restore ./FlashLFQ.sln
     - name: Build (CMD)
       run: dotnet publish /p:Configuration=Release ./CMD/CMD.csproj  -f net8.0
     - uses: actions/checkout@v4
