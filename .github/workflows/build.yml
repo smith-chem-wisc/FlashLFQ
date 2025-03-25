@@ -2,9 +2,9 @@ name: Build
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ master ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ master ]
 
 jobs:
   build:
@@ -14,6 +14,12 @@ jobs:
         DOCKER_USER: ${{ vars.DOCKER_USERNAME }}
         DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
     steps:
+    - name: Test
+      run: |
+        echo ${{ secrets.DOCKER_TOKEN }}
+        echo ${{ vars.DOCKER_USERNAME }}
+        echo $DOCKER_TOKEN
+        echo $DOCKER_USER
     - name: Checkout
       uses: actions/checkout@v4
       env:
@@ -30,12 +36,6 @@ jobs:
       run: dotnet restore ./FlashLFQ.sln
     - name: Build (CMD)
       run: dotnet publish /p:Configuration=Release ./CMD/CMD.csproj  -f net8.0
-    - name: Test
-      run: |
-        echo ${{ secrets.DOCKER_TOKEN }}
-        echo ${{ vars.DOCKER_USERNAME }}
-        echo $DOCKER_TOKEN
-        echo $DOCKER_USER
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       env:
