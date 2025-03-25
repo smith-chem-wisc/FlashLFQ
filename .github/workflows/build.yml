@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
     - uses: actions/checkout@v2
@@ -20,8 +20,6 @@ jobs:
       run: nuget restore FlashLFQ.sln -verbosity quiet
     - name: Build (CMD)
       run: dotnet publish /p:Configuration=Release ./CMD/CMD.csproj  -f net8.0
-    - name: Build (GUI)
-      run: dotnet publish /p:Configuration=Release ./GUI/GUI.csproj  -f net8.0-windows
     - uses: actions/checkout@v4
     - name: Build the Docker image
       run: docker build --tag smithchemwisc/flashlfq:dev .
