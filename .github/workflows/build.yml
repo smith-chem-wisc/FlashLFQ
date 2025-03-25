@@ -10,9 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
-      DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
+    environment: docker-build
     steps:
     - name: Checkout
       uses: actions/checkout@v4
