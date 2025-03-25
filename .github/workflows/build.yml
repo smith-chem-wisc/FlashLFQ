@@ -22,7 +22,10 @@ jobs:
       run: dotnet publish /p:Configuration=Release ./CMD/CMD.csproj  -f net8.0
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build --tag smithchemwisc/flashlfq:dev .
+      run: |
+        cd /home/runner/work/FlashLFQ/FlashLFQ
+        pwd
+        docker build --tag smithchemwisc/flashlfq:dev .
     - name: Upload the docker image
       run: |
         docker login docker.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
