@@ -12,6 +12,7 @@
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
     <ApplicationIcon>FlashLFQ_Icon.ico</ApplicationIcon>
     <Platforms>AnyCPU</Platforms>
+	<EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
