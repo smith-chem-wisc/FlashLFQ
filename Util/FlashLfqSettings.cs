@@ -87,13 +87,15 @@ namespace Util
 
         [Option("rns", HelpText = "int; random seed for the Bayesian protein fold-change analysis")]
         public int? RandomSeed { get; set; }
-        //TODO: paired samples
 
         [Option("pipfdr", HelpText = "double; fdr cutoff for pip")]
-        public double MbrDetectionQValueThreshold  { get; set; }
+        public double MbrDetectionQValueThreshold { get; set; }
 
         [Option("usepepq", Default = false, HelpText = "bool; determines whether PEP Q Value should be used to determine which peptides to quantify")]
         public bool UsePepQValue { get; set; }
+
+        //TODO: paired samples
+
 
         public FlashLfqSettings()
         {
