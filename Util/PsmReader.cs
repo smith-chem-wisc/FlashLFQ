@@ -178,29 +178,46 @@ namespace Util
             double qValue= 0;
             qValueThreshold = Math.Max(qValueThreshold, 0.01);
 
-            // only quantify PSMs below 1% FDR with MetaMorpheus/Morpheus results
-            if (fileType == PsmFileType.MetaMorpheus)
+            // only quantify PSMs below the qValueThreshold with MetaMorpheus/Morpheus/Generic results
+            switch (fileType)
             {
-                qValue = double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture);
-                if (qValue > qValueThreshold)
-                {
-                    return null;
-                }
+                case (PsmFileType.MetaMorpheus):
+                    qValue = double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture);
+                    if (qValue > qValueThreshold)
+                        return null;
+                    break;
+                case (PsmFileType.Morpheus): // This is legacy code, I have no idea how Morpheus files work or why Q values would be greater than 1
+                    if (double.Parse(param[_qValueCol], CultureInfo.InvariantCulture) > 1.00)
+                        return null;
+                    break;
+                default:
+                    if (_qValueCol < 0)
+                        break;
+                    qValue = double.Parse(param[_qValueCol], CultureInfo.InvariantCulture);
+                    if (qValue > qValueThreshold)
+                        return null;
+                    break;
             }
-            else if (fileType == PsmFileType.Morpheus && double.Parse(param[_qValueCol], CultureInfo.InvariantCulture) > 1.00)
-            {
-                return null;
-            }
+
+            
+            //if (fileType == PsmFileType.MetaMorpheus)
+            //{
+            //    qValue = double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture);
+            //    if (qValue > qValueThreshold)
+            //    {
+            //        return null;
+            //    }
+            //}
+            //else if (fileType == PsmFileType.Morpheus && double.Parse(param[_qValueCol], CultureInfo.InvariantCulture) > 1.00)
+            //{
+            //    return null;
+            //}
 
             // find and label decoys in MetaMorpheus results
             //TODO: what about decoys from other input types?
-            bool decoy = false;
-            if ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus || fileType == PsmFileType.Generic) 
+            bool decoy = ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus || fileType == PsmFileType.Generic)
                 && _decoyCol >= 0
-                && param[_decoyCol].Contains("D"))
-            {
-                decoy = true;
-            }
+                && param[_decoyCol].Contains('D'));
 
             // spectrum file name
             string fileName = PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(param[_fileNameCol]);
@@ -731,6 +748,7 @@ namespace Util
                 _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant()); // probably doesn't exist
                 _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 
+                _qValueCol = Array.IndexOf(split, "Q-Value".ToLowerInvariant());
                 _decoyCol = Array.IndexOf(split, "Target/Decoy".ToLowerInvariant());
 
                 return PsmFileType.Generic;
