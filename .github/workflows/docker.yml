@@ -1,4 +1,4 @@
-name: Build
+name: Docker Upload (dev)
 
 on:
   push:
