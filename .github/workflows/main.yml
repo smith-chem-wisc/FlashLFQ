@@ -24,9 +24,9 @@ jobs:
       run: dotnet add Test/Test.csproj package coverlet.collector -v 6.0.2
     - name: Test
       run: dotnet test --no-build --verbosity normal --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura ./Test/Test.csproj
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         verbose: true
         files: Test*/TestResults/*/coverage.cobertura.xml
