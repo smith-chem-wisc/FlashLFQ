@@ -515,6 +515,7 @@ namespace GUI
             // read IDs
             var ids = new List<Identification>();
             List<string> peptidesToQuantify = null;
+            PsmReader psmReader = new();
 
             try
             {
@@ -522,14 +523,14 @@ namespace GUI
                 if(allPepFile!=null)
                 {
                     // Read in the peptide file, select only the peptdies that pass the q-value threshold
-                    peptidesToQuantify = PsmReader.ReadPsms(allPepFile.FilePath, false,
+                    peptidesToQuantify = psmReader.ReadPsms(allPepFile.FilePath, false,
                             spectraFiles.Select(p => p.SpectraFileInfo).ToList(), 
                             usePepQValue: settings.UsePepQValue)
                         .Select(id => id.ModifiedSequence).ToList();
                 }
                 foreach (var identFile in idFiles.Where(idFile => idFile != allPepFile))
                 {
-                    ids = ids.Concat(PsmReader.ReadPsms(identFile.FilePath, false,
+                    ids = ids.Concat(psmReader.ReadPsms(identFile.FilePath, false,
                         spectraFiles.Select(p => p.SpectraFileInfo).ToList(), 
                         usePepQValue: settings.UsePepQValue)).ToList();
                 }

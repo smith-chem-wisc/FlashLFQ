@@ -192,9 +192,10 @@ namespace CMD
 
             // set up IDs
             List<Identification> ids;
+            PsmReader psmReader = new();
             try
             {
-                ids = PsmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos, usePepQValue: settings.UsePepQValue).ToList();
+                ids = psmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos, usePepQValue: settings.UsePepQValue).ToList();
             }
             catch (Exception e)
             {
@@ -208,7 +209,7 @@ namespace CMD
             {
                 try
                 {
-                    peptidesToQuantify = PsmReader.ReadPsms(settings.PeptideIdentificationPath, settings.Silent, spectraFileInfos, usePepQValue: settings.UsePepQValue)
+                    peptidesToQuantify = psmReader.ReadPsms(settings.PeptideIdentificationPath, settings.Silent, spectraFileInfos, usePepQValue: settings.UsePepQValue)
                         .Select(id => id.ModifiedSequence).ToList();
                 }
                 catch (Exception e)

@@ -218,7 +218,8 @@ namespace Test
 
             List<double> expectedRetentionTimes = new() { 7.54, 7.54, 7.56, 7.58, 7.61, 7.63 };
 
-            List<Identification> ids = PsmReader.ReadPsms(pathOfIdentificationFile, true, new List<SpectraFileInfo> { sfi });
+            PsmReader psmReader = new();
+            List<Identification> ids = psmReader.ReadPsms(pathOfIdentificationFile, true, new List<SpectraFileInfo> { sfi });
             Assert.AreEqual(6, ids.Count);
 
             //strings separated by commas should be taken literally as protein names
@@ -251,7 +252,8 @@ namespace Test
             string pathOfMzml = Path.Combine(myDirectory, "SmallCalibratible_Yeast.mzML");
             SpectraFileInfo sfi = new SpectraFileInfo(pathOfMzml, "A", 1, 1, 1);
 
-            List<Identification> ids = PsmReader.ReadPsms(pathOfIdentificationFile, false, new List<SpectraFileInfo> { sfi });
+            PsmReader psmReader = new();
+            List<Identification> ids = psmReader.ReadPsms(pathOfIdentificationFile, false, new List<SpectraFileInfo> { sfi });
 
             //would like better assertion with message but can't get it to return exception message...
             Assert.IsEmpty(ids);
