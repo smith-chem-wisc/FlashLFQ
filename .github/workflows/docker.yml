@@ -3,11 +3,7 @@ name: Docker Upload (dev)
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  pull_request_target:
-    types:
-      - opened
+# Only run when PR is merged to master
 
 jobs:
   build:
