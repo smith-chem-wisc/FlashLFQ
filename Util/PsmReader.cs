@@ -14,27 +14,38 @@ namespace Util
 
     public class PsmReader
     {
-        private static int _fileNameCol;
-        private static int _baseSequCol;
-        private static int _fullSequCol;
-        private static int _monoMassCol;
-        private static int _msmsRetnCol;
-        private static int _msmsScanCol;
-        private static int _chargeStCol;
-        private static int _protNameCol;
-        private static int _decoyCol;
-        private static int _scoreCol;
-        private static int _qValueCol;
-        private static int _qValueNotchCol;
+
+        public PsmReader() 
+        { 
+            //Set optional columns to -1
+            GeneNameColumn = -1;
+            OrganismColumn = -1;
+            DecoyColumn = -1;
+            ScoreColumn = -1;
+            QValueColumn = -1;
+            QValueNotchColumn = -1;
+        }
+
+        public int FileNameColumn { get; private set; }
+        public int BaseSeqColumn { get; private set; }
+        public int FullSeqColumn { get; private set; }
+        public int MonoisotopicMassColumn { get; private set; }
+        public int MsmsRTColumn { get; private set; }
+        public int MsmsScanNumberColumn { get; private set; }
+        public int ChargeStateColumn { get; private set; }
+        public int ProteinColumn { get; private set; }
 
         // optional columns
-        private static int _geneNameCol;
+        public int GeneNameColumn { get; private set; }
+        public int OrganismColumn { get; private set; }
+        public int DecoyColumn { get; private set; }
+        public int ScoreColumn { get; private set; }
+        public static int QValueColumn { get; private set; }
+        public static int QValueNotchColumn { get; private set; }
 
-        private static int _organismCol;
-
-        private static Dictionary<string, double> _modSequenceToMonoMass;
-        private static Dictionary<string, ProteinGroup> allProteinGroups;
-        private static List<ScanHeaderInfo> _scanHeaderInfo = new List<ScanHeaderInfo>();
+        private Dictionary<string, double> _modSequenceToMonoMass;
+        private Dictionary<string, ProteinGroup> allProteinGroups;
+        private List<ScanHeaderInfo> _scanHeaderInfo = new List<ScanHeaderInfo>();
 
         //Delimiters refere to contents of one field, not the delimiter between fields
         private static readonly Dictionary<PsmFileType, string[]> delimiters = new Dictionary<PsmFileType, string[]>
@@ -47,7 +58,7 @@ namespace Util
             { PsmFileType.PeptideShaker, new string[] { ", " } },
         };
 
-        public static List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles, double qValueThreshold = 0.01, bool usePepQValue = false)
+        public List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles, double qValueThreshold = 0.01, bool usePepQValue = false)
         {
             if (_modSequenceToMonoMass == null)
             {
@@ -96,7 +107,7 @@ namespace Util
                 throw new Exception("Could not interpret PSM header labels from file: " + filepath);
             }
 
-            var psmsGroupedByFile = inputPsms.GroupBy(p => PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(p.Split('\t')[_fileNameCol])).ToList();
+            var psmsGroupedByFile = inputPsms.GroupBy(p => PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(p.Split('\t')[FileNameColumn])).ToList();
 
             foreach (var fileSpecificPsms in psmsGroupedByFile)
             {
@@ -122,7 +133,7 @@ namespace Util
                             if (!silent)
                             {
                                 Console.WriteLine("Problem reading line in the identification file" + "; " + e.Message);
-                                Console.WriteLine("Decoy column set to: " + _decoyCol);
+                                Console.WriteLine("Decoy column set to: " + DecoyColumn);
 
                             }
                         }
@@ -145,7 +156,7 @@ namespace Util
                             if (!silent)
                             {
                                 Console.WriteLine("Problem reading line in the identification file" + "; " + e.Message);
-                                Console.WriteLine("Decoy column set to: " + _decoyCol);
+                                Console.WriteLine("Decoy column set to: " + DecoyColumn);
                             }
                         }
                     }
@@ -164,7 +175,7 @@ namespace Util
         }
 
         /// <summary>
-        /// 
+        /// Retrieves an individual ID from a line of a PSM file
         /// </summary>
         /// <param name="line"></param>
         /// <param name="silent"></param>
@@ -172,44 +183,47 @@ namespace Util
         /// <param name="fileType"></param>
         /// <param name="qValueThreshold"> Minimum is 0.01. </param>
         /// <returns></returns>
-        private static Identification GetIdentification(string line, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary, PsmFileType fileType, double qValueThreshold = 0.01)
+        private Identification GetIdentification(string line, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary, PsmFileType fileType, double qValueThreshold = 0.01)
         {
             var param = line.Split('\t');
             double qValue= 0;
             qValueThreshold = Math.Max(qValueThreshold, 0.01);
 
-            // only quantify PSMs below 1% FDR with MetaMorpheus/Morpheus results
-            if (fileType == PsmFileType.MetaMorpheus)
+            // only quantify PSMs below the qValueThreshold with MetaMorpheus/Morpheus/Generic results
+            switch (fileType)
             {
-                qValue = double.Parse(param[_qValueNotchCol], CultureInfo.InvariantCulture);
-                if (qValue > qValueThreshold)
-                {
-                    return null;
-                }
-            }
-            else if (fileType == PsmFileType.Morpheus && double.Parse(param[_qValueCol], CultureInfo.InvariantCulture) > 1.00)
-            {
-                return null;
+                case (PsmFileType.MetaMorpheus):
+                    qValue = double.Parse(param[QValueNotchColumn], CultureInfo.InvariantCulture);
+                    if (qValue > qValueThreshold)
+                        return null;
+                    break;
+                case (PsmFileType.Morpheus): // This is legacy code, I have no idea how Morpheus files work or why Q values would be greater than 1
+                    if (double.Parse(param[QValueColumn], CultureInfo.InvariantCulture) > 1.00)
+                        return null;
+                    break;
+                default:
+                    if (QValueColumn < 0)
+                        break;
+                    qValue = double.Parse(param[QValueColumn], CultureInfo.InvariantCulture);
+                    if (qValue > qValueThreshold)
+                        return null;
+                    break;
             }
 
             // find and label decoys in MetaMorpheus results
             //TODO: what about decoys from other input types?
-            bool decoy = false;
-            if ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus || fileType == PsmFileType.Generic) 
-                && _decoyCol >= 0
-                && param[_decoyCol].Contains("D"))
-            {
-                decoy = true;
-            }
+            bool decoy = ((fileType == PsmFileType.MetaMorpheus || fileType == PsmFileType.Morpheus || fileType == PsmFileType.Generic)
+                && DecoyColumn >= 0
+                && param[DecoyColumn].Contains('D'));
 
             // spectrum file name
-            string fileName = PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(param[_fileNameCol]);
+            string fileName = PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(param[FileNameColumn]);
 
             // base sequence
-            string baseSequence = param[_baseSequCol];
+            string baseSequence = param[BaseSeqColumn];
 
             // modified sequence
-            string modSequence = param[_fullSequCol];
+            string modSequence = param[FullSeqColumn];
 
             // skip ambiguous sequence in MetaMorpheus output
             if (fileType == PsmFileType.MetaMorpheus && (modSequence.Contains(" or ") || modSequence.Contains("|") || modSequence.ToLowerInvariant().Contains("too long")))
@@ -218,7 +232,7 @@ namespace Util
             }
 
             // monoisotopic mass
-            if (double.TryParse(param[_monoMassCol], NumberStyles.Number, CultureInfo.InvariantCulture, out double monoisotopicMass))
+            if (double.TryParse(param[MonoisotopicMassColumn], NumberStyles.Number, CultureInfo.InvariantCulture, out double monoisotopicMass))
             {
                 if (_modSequenceToMonoMass.TryGetValue(modSequence, out double storedMonoisotopicMass))
                 {
@@ -251,7 +265,7 @@ namespace Util
 
             // retention time
             double ms2RetentionTime = -1;
-            if (double.TryParse(param[_msmsRetnCol], NumberStyles.Number, CultureInfo.InvariantCulture, out double retentionTime))
+            if (double.TryParse(param[MsmsRTColumn], NumberStyles.Number, CultureInfo.InvariantCulture, out double retentionTime))
             {
                 ms2RetentionTime = retentionTime;
                 if (fileType == PsmFileType.PeptideShaker)
@@ -286,7 +300,7 @@ namespace Util
             int chargeState;
             if (fileType == PsmFileType.PeptideShaker)
             {
-                string chargeStringNumbersOnly = new String(param[_chargeStCol].Where(Char.IsDigit).ToArray());
+                string chargeStringNumbersOnly = new String(param[ChargeStateColumn].Where(Char.IsDigit).ToArray());
 
                 if (string.IsNullOrWhiteSpace(chargeStringNumbersOnly))
                 {
@@ -314,7 +328,7 @@ namespace Util
             }
             else
             {
-                if (!double.TryParse(param[_chargeStCol], NumberStyles.Number, CultureInfo.InvariantCulture, out double chargeStateDouble))
+                if (!double.TryParse(param[ChargeStateColumn], NumberStyles.Number, CultureInfo.InvariantCulture, out double chargeStateDouble))
                 {
                     if (!silent)
                     {
@@ -334,16 +348,16 @@ namespace Util
             string[] genes = null;
             string[] organisms = null;
             List<ProteinGroup> proteinGroups = new List<ProteinGroup>();
-            proteins = param[_protNameCol].Split(delimiters[fileType], StringSplitOptions.None);
+            proteins = param[ProteinColumn].Split(delimiters[fileType], StringSplitOptions.None);
 
-            if (_geneNameCol >= 0)
+            if (GeneNameColumn >= 0)
             {
-                genes = param[_geneNameCol].Split(delimiters[fileType], StringSplitOptions.None);
+                genes = param[GeneNameColumn].Split(delimiters[fileType], StringSplitOptions.None);
             }
 
-            if (_organismCol >= 0)
+            if (OrganismColumn >= 0)
             {
-                organisms = param[_organismCol].Split(delimiters[fileType], StringSplitOptions.None);
+                organisms = param[OrganismColumn].Split(delimiters[fileType], StringSplitOptions.None);
             }
 
             for (int pr = 0; pr < proteins.Length; pr++)
@@ -364,7 +378,7 @@ namespace Util
                     }
                     else if (proteins.Length == 1)
                     {
-                        gene = param[_geneNameCol];
+                        gene = param[GeneNameColumn];
                     }
                 }
 
@@ -380,7 +394,7 @@ namespace Util
                     }
                     else if (proteins.Length == 1)
                     {
-                        organism = param[_organismCol];
+                        organism = param[OrganismColumn];
                     }
                 }
 
@@ -403,9 +417,9 @@ namespace Util
             }
 
             double score;
-            if(_scoreCol > 0 && fileType == PsmFileType.MetaMorpheus)
+            if(ScoreColumn > 0 && fileType == PsmFileType.MetaMorpheus)
             {
-                double.TryParse(param[_scoreCol], out score);
+                double.TryParse(param[ScoreColumn], out score);
             }
             else
             {
@@ -418,18 +432,18 @@ namespace Util
                 decoy: decoy, qValue: qValue, psmScore: score);
         }
 
-        private static Identification GetPercolatorIdentification(string line, List<ScanHeaderInfo> scanHeaderInfo, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary)
+        private Identification GetPercolatorIdentification(string line, List<ScanHeaderInfo> scanHeaderInfo, bool silent, Dictionary<string, SpectraFileInfo> rawFileDictionary)
         {
             var param = line.Split('\t');
 
             // spectrum file name
-            string fileName = param[_fileNameCol];
+            string fileName = param[FileNameColumn];
 
             // base sequence
             string baseSequence = null;
 
             // modified sequence
-            string modSequence = param[_fullSequCol];
+            string modSequence = param[FullSeqColumn];
 
             // skip ambiguous sequence in MetaMorpheus output
             if (modSequence.Contains("|") || modSequence.ToLowerInvariant().Contains("too long"))
@@ -438,7 +452,7 @@ namespace Util
             }
 
             // monoisotopic mass
-            if (double.TryParse(param[_monoMassCol], NumberStyles.Number, CultureInfo.InvariantCulture, out double monoisotopicMass))
+            if (double.TryParse(param[MonoisotopicMassColumn], NumberStyles.Number, CultureInfo.InvariantCulture, out double monoisotopicMass))
             {
                 if (_modSequenceToMonoMass.TryGetValue(modSequence, out double storedMonoisotopicMass))
                 {
@@ -471,7 +485,7 @@ namespace Util
             double ms2RetentionTime = -1;
             //percolator input files do not have retention times. So, we have to get them from the data file using the scan number.
 
-            if (int.TryParse(param[_msmsScanCol], NumberStyles.Number, CultureInfo.InvariantCulture, out int scanNumber))
+            if (int.TryParse(param[MsmsScanNumberColumn], NumberStyles.Number, CultureInfo.InvariantCulture, out int scanNumber))
             {
                 ms2RetentionTime = scanHeaderInfo.Where(i => PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(i.FileNameWithoutExtension) == PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(fileName) && i.ScanNumber == scanNumber).FirstOrDefault().RetentionTime;
             }
@@ -479,7 +493,7 @@ namespace Util
             // charge state
             int chargeState;
 
-            if (!double.TryParse(param[_chargeStCol], NumberStyles.Number, CultureInfo.InvariantCulture, out double chargeStateDouble))
+            if (!double.TryParse(param[ChargeStateColumn], NumberStyles.Number, CultureInfo.InvariantCulture, out double chargeStateDouble))
             {
                 if (!silent)
                 {
@@ -498,16 +512,16 @@ namespace Util
             string[] genes = null;
             string[] organisms = null;
             List<ProteinGroup> proteinGroups = new List<ProteinGroup>();
-            proteins = param[_protNameCol].Split(delimiters[PsmFileType.Percolator], StringSplitOptions.None);
+            proteins = param[ProteinColumn].Split(delimiters[PsmFileType.Percolator], StringSplitOptions.None);
 
-            if (_geneNameCol >= 0)
+            if (GeneNameColumn >= 0)
             {
-                genes = param[_geneNameCol].Split(delimiters[PsmFileType.Percolator], StringSplitOptions.None);
+                genes = param[GeneNameColumn].Split(delimiters[PsmFileType.Percolator], StringSplitOptions.None);
             }
 
-            if (_organismCol >= 0)
+            if (OrganismColumn >= 0)
             {
-                organisms = param[_organismCol].Split(delimiters[PsmFileType.Percolator], StringSplitOptions.None);
+                organisms = param[OrganismColumn].Split(delimiters[PsmFileType.Percolator], StringSplitOptions.None);
             }
 
             for (int pr = 0; pr < proteins.Length; pr++)
@@ -528,7 +542,7 @@ namespace Util
                     }
                     else if (proteins.Length == 1)
                     {
-                        gene = param[_geneNameCol];
+                        gene = param[GeneNameColumn];
                     }
                 }
 
@@ -544,7 +558,7 @@ namespace Util
                     }
                     else if (proteins.Length == 1)
                     {
-                        organism = param[_organismCol];
+                        organism = param[OrganismColumn];
                     }
                 }
 
@@ -573,7 +587,7 @@ namespace Util
         /// In addition to determining the file type based off of the header, this also sets the column indices for all the fields 
         /// that will be read when reading in the Identificatoin
         /// </summary>
-        private static PsmFileType GetFileTypeFromHeader(string header, bool usePepQValue = false)
+        private PsmFileType GetFileTypeFromHeader(string header, bool usePepQValue = false)
         {
             PsmFileType type = PsmFileType.Unknown;
 
@@ -591,28 +605,28 @@ namespace Util
                         && split.Contains("QValue".ToLowerInvariant())
                         && split.Contains("QValue Notch".ToLowerInvariant()))
             {
-                _fileNameCol = Array.IndexOf(split, "File Name".ToLowerInvariant());
-                _baseSequCol = Array.IndexOf(split, "Base Sequence".ToLowerInvariant());
-                _fullSequCol = Array.IndexOf(split, "Full Sequence".ToLowerInvariant());
-                _monoMassCol = Array.IndexOf(split, "Peptide Monoisotopic Mass".ToLowerInvariant());
-                _msmsRetnCol = Array.IndexOf(split, "Scan Retention Time".ToLowerInvariant());
-                _chargeStCol = Array.IndexOf(split, "Precursor Charge".ToLowerInvariant());
-                _protNameCol = Array.IndexOf(split, "Protein Accession".ToLowerInvariant());
-                _decoyCol = Array.IndexOf(split, "Decoy/Contaminant/Target".ToLowerInvariant());
-                _scoreCol = Array.IndexOf(split, "Score".ToLowerInvariant());
+                FileNameColumn = Array.IndexOf(split, "File Name".ToLowerInvariant());
+                BaseSeqColumn = Array.IndexOf(split, "Base Sequence".ToLowerInvariant());
+                FullSeqColumn = Array.IndexOf(split, "Full Sequence".ToLowerInvariant());
+                MonoisotopicMassColumn = Array.IndexOf(split, "Peptide Monoisotopic Mass".ToLowerInvariant());
+                MsmsRTColumn = Array.IndexOf(split, "Scan Retention Time".ToLowerInvariant());
+                ChargeStateColumn = Array.IndexOf(split, "Precursor Charge".ToLowerInvariant());
+                ProteinColumn = Array.IndexOf(split, "Protein Accession".ToLowerInvariant());
+                DecoyColumn = Array.IndexOf(split, "Decoy/Contaminant/Target".ToLowerInvariant());
+                ScoreColumn = Array.IndexOf(split, "Score".ToLowerInvariant());
 
                 if(usePepQValue)
                 {
-                    _qValueCol = Array.IndexOf(split, "PEP_QValue".ToLowerInvariant());
-                    _qValueNotchCol = Array.IndexOf(split, "PEP_QValue".ToLowerInvariant());
+                    QValueColumn = Array.IndexOf(split, "PEP_QValue".ToLowerInvariant());
+                    QValueNotchColumn = Array.IndexOf(split, "PEP_QValue".ToLowerInvariant());
                 }
                 else
                 {
-                    _qValueCol = Array.IndexOf(split, "QValue".ToLowerInvariant());
-                    _qValueNotchCol = Array.IndexOf(split, "QValue Notch".ToLowerInvariant());
+                    QValueColumn = Array.IndexOf(split, "QValue".ToLowerInvariant());
+                    QValueNotchColumn = Array.IndexOf(split, "QValue Notch".ToLowerInvariant());
                 }
-                _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant());
-                _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
+                GeneNameColumn = Array.IndexOf(split, "Gene Name".ToLowerInvariant());
+                OrganismColumn = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 
                 return PsmFileType.MetaMorpheus;
             }
@@ -628,18 +642,18 @@ namespace Util
                 && split.Contains("Decoy?".ToLowerInvariant())
                 && split.Contains("Q-Value (%)".ToLowerInvariant()))
             {
-                _fileNameCol = Array.IndexOf(split, "Filename".ToLowerInvariant());
-                _baseSequCol = Array.IndexOf(split, "Base Peptide Sequence".ToLowerInvariant());
-                _fullSequCol = Array.IndexOf(split, "Peptide Sequence".ToLowerInvariant());
-                _monoMassCol = Array.IndexOf(split, "Theoretical Mass (Da)".ToLowerInvariant());
-                _msmsRetnCol = Array.IndexOf(split, "Retention Time (minutes)".ToLowerInvariant());
-                _chargeStCol = Array.IndexOf(split, "Precursor Charge".ToLowerInvariant());
-                _protNameCol = Array.IndexOf(split, "Protein Description".ToLowerInvariant());
-                _decoyCol = Array.IndexOf(split, "Decoy?".ToLowerInvariant());
-                _qValueCol = Array.IndexOf(split, "Q-Value (%)".ToLowerInvariant());
+                FileNameColumn = Array.IndexOf(split, "Filename".ToLowerInvariant());
+                BaseSeqColumn = Array.IndexOf(split, "Base Peptide Sequence".ToLowerInvariant());
+                FullSeqColumn = Array.IndexOf(split, "Peptide Sequence".ToLowerInvariant());
+                MonoisotopicMassColumn = Array.IndexOf(split, "Theoretical Mass (Da)".ToLowerInvariant());
+                MsmsRTColumn = Array.IndexOf(split, "Retention Time (minutes)".ToLowerInvariant());
+                ChargeStateColumn = Array.IndexOf(split, "Precursor Charge".ToLowerInvariant());
+                ProteinColumn = Array.IndexOf(split, "Protein Description".ToLowerInvariant());
+                DecoyColumn = Array.IndexOf(split, "Decoy?".ToLowerInvariant());
+                QValueColumn = Array.IndexOf(split, "Q-Value (%)".ToLowerInvariant());
 
-                _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant()); // probably doesn't exist
-                _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
+                GeneNameColumn = Array.IndexOf(split, "Gene Name".ToLowerInvariant()); // probably doesn't exist
+                OrganismColumn = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 
                 return PsmFileType.Morpheus;
             }
@@ -653,16 +667,16 @@ namespace Util
                 && split.Contains("Charge".ToLowerInvariant())
                 && split.Contains("Proteins".ToLowerInvariant()))
             {
-                _fileNameCol = Array.IndexOf(split, "Raw file".ToLowerInvariant());
-                _baseSequCol = Array.IndexOf(split, "Sequence".ToLowerInvariant());
-                _fullSequCol = Array.IndexOf(split, "Modified sequence".ToLowerInvariant());
-                _monoMassCol = Array.IndexOf(split, "Mass".ToLowerInvariant());
-                _msmsRetnCol = Array.IndexOf(split, "Retention time".ToLowerInvariant());
-                _chargeStCol = Array.IndexOf(split, "Charge".ToLowerInvariant());
-                _protNameCol = Array.IndexOf(split, "Proteins".ToLowerInvariant());
-                _geneNameCol = Array.IndexOf(split, "Gene Names".ToLowerInvariant());
+                FileNameColumn = Array.IndexOf(split, "Raw file".ToLowerInvariant());
+                BaseSeqColumn = Array.IndexOf(split, "Sequence".ToLowerInvariant());
+                FullSeqColumn = Array.IndexOf(split, "Modified sequence".ToLowerInvariant());
+                MonoisotopicMassColumn = Array.IndexOf(split, "Mass".ToLowerInvariant());
+                MsmsRTColumn = Array.IndexOf(split, "Retention time".ToLowerInvariant());
+                ChargeStateColumn = Array.IndexOf(split, "Charge".ToLowerInvariant());
+                ProteinColumn = Array.IndexOf(split, "Proteins".ToLowerInvariant());
+                GeneNameColumn = Array.IndexOf(split, "Gene Names".ToLowerInvariant());
 
-                _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
+                OrganismColumn = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 
                 return PsmFileType.MaxQuant;
             }
@@ -676,16 +690,16 @@ namespace Util
                 && split.Contains("Identification Charge".ToLowerInvariant())
                 && split.Contains("Protein(s)".ToLowerInvariant()))
             {
-                _fileNameCol = Array.IndexOf(split, "Spectrum File".ToLowerInvariant());
-                _baseSequCol = Array.IndexOf(split, "Sequence".ToLowerInvariant());
-                _fullSequCol = Array.IndexOf(split, "Modified Sequence".ToLowerInvariant());
-                _monoMassCol = Array.IndexOf(split, "Theoretical Mass".ToLowerInvariant());
-                _msmsRetnCol = Array.IndexOf(split, "RT".ToLowerInvariant());
-                _chargeStCol = Array.IndexOf(split, "Identification Charge".ToLowerInvariant());
-                _protNameCol = Array.IndexOf(split, "Protein(s)".ToLowerInvariant());
+                FileNameColumn = Array.IndexOf(split, "Spectrum File".ToLowerInvariant());
+                BaseSeqColumn = Array.IndexOf(split, "Sequence".ToLowerInvariant());
+                FullSeqColumn = Array.IndexOf(split, "Modified Sequence".ToLowerInvariant());
+                MonoisotopicMassColumn = Array.IndexOf(split, "Theoretical Mass".ToLowerInvariant());
+                MsmsRTColumn = Array.IndexOf(split, "RT".ToLowerInvariant());
+                ChargeStateColumn = Array.IndexOf(split, "Identification Charge".ToLowerInvariant());
+                ProteinColumn = Array.IndexOf(split, "Protein(s)".ToLowerInvariant());
 
-                _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant()); // probably doesn't exist
-                _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
+                GeneNameColumn = Array.IndexOf(split, "Gene Name".ToLowerInvariant()); // probably doesn't exist
+                OrganismColumn = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 
                 return PsmFileType.PeptideShaker;
             }
@@ -700,13 +714,13 @@ namespace Util
                 && split.Contains("sequence".ToLowerInvariant())
                 && split.Contains("protein id".ToLowerInvariant()))
             {
-                _fileNameCol = Array.IndexOf(split, "file_idx".ToLowerInvariant());
-                _fullSequCol = Array.IndexOf(split, "sequence".ToLowerInvariant());
-                _monoMassCol = Array.IndexOf(split, "peptide mass".ToLowerInvariant()); //TODO: see if this needs to be theoretical or experimental mass AND if it is neutral or monoisotopic(H+)
-                _msmsScanCol = Array.IndexOf(split, "scan".ToLowerInvariant());
-                _chargeStCol = Array.IndexOf(split, "charge".ToLowerInvariant());
-                _protNameCol = Array.IndexOf(split, "protein id".ToLowerInvariant());
-                _qValueCol = Array.IndexOf(split, "percolator q-value".ToLowerInvariant());
+                FileNameColumn = Array.IndexOf(split, "file_idx".ToLowerInvariant());
+                FullSeqColumn = Array.IndexOf(split, "sequence".ToLowerInvariant());
+                MonoisotopicMassColumn = Array.IndexOf(split, "peptide mass".ToLowerInvariant()); //TODO: see if this needs to be theoretical or experimental mass AND if it is neutral or monoisotopic(H+)
+                MsmsScanNumberColumn = Array.IndexOf(split, "scan".ToLowerInvariant());
+                ChargeStateColumn = Array.IndexOf(split, "charge".ToLowerInvariant());
+                ProteinColumn = Array.IndexOf(split, "protein id".ToLowerInvariant());
+                QValueColumn = Array.IndexOf(split, "percolator q-value".ToLowerInvariant());
 
                 return PsmFileType.Percolator;
             }
@@ -720,18 +734,19 @@ namespace Util
                         && split.Contains("Precursor Charge".ToLowerInvariant())
                         && split.Contains("Protein Accession".ToLowerInvariant()))
             {
-                _fileNameCol = Array.IndexOf(split, "File Name".ToLowerInvariant());
-                _baseSequCol = Array.IndexOf(split, "Base Sequence".ToLowerInvariant());
-                _fullSequCol = Array.IndexOf(split, "Full Sequence".ToLowerInvariant());
-                _monoMassCol = Array.IndexOf(split, "Peptide Monoisotopic Mass".ToLowerInvariant());
-                _msmsRetnCol = Array.IndexOf(split, "Scan Retention Time".ToLowerInvariant());
-                _chargeStCol = Array.IndexOf(split, "Precursor Charge".ToLowerInvariant());
-                _protNameCol = Array.IndexOf(split, "Protein Accession".ToLowerInvariant());
+                FileNameColumn = Array.IndexOf(split, "File Name".ToLowerInvariant());
+                BaseSeqColumn = Array.IndexOf(split, "Base Sequence".ToLowerInvariant());
+                FullSeqColumn = Array.IndexOf(split, "Full Sequence".ToLowerInvariant());
+                MonoisotopicMassColumn = Array.IndexOf(split, "Peptide Monoisotopic Mass".ToLowerInvariant());
+                MsmsRTColumn = Array.IndexOf(split, "Scan Retention Time".ToLowerInvariant());
+                ChargeStateColumn = Array.IndexOf(split, "Precursor Charge".ToLowerInvariant());
+                ProteinColumn = Array.IndexOf(split, "Protein Accession".ToLowerInvariant());
 
-                _geneNameCol = Array.IndexOf(split, "Gene Name".ToLowerInvariant()); // probably doesn't exist
-                _organismCol = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
+                GeneNameColumn = Array.IndexOf(split, "Gene Name".ToLowerInvariant()); // probably doesn't exist
+                OrganismColumn = Array.IndexOf(split, "Organism Name".ToLowerInvariant());
 
-                _decoyCol = Array.IndexOf(split, "Target/Decoy".ToLowerInvariant());
+                QValueColumn = Array.IndexOf(split, "Q-Value".ToLowerInvariant());
+                DecoyColumn = Array.IndexOf(split, "Target/Decoy".ToLowerInvariant());
 
                 return PsmFileType.Generic;
             }

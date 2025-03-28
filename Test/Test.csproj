@@ -23,6 +23,9 @@
     <ProjectReference Include="..\Util\Util.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Update="SampleFiles\Generic\NewGenericInput.tsv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="SampleFiles\Parallel\20100614_Velos1_TaGe_SA_Jurkat_3.mzML">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
