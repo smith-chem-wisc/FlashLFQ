@@ -403,10 +403,10 @@
                         <CheckBox Name="normalizeCheckbox" Content="Normalize Intensities" Foreground="DarkGray" 
                                   Grid.Row="4" Style="{StaticResource SquareCheckbox}" 
                                   ToolTip="Corrects systematic intensity errors with median normalization. The main assumption is that most proteins do not change in abundance between samples" />
-                        
-                        <CheckBox Name="pepQValueCheckbox" Content="Use PEP Q Values" Foreground="DarkGray" 
+
+                        <CheckBox Name="isoTrackCheckbox" Content="IsoTracker: Improved quantification of isobaric species" Foreground="DarkGray" 
                                   Grid.Row="5" Style="{StaticResource SquareCheckbox}" 
-                                  ToolTip="Determines how FlashLFQ chooses which peptides to quantify (only applies to MetaMorpheus identifications). Using PEP Q generally yields more peptide IDs" />         
+                                  ToolTip="Turn on Ray's awesome algorithm!" />
 
                         <CheckBox Name="sharedPeptideCheckbox" Content="Use shared peptides for protein quantification" Foreground="DarkGray" 
                                   Grid.Row="6" 
@@ -448,12 +448,14 @@
                                     <ColumnDefinition Width="300"/>
                                 </Grid.ColumnDefinitions>
 
-                                <CheckBox Name="integrateCheckBox" Content="Integrate Peak Areas" Foreground="DarkGray" Grid.Row="0" Style="{StaticResource SquareCheckbox}"
+                                <CheckBox Name="integrateCheckBox" Grid.Row="0" Content="Integrate Peak Areas" Foreground="DarkGray"  
+                                          Style="{StaticResource SquareCheckbox}"
                                           ToolTip="By default, FlashLFQ reports the peak height and not peak area. Enabling integration reports the peak area"/>
 
-                                <CheckBox Name="precursorIdOnlyCheckbox" Content="Only quantify identified charge" Foreground="DarkGray" Grid.Row="1" Style="{StaticResource SquareCheckbox}"
-                                          ToolTip="FlashLFQ will only quantify the identified charge, and will not look for alternative charges"/>
-
+                                <CheckBox Name="pepQValueCheckbox" Grid.Row="1" Content="Use PEP Q Values" Foreground="DarkGray" 
+                                          Style="{StaticResource SquareCheckbox}" 
+                                          ToolTip="Determines how FlashLFQ chooses which peptides to quantify (only applies to MetaMorpheus identifications). Using PEP Q generally yields more peptide IDs" />
+                                
                                 <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="2"
                                             ToolTip="The mass tolerance in parts per million of isotope peaks (e.g., M+1, M+2 peaks)">
                                     <TextBox Name="isotopePpmToleranceTextBox" Width="40" Foreground="DarkGray" Background="Transparent" BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
@@ -466,23 +468,27 @@
                                     <Label Content="Number of isotopes required" Foreground="DarkGray" />
                                 </StackPanel>
 
-                                <CheckBox Name="requireMsmsIdInConditionCheckbox" Content="Require MS/MS Identification in Condition" Foreground="DarkGray" Grid.Row="0" 
-                                          Grid.Column="1" Style="{StaticResource SquareCheckbox}" IsEnabled="{Binding IsChecked, ElementName=mbrCheckbox}"
+                                <CheckBox Name="requireMsmsIdInConditionCheckbox" Grid.Row="0" Grid.Column="1" Content="Require MS/MS Identification in Condition" Foreground="DarkGray"  
+                                          Style="{StaticResource SquareCheckbox}" IsEnabled="{Binding IsChecked, ElementName=mbrCheckbox}"
                                           ToolTip="Only try to match peptides from proteins if an MS/MS identified peptide from that protein was observed in the condition"/>
 
-                                <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="1" Margin="2" IsEnabled="{Binding IsChecked, ElementName=mbrCheckbox}"
+                                <CheckBox Name="precursorIdOnlyCheckbox" Grid.Row="1" Grid.Column ="1" Content="Only quantify identified charge" Foreground="DarkGray" 
+                                           Style="{StaticResource SquareCheckbox}"
+                                          ToolTip="FlashLFQ will only quantify the identified charge, and will not look for alternative charges"/>
+
+                                <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="1" Margin="2" IsEnabled="{Binding IsChecked, ElementName=mbrCheckbox}"
                                             ToolTip="The retention-time error allowed in match-between runs. This is not the systematic time shift, but a sort of &quot;variance&quot; or &quot;error&quot; in the retention time allowed">
                                     <TextBox Name="mbrRtWindowTextBox" Width="40" Foreground="DarkGray" Background="Transparent" BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
                                     <Label Content="Maximum MBR window (minutes)" Foreground="DarkGray" />
                                 </StackPanel>
 
-                                <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="1" Margin="2" IsEnabled="{Binding IsChecked, ElementName=bayesianCheckbox}"
+                                <StackPanel Orientation="Horizontal" Grid.Row="3" Grid.Column="1" Margin="2" IsEnabled="{Binding IsChecked, ElementName=bayesianCheckbox}"
                                             ToolTip="The number of iterations to perform for the Markov-Chain Monte Carlo sampler in the Bayesian stats engine. A larger number of iterations will result in a slower but more precise estimate of the protein fold-change, the PEP, and the FDR">
                                     <TextBox Name="mcmcIterationsTextBox" Width="40" Foreground="DarkGray" Background="Transparent" BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
                                     <Label Content="MCMC Iterations" Foreground="DarkGray" />
                                 </StackPanel>
 
-                                <StackPanel Orientation="Horizontal" Grid.Row="3" Grid.Column="1" Margin="2" IsEnabled="{Binding IsChecked, ElementName=bayesianCheckbox}"
+                                <StackPanel Orientation="Horizontal" Grid.Row="4" Grid.Column="1" Margin="2" IsEnabled="{Binding IsChecked, ElementName=bayesianCheckbox}"
                                             ToolTip="The seed for the random number generator in the Markov-Chain Monte Carlo sampler. You should probably not change this unless unless you are trying to reproduce an analysis">
                                     <TextBox Name="mcmcRandomSeedTextBox" Width="40" Foreground="DarkGray" Background="Transparent" BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
                                     <Label Content="MCMC Random Seed" Foreground="DarkGray" />

@@ -82,6 +82,7 @@ namespace GUI
             ppmToleranceTextBox.Text = settings.PpmTolerance.ToString("F1");
             normalizeCheckbox.IsChecked = settings.Normalize;
             mbrCheckbox.IsChecked = settings.MatchBetweenRuns;
+            isoTrackCheckbox.IsChecked = settings.IsoTracker;
             mbrFDRTextBox.Text = "0.01";
             sharedPeptideCheckbox.IsChecked = settings.UseSharedPeptidesForProteinQuant;
             pepQValueCheckbox.IsChecked = settings.UsePepQValue;
@@ -149,6 +150,8 @@ namespace GUI
             settings.IdSpecificChargeState = precursorIdOnlyCheckbox.IsChecked.Value;
             settings.ProteinQuantBaseCondition = (string)ControlConditionComboBox.SelectedItem;
             settings.RequireMsmsIdInCondition = requireMsmsIdInConditionCheckbox.IsChecked.Value;
+
+            settings.IsoTracker = isoTrackCheckbox.IsChecked.Value;
 
             // isotope PPM tolerance
             if (double.TryParse(isotopePpmToleranceTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out double isotopePpmTolerance))
@@ -442,6 +445,7 @@ namespace GUI
                 identFilesDataGrid.IsReadOnly = true;
                 ppmToleranceTextBox.IsEnabled = false;
                 normalizeCheckbox.IsEnabled = false;
+                isoTrackCheckbox.IsEnabled = false;
                 mbrCheckbox.IsEnabled = false;
                 MbrFdrPanel.IsEnabled = false;
                 sharedPeptideCheckbox.IsEnabled = false;
