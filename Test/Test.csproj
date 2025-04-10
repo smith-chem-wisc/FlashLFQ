@@ -11,8 +11,16 @@
     <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="SampleFiles\FraggerPsm_FragPipev21.1_psm.tsv" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="SampleFiles\FraggerPsm_FragPipev21.1_psm.tsv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    <PackageReference Include="mzLib" Version="1.0.553" />
+    <PackageReference Include="mzLib" Version="2.0.1" />
     <PackageReference Include="NetSerializer" Version="4.1.2" />
     <PackageReference Include="nunit" Version="4.2.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />

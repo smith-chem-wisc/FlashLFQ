@@ -223,11 +223,11 @@ namespace Test
             Assert.AreEqual(6, ids.Count);
 
             //strings separated by commas should be taken literally as protein names
-            Assert.AreEqual(11,ids[0].ProteinGroups.Count);
-            List<string> expectedProteinNameStrings = new() { "sp|Q13885|TBB2A_HUMAN", "tr|M0R1I1|M0R1I1_HUMAN", "tr|Q5JP53|Q5JP53_HUMAN", 
-                "tr|M0QZL7|M0QZL7_HUMAN", "sp|P04350|TBB4A_HUMAN", "sp|P07437|TBB5_HUMAN", "sp|Q9BVA1|TBB2B_HUMAN", "tr|M0R278|M0R278_HUMAN", 
+            Assert.AreEqual(11, ids[0].ProteinGroups.Count);
+            List<string> expectedProteinNameStrings = new() { "sp|Q13885|TBB2A_HUMAN", "tr|M0R1I1|M0R1I1_HUMAN", "tr|Q5JP53|Q5JP53_HUMAN",
+                "tr|M0QZL7|M0QZL7_HUMAN", "sp|P04350|TBB4A_HUMAN", "sp|P07437|TBB5_HUMAN", "sp|Q9BVA1|TBB2B_HUMAN", "tr|M0R278|M0R278_HUMAN",
                 "tr|Q5ST81|Q5ST81_HUMAN", "sp|P68371|TBB4B_HUMAN", "tr|M0QY85|M0QY85_HUMAN" };
-            CollectionAssert.AreEquivalent(ids[0].ProteinGroups.Select(n=>n.ProteinGroupName).ToList(), expectedProteinNameStrings);  
+            CollectionAssert.AreEquivalent(ids[0].ProteinGroups.Select(n => n.ProteinGroupName).ToList(), expectedProteinNameStrings);
 
             List<double> actualRetentionTimes = ids.Select(t => Math.Round(t.Ms2RetentionTimeInMinutes, 2)).ToList();
 
@@ -456,7 +456,7 @@ namespace Test
             File.Delete(proteinsPath);
         }
 
-        [Test]    
+        [Test]
         public static void TestParallelProcessingMetaMorpheusOutputWithExtensionsAndWindowsPath()
         {
             string search = "Parallel";
@@ -651,6 +651,37 @@ namespace Test
 
                 Assert.That(settingsValue, Is.EqualTo(engineValue));
             }
+        }
+
+        [Test]
+        [TestCase(@"SampleFiles\FraggerPsm_FragPipev21.1_psm.tsv")]
+        [TestCase(@"SampleFiles\SmallCalibratible_Yeast.mzML")]
+        public static void TestReadPsmsValidMsFraggerPsmFile(string path)
+        {
+            // Arrange  
+            var filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, path);
+            Assert.That(File.Exists(filePath));
+            string mzmlPath = Path.Combine(TestContext.CurrentContext.TestDirectory, @"SampleFiles\SmallCalibratible_Yeast.mzML");
+            SpectraFileInfo sfi = new SpectraFileInfo(mzmlPath, "A", 1, 1, 1);
+            PsmReader psmReader = new();
+
+            // Act  
+            List<Identification> ids = psmReader.ReadPsms(filePath, false, new List<SpectraFileInfo> { sfi });
+
+            // Assert  
+            Assert.IsNotEmpty(ids);
+            Assert.That(ids.Count, Is.GreaterThan(0));
+        }
+
+        [Test]
+        public static void TestReadPsmsThrowsException()
+        {
+            // Arrange  
+            string invalidFilePath = "NonExistentFile.psmtsv";
+            PsmReader psmReader = new();
+
+            // Act & Assert  
+            Assert.DoesNotThrow(() => psmReader.ReadPsms(invalidFilePath, false, new List<SpectraFileInfo>()));
         }
     }
 }
