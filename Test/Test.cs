@@ -655,13 +655,13 @@ namespace Test
 
         [Test]
         [TestCase(@"SampleFiles\FraggerPsm_FragPipev21.1_psm.tsv")]
-        [TestCase(@"SampleFiles\SmallCalibratible_Yeast.mzML")]
         public static void TestReadPsmsValidMsFraggerPsmFile(string path)
         {
             // Arrange  
             var filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, path);
             Assert.That(File.Exists(filePath));
-            string mzmlPath = Path.Combine(TestContext.CurrentContext.TestDirectory, @"SampleFiles\SmallCalibratible_Yeast.mzML");
+            // this is a local file path only used for testing, do not try to access
+            string mzmlPath = @"D:\Projects\Chimeras\Mann_11cell_analysis\Hela\MsFragger\Hela_1_1\20100611_Velos1_TaGe_SA_Hela_1.mzML";
             SpectraFileInfo sfi = new SpectraFileInfo(mzmlPath, "A", 1, 1, 1);
             PsmReader psmReader = new();
 

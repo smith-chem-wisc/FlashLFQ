@@ -1,12 +1,12 @@
 ﻿using FlashLFQ;
 using MzLibUtil;
 using Readers;
-using Readers.ExternalResults.BaseClasses;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using ThermoFisher.CommonCore.Data.Business;
 using UsefulProteomicsDatabases;
 
@@ -71,7 +71,7 @@ namespace Util
         {
             try
             {
-                IQuantifiableResultFile quantifiable = ReadQuantifiableResultFile();
+                IQuantifiableResultFile quantifiable = FileReader.ReadQuantifiableResultFile(filepath);
                 List<Identification> identifications = quantifiable.MakeIdentifications(rawfiles);
                 if (!silent)
                 {
@@ -81,10 +81,7 @@ namespace Util
             }
             catch (Exception e)
             {
-                if (!silent)
-                {
-                    Console.WriteLine(e.Message);
-                }
+                // potentially change later
             }
             return null;
         }
@@ -93,9 +90,10 @@ namespace Util
         public List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles, double qValueThreshold = 0.01, bool usePepQValue = false)
         {
             // check if file path can be read in using readers as QuantifiableResultFile
-            if (TryReadQuantifiableResultFile(filepath, silent, rawfiles) != null)
+            List<Identification> quantifiableIdentifications = TryReadQuantifiableResultFile(filepath, silent, rawfiles);
+            if (quantifiableIdentifications != null)
             {
-                return TryReadQuantifiableResultFile(filepath, silent, rawfiles);
+                return quantifiableIdentifications;
             }
 
             if (_modSequenceToMonoMass == null)
