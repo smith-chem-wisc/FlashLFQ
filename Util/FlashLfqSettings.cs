@@ -7,6 +7,7 @@ using System.Linq;
 
 namespace Util
 {
+    // This class is used to translate command line arguments into FlashLFQParameters objects / .tomls
     public class FlashLfqSettings
     {
         // these are used in the command-line version only
@@ -61,7 +62,7 @@ namespace Util
         public bool MatchBetweenRuns { get; set; }
 
         [Option("mrt", Default = 1.5, HelpText = "double; maximum MBR window in minutes")]
-        public double MbrRtWindow { get; set; }
+        public double MaxMbrRtWindow { get; set; }
 
         [Option("rmc", Default = false, HelpText = "bool; require MS/MS ID in condition")]
         public bool RequireMsmsIdInCondition { get; set; }
@@ -89,7 +90,7 @@ namespace Util
         public int? RandomSeed { get; set; }
 
         [Option("pipfdr", HelpText = "double; fdr cutoff for pip")]
-        public double MbrDetectionQValueThreshold { get; set; }
+        public double MbrQValueThreshold { get; set; }
 
         [Option("usepepq", Default = false, HelpText = "bool; determines whether PEP Q Value should be used to determine which peptides to quantify")]
         public bool UsePepQValue { get; set; }
@@ -99,31 +100,30 @@ namespace Util
 
         public FlashLfqSettings()
         {
-            FlashLfqEngine f = new FlashLfqEngine(new List<Identification>());
-            var bayesianSettings = new ProteinQuantificationEngine(new FlashLfqResults(new List<SpectraFileInfo>(), new List<Identification>()), 1, "temp");
+            FlashLfqParameters defaultParams = new();
 
-            Normalize = f.Normalize;
-            PpmTolerance = f.PpmTolerance;
-            IsotopePpmTolerance = f.IsotopePpmTolerance;
-            Integrate = f.Integrate;
-            NumIsotopesRequired = f.NumIsotopesRequired;
-            IdSpecificChargeState = f.IdSpecificChargeState;
-            MaxThreads = f.MaxThreads;
+            Normalize = defaultParams.Normalize;
+            PpmTolerance = defaultParams.PpmTolerance;
+            IsotopePpmTolerance = defaultParams.IsotopePpmTolerance;
+            Integrate = defaultParams.Integrate;
+            NumIsotopesRequired = defaultParams.NumIsotopesRequired;
+            IdSpecificChargeState = defaultParams.IdSpecificChargeState;
+            MaxThreads = defaultParams.MaxThreads;
 
-            MatchBetweenRuns = f.MatchBetweenRuns;
-            MbrRtWindow = f.MbrRtWindow;
-            RequireMsmsIdInCondition = f.RequireMsmsIdInCondition;
-            MbrDetectionQValueThreshold = f.MbrDetectionQValueThreshold;
+            MatchBetweenRuns = defaultParams.MatchBetweenRuns;
+            MaxMbrRtWindow = defaultParams.MaxMbrRtWindow;
+            RequireMsmsIdInCondition = defaultParams.RequireMsmsIdInCondition;
+            MbrQValueThreshold = defaultParams.MbrQValueThreshold;
             UsePepQValue = false;
 
-            BayesianProteinQuant = f.BayesianProteinQuant;
-            ProteinQuantBaseCondition = f.ProteinQuantBaseCondition;
+            BayesianProteinQuant = defaultParams.BayesianProteinQuant;
+            ProteinQuantBaseCondition = defaultParams.ProteinQuantBaseCondition;
             ProteinQuantFoldChangeCutoff = 0.1;
-            McmcSteps = f.McmcSteps;
-            McmcBurninSteps = f.McmcBurninSteps;
-            UseSharedPeptidesForProteinQuant = f.UseSharedPeptidesForProteinQuant;
+            McmcSteps = defaultParams.McmcSteps;
+            McmcBurninSteps = defaultParams.McmcBurninSteps;
+            UseSharedPeptidesForProteinQuant = defaultParams.UseSharedPeptidesForProteinQuant;
 
-            RandomSeed = bayesianSettings.RandomSeed;
+            RandomSeed = defaultParams.RandomSeed;
         }
 
         public static FlashLfqEngine CreateEngineWithSettings(FlashLfqSettings settings, List<Identification> ids, List<string> peptidesForMbr = null)
@@ -142,10 +142,10 @@ namespace Util
 
                 matchBetweenRuns: settings.MatchBetweenRuns,
                 matchBetweenRunsPpmTolerance: 10,
-                maxMbrWindow: settings.MbrRtWindow,
+                maxMbrWindow: settings.MaxMbrRtWindow,
                 donorCriterion: DonorCriterion.Score,
-                donorQValueThreshold: settings.MbrDetectionQValueThreshold / 5.0, // The donor q-value threshold is 1/5 of the MBR FDR threshold, as having the two values equal would result in no MBR hits at the desired MBR FDR threshold
-                matchBetweenRunsFdrThreshold: settings.MbrDetectionQValueThreshold,
+                donorQValueThreshold: settings.MbrQValueThreshold / 5.0, // The donor q-value threshold is 1/5 of the MBR FDR threshold, as having the two values equal would result in no MBR hits at the desired MBR FDR threshold
+                matchBetweenRunsFdrThreshold: settings.MbrQValueThreshold,
                 requireMsmsIdInCondition: settings.RequireMsmsIdInCondition,
 
                 bayesianProteinQuant: settings.BayesianProteinQuant,
@@ -210,7 +210,7 @@ namespace Util
                 throw new Exception("The number of isotopes required must be at least 2");
             }
 
-            if (MbrRtWindow <= 0)
+            if (MaxMbrRtWindow <= 0)
             {
                 throw new Exception("The match-between-runs time window must be greater than 0");
             }

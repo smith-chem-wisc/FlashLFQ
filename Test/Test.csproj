@@ -12,7 +12,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    <PackageReference Include="mzLib" Version="1.0.553" />
+    <PackageReference Include="mzLib" Version="8.1.2" />
     <PackageReference Include="NetSerializer" Version="4.1.2" />
     <PackageReference Include="nunit" Version="4.2.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />

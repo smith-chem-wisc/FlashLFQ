@@ -539,7 +539,7 @@ namespace Test
 
             FlashLfqEngine e = FlashLfqSettings.CreateEngineWithSettings(settings, new List<Identification>());
 
-            var engineProperties = e.GetType().GetFields();
+            var engineProperties = e.FlashParams.GetType().GetProperties();
 
             // check to make sure the settings got passed properly into the engine (the settings should have identical values)
             foreach (var property in properties)
@@ -563,7 +563,7 @@ namespace Test
                 var engineProperty = engineProperties.FirstOrDefault(p => p.Name == name);
 
                 var settingsValue = property.GetValue(settings);
-                var engineValue = engineProperty.GetValue(e);
+                var engineValue = engineProperty.GetValue(e.FlashParams);
 
                 Assert.That(settingsValue, Is.EqualTo(engineValue));
             }
