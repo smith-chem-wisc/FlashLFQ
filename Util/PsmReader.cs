@@ -81,7 +81,7 @@ namespace Util
             }
             catch (Exception e)
             {
-                // potentially change later
+                // not every file read in will be a QuantifiableResultFile, support for this is still in development
             }
             return null;
         }
