@@ -93,7 +93,7 @@ namespace GUI
             precursorIdOnlyCheckbox.IsChecked = settings.IdSpecificChargeState;
             isotopePpmToleranceTextBox.Text = settings.IsotopePpmTolerance.ToString("F1");
             numIsotopesRequiredTextBox.Text = settings.NumIsotopesRequired.ToString();
-            mbrRtWindowTextBox.Text = settings.MbrRtWindow.ToString("F1");
+            mbrRtWindowTextBox.Text = settings.MaxMbrRtWindow.ToString("F1");
             mcmcIterationsTextBox.Text = settings.McmcSteps.ToString();
             mcmcRandomSeedTextBox.Text = settings.RandomSeed.ToString();
             requireMsmsIdInConditionCheckbox.IsChecked = settings.RequireMsmsIdInCondition;
@@ -132,7 +132,7 @@ namespace GUI
             // MBR FDR
             if (double.TryParse(mbrFDRTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out double mbrFdr))
             {
-                settings.MbrDetectionQValueThreshold = mbrFdr;
+                settings.MbrQValueThreshold = mbrFdr;
             }
             else
             {
@@ -193,7 +193,7 @@ namespace GUI
             // MBR time tolerance
             if (double.TryParse(mbrRtWindowTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out double MbrRtWindow))
             {
-                settings.MbrRtWindow = MbrRtWindow;
+                settings.MaxMbrRtWindow = MbrRtWindow;
             }
             else
             {
@@ -623,7 +623,7 @@ namespace GUI
             {
                 try
                 {
-                    OutputWriter.WriteOutput(Directory.GetParent(spectraFiles.First().FilePath).FullName, results, flashLfqEngine.Silent,
+                    OutputWriter.WriteOutput(Directory.GetParent(spectraFiles.First().FilePath).FullName, results, flashLfqEngine.FlashParams.Silent,
                         outputFolderPath);
 
                     MessageBox.Show("Run complete");

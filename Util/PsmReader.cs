@@ -17,7 +17,6 @@ namespace Util
 
     public class PsmReader
     {
-
         public PsmReader() 
         { 
             //Set optional columns to -1
