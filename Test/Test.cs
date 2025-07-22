@@ -18,16 +18,23 @@ namespace Test
     internal class Test
     {
         [Test]
-        public static void TestMetaMorpheusOutput()
+        [TestCase("MetaMorpheus", "AllPSMs.psmtsv")]
+        [TestCase("MetaMorpheus", "AllPeptides_NewHeader.psmtsv")]
+        [TestCase("Morpheus", "SmallCalibratible_Yeast.PSMs.tsv")]
+        [TestCase("MaxQuant", "msms.txt")]
+        [TestCase("PeptideShaker", "Default PSM Report.tabular")]
+        [TestCase("Percolator", "percolatorTestData.txt", "Percolator\\percolatorMzml.mzML")]
+        [TestCase("Generic", "AllPSMs.tsv")]
+        [TestCase("MsFragger", "Fragger_v4p3_psm.tsv")]
+        public static void TestOutputs(string search, string psmFilename, string mzmlFileName = "SmallCalibratible_Yeast.mzML")
         {
-            string search = "MetaMorpheus";
-            string psmFilename = "AllPSMs.psmtsv";
-
-            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
-            var pathOfIdentificationFile = Path.Combine(myDirectory, search, psmFilename);
-            var pathOfMzml = Path.Combine(myDirectory, "SmallCalibratible_Yeast.mzML");
+            var defaultDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
+            var pathOfIdentificationFile = Path.Combine(defaultDirectory, search, psmFilename);
+            var pathOfMzml = Path.Combine(defaultDirectory, mzmlFileName);
             Assert.That(File.Exists(pathOfIdentificationFile));
             Assert.That(File.Exists(pathOfMzml));
+
+            var myDirectory = Path.GetDirectoryName(pathOfMzml);
 
             string[] myargs = new string[]
             {
@@ -41,163 +48,15 @@ namespace Test
 
             CMD.FlashLfqExecutable.Main(myargs);
 
-            string peaksPath = Path.Combine(myDirectory, search, "QuantifiedPeaks.tsv");
+            string peaksPath = Path.Combine(defaultDirectory, search, "QuantifiedPeaks.tsv");
             Assert.That(File.Exists(peaksPath));
             File.Delete(peaksPath);
 
-            string peptidesPath = Path.Combine(myDirectory, search, "QuantifiedPeptides.tsv");
+            string peptidesPath = Path.Combine(defaultDirectory, search, "QuantifiedPeptides.tsv");
             Assert.That(File.Exists(peptidesPath));
             File.Delete(peptidesPath);
 
-            string proteinsPath = Path.Combine(myDirectory, search, "QuantifiedProteins.tsv");
-            Assert.That(File.Exists(proteinsPath));
-            File.Delete(proteinsPath);
-        }
-
-        [Test]
-        public static void TestMorpheusOutput()
-        {
-            string search = "Morpheus";
-            string psmFilename = "SmallCalibratible_Yeast.PSMs.tsv";
-
-            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
-            var pathOfIdentificationFile = Path.Combine(myDirectory, search, psmFilename);
-            var pathOfMzml = Path.Combine(myDirectory, "SmallCalibratible_Yeast.mzML");
-            Assert.That(File.Exists(pathOfIdentificationFile));
-            Assert.That(File.Exists(pathOfMzml));
-
-            string[] myargs = new string[]
-            {
-                "--rep",
-                myDirectory,
-                "--idt",
-                pathOfIdentificationFile,
-                "--ppm",
-                "5"
-            };
-
-            CMD.FlashLfqExecutable.Main(myargs);
-
-            string peaksPath = Path.Combine(myDirectory, search, "QuantifiedPeaks.tsv");
-            Assert.That(File.Exists(peaksPath));
-            File.Delete(peaksPath);
-
-            string peptidesPath = Path.Combine(myDirectory, search, "QuantifiedPeptides.tsv");
-            Assert.That(File.Exists(peptidesPath));
-            File.Delete(peptidesPath);
-
-            string proteinsPath = Path.Combine(myDirectory, search, "QuantifiedProteins.tsv");
-            Assert.That(File.Exists(proteinsPath));
-            File.Delete(proteinsPath);
-        }
-
-        [Test]
-        public static void TestMaxQuantOutput()
-        {
-            string search = "MaxQuant";
-            string psmFilename = "msms.txt";
-
-            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
-            var pathOfIdentificationFile = Path.Combine(myDirectory, search, psmFilename);
-            var pathOfMzml = Path.Combine(myDirectory, "SmallCalibratible_Yeast.mzML");
-            Assert.That(File.Exists(pathOfIdentificationFile));
-            Assert.That(File.Exists(pathOfMzml));
-
-            string[] myargs = new string[]
-            {
-                "--rep",
-                myDirectory,
-                "--idt",
-                pathOfIdentificationFile,
-                "--ppm",
-                "5"
-            };
-
-            CMD.FlashLfqExecutable.Main(myargs);
-
-            string peaksPath = Path.Combine(myDirectory, search, "QuantifiedPeaks.tsv");
-            Assert.That(File.Exists(peaksPath));
-            File.Delete(peaksPath);
-
-            string peptidesPath = Path.Combine(myDirectory, search, "QuantifiedPeptides.tsv");
-            Assert.That(File.Exists(peptidesPath));
-            File.Delete(peptidesPath);
-
-            string proteinsPath = Path.Combine(myDirectory, search, "QuantifiedProteins.tsv");
-            Assert.That(File.Exists(proteinsPath));
-            File.Delete(proteinsPath);
-        }
-
-        [Test]
-        public static void TestPeptideShakerOutput()
-        {
-            string search = "PeptideShaker";
-            string psmFilename = "Default PSM Report.tabular";
-
-            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
-            var pathOfIdentificationFile = Path.Combine(myDirectory, search, psmFilename);
-            var pathOfMzml = Path.Combine(myDirectory, "SmallCalibratible_Yeast.mzML");
-            Assert.That(File.Exists(pathOfIdentificationFile));
-            Assert.That(File.Exists(pathOfMzml));
-
-            string[] myargs = new string[]
-            {
-                "--rep",
-                myDirectory,
-                "--idt",
-                pathOfIdentificationFile,
-                "--ppm",
-                "5"
-            };
-
-            CMD.FlashLfqExecutable.Main(myargs);
-
-            string peaksPath = Path.Combine(myDirectory, search, "QuantifiedPeaks.tsv");
-            Assert.That(File.Exists(peaksPath));
-            File.Delete(peaksPath);
-
-            string peptidesPath = Path.Combine(myDirectory, search, "QuantifiedPeptides.tsv");
-            Assert.That(File.Exists(peptidesPath));
-            File.Delete(peptidesPath);
-
-            string proteinsPath = Path.Combine(myDirectory, search, "QuantifiedProteins.tsv");
-            Assert.That(File.Exists(proteinsPath));
-            File.Delete(proteinsPath);
-        }
-
-        [Test]
-        public static void TestPercolatorOutput()
-        {
-            string search = "Percolator";
-            string psmFilename = "percolatorTestData.txt";
-
-            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles", search);
-            var pathOfIdentificationFile = Path.Combine(myDirectory, psmFilename);
-            var pathOfMzml = Path.Combine(myDirectory, "percolatorMzml.mzML");
-            Assert.That(File.Exists(pathOfIdentificationFile));
-            Assert.That(File.Exists(pathOfMzml));
-
-            string[] myargs = new string[]
-            {
-                "--rep",
-                myDirectory,
-                "--idt",
-                pathOfIdentificationFile,
-                "--ppm",
-                "5"
-            };
-
-            FlashLfqExecutable.Main(myargs);
-
-            string peaksPath = Path.Combine(myDirectory, "QuantifiedPeaks.tsv");
-            Assert.That(File.Exists(peaksPath));
-            File.Delete(peaksPath);
-
-            string peptidesPath = Path.Combine(myDirectory, "QuantifiedPeptides.tsv");
-            Assert.That(File.Exists(peptidesPath));
-            File.Delete(peptidesPath);
-
-            string proteinsPath = Path.Combine(myDirectory, "QuantifiedProteins.tsv");
+            string proteinsPath = Path.Combine(defaultDirectory, search, "QuantifiedProteins.tsv");
             Assert.That(File.Exists(proteinsPath));
             File.Delete(proteinsPath);
         }
@@ -223,11 +82,11 @@ namespace Test
             Assert.AreEqual(6, ids.Count);
 
             //strings separated by commas should be taken literally as protein names
-            Assert.AreEqual(11,ids[0].ProteinGroups.Count);
-            List<string> expectedProteinNameStrings = new() { "sp|Q13885|TBB2A_HUMAN", "tr|M0R1I1|M0R1I1_HUMAN", "tr|Q5JP53|Q5JP53_HUMAN", 
-                "tr|M0QZL7|M0QZL7_HUMAN", "sp|P04350|TBB4A_HUMAN", "sp|P07437|TBB5_HUMAN", "sp|Q9BVA1|TBB2B_HUMAN", "tr|M0R278|M0R278_HUMAN", 
+            Assert.AreEqual(11, ids[0].ProteinGroups.Count);
+            List<string> expectedProteinNameStrings = new() { "sp|Q13885|TBB2A_HUMAN", "tr|M0R1I1|M0R1I1_HUMAN", "tr|Q5JP53|Q5JP53_HUMAN",
+                "tr|M0QZL7|M0QZL7_HUMAN", "sp|P04350|TBB4A_HUMAN", "sp|P07437|TBB5_HUMAN", "sp|Q9BVA1|TBB2B_HUMAN", "tr|M0R278|M0R278_HUMAN",
                 "tr|Q5ST81|Q5ST81_HUMAN", "sp|P68371|TBB4B_HUMAN", "tr|M0QY85|M0QY85_HUMAN" };
-            CollectionAssert.AreEquivalent(ids[0].ProteinGroups.Select(n=>n.ProteinGroupName).ToList(), expectedProteinNameStrings);  
+            CollectionAssert.AreEquivalent(ids[0].ProteinGroups.Select(n => n.ProteinGroupName).ToList(), expectedProteinNameStrings);
 
             List<double> actualRetentionTimes = ids.Select(t => Math.Round(t.Ms2RetentionTimeInMinutes, 2)).ToList();
 
@@ -257,43 +116,6 @@ namespace Test
 
             //would like better assertion with message but can't get it to return exception message...
             Assert.IsEmpty(ids);
-        }
-
-        [Test]
-        public static void TestGenericOutput()
-        {
-            string search = "Generic";
-            string psmFilename = "AllPSMs.tsv";
-
-            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
-            var pathOfIdentificationFile = Path.Combine(myDirectory, search, psmFilename);
-            var pathOfMzml = Path.Combine(myDirectory, "SmallCalibratible_Yeast.mzML");
-            Assert.That(File.Exists(pathOfIdentificationFile));
-            Assert.That(File.Exists(pathOfMzml));
-
-            string[] myargs = new string[]
-            {
-                "--rep",
-                myDirectory,
-                "--idt",
-                pathOfIdentificationFile,
-                "--ppm",
-                "5"
-            };
-
-            CMD.FlashLfqExecutable.Main(myargs);
-
-            string peaksPath = Path.Combine(myDirectory, search, "QuantifiedPeaks.tsv");
-            Assert.That(File.Exists(peaksPath));
-            File.Delete(peaksPath);
-
-            string peptidesPath = Path.Combine(myDirectory, search, "QuantifiedPeptides.tsv");
-            Assert.That(File.Exists(peptidesPath));
-            File.Delete(peptidesPath);
-
-            string proteinsPath = Path.Combine(myDirectory, search, "QuantifiedProteins.tsv");
-            Assert.That(File.Exists(proteinsPath));
-            File.Delete(proteinsPath);
         }
 
         [Test]
@@ -377,7 +199,6 @@ namespace Test
             File.Delete(proteinsPath);
         }
 
-
         [Test]
         public static void TestParallelProcessingMetaMorpheusOutput()
         {
@@ -456,7 +277,7 @@ namespace Test
             File.Delete(proteinsPath);
         }
 
-        [Test]    
+        [Test]
         public static void TestParallelProcessingMetaMorpheusOutputWithExtensionsAndWindowsPath()
         {
             string search = "Parallel";
@@ -623,7 +444,8 @@ namespace Test
 
             FlashLfqEngine e = FlashLfqSettings.CreateEngineWithSettings(settings, new List<Identification>());
 
-            var engineProperties = e.GetType().GetFields();
+
+            var engineProperties = e.FlashParams.GetType().GetProperties();
 
             // check to make sure the settings got passed properly into the engine (the settings should have identical values)
             foreach (var property in properties)
@@ -647,10 +469,21 @@ namespace Test
                 var engineProperty = engineProperties.FirstOrDefault(p => p.Name == name);
 
                 var settingsValue = property.GetValue(settings);
-                var engineValue = engineProperty.GetValue(e);
+                var engineValue = engineProperty.GetValue(e.FlashParams);
 
                 Assert.That(settingsValue, Is.EqualTo(engineValue));
             }
+        }
+
+        [Test]
+        public static void TestReadPsmsThrowsException()
+        {
+            // Arrange  
+            string invalidFilePath = "NonExistentFile.psmtsv";
+            PsmReader psmReader = new();
+
+            // Act & Assert  
+            Assert.DoesNotThrow(() => psmReader.ReadPsms(invalidFilePath, false, new List<SpectraFileInfo>()));
         }
     }
 }

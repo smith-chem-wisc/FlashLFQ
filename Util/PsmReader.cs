@@ -1,10 +1,13 @@
 ﻿using FlashLFQ;
 using MzLibUtil;
+using Readers;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
+using ThermoFisher.CommonCore.Data.Business;
 using UsefulProteomicsDatabases;
 
 namespace Util
@@ -14,7 +17,6 @@ namespace Util
 
     public class PsmReader
     {
-
         public PsmReader() 
         { 
             //Set optional columns to -1
@@ -58,8 +60,41 @@ namespace Util
             { PsmFileType.PeptideShaker, new string[] { ", " } },
         };
 
+        // TODO: 
+        // try to cast filetype as IQuantifiableResultFile
+        // var readResult as IQuantifiableResultFile
+        // 1. use Parsefiletype extension  to get supported filetype enum
+        // 2. get ResultFile by passing in filePath and enum
+        // try cast resultFile to IQuantResultFile
+        private static List<Identification> TryReadQuantifiableResultFile(string filepath, bool silent, List<SpectraFileInfo> rawfiles)
+        {
+            try
+            {
+                IQuantifiableResultFile quantifiable = FileReader.ReadQuantifiableResultFile(filepath);
+                List<Identification> identifications = quantifiable.MakeIdentifications(rawfiles);
+                if (!silent)
+                {
+                    Console.WriteLine("Done reading PSMs; found " + identifications.Count);
+                }
+                return identifications;
+            }
+            catch (Exception e)
+            {
+                // not every file read in will be a QuantifiableResultFile, support for this is still in development
+            }
+            return null;
+        }
+
+
         public List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles, double qValueThreshold = 0.01, bool usePepQValue = false)
         {
+            // check if file path can be read in using readers as QuantifiableResultFile
+            List<Identification> quantifiableIdentifications = TryReadQuantifiableResultFile(filepath, silent, rawfiles);
+            if (quantifiableIdentifications != null)
+            {
+                return quantifiableIdentifications;
+            }
+
             if (_modSequenceToMonoMass == null)
             {
                 _modSequenceToMonoMass = new Dictionary<string, double>();
