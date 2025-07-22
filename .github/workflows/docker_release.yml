@@ -33,4 +33,4 @@ jobs:
       with:
         context: "/home/runner/work/FlashLFQ/FlashLFQ"
         push: true
-        tags: smithchemwisc/flashlfq:latest , smithchemwisc/flashlfq:${{ github.event.release.tag_name }}
+        tags: smithchemwisc/flashlfq:${{ github.event.release.tag_name }}, smithchemwisc/flashlfq:latest
