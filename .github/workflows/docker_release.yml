@@ -2,7 +2,7 @@ name: Docker Upload (latest release)
 
 on:
   release:
-    types: [released]
+    types: [released, edited]
 # Runs when a new release is published
 
 jobs:
