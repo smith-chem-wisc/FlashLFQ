@@ -23,16 +23,18 @@ namespace Test
         [TestCase("Morpheus", "SmallCalibratible_Yeast.PSMs.tsv")]
         [TestCase("MaxQuant", "msms.txt")]
         [TestCase("PeptideShaker", "Default PSM Report.tabular")]
-        [TestCase("Percolator", "percolatorTestData.txt", "percolatorMzml.mzML")]
+        [TestCase("Percolator", "percolatorTestData.txt", "Percolator\\percolatorMzml.mzML")]
         [TestCase("Generic", "AllPSMs.tsv")]
         [TestCase("MsFragger", "Fragger_v4p3_psm.tsv")]
         public static void TestOutputs(string search, string psmFilename, string mzmlFileName = "SmallCalibratible_Yeast.mzML")
         {
-            var myDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
-            var pathOfIdentificationFile = Path.Combine(myDirectory, search, psmFilename);
-            var pathOfMzml = Path.Combine(myDirectory, mzmlFileName);
+            var defaultDirectory = Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles");
+            var pathOfIdentificationFile = Path.Combine(defaultDirectory, search, psmFilename);
+            var pathOfMzml = Path.Combine(defaultDirectory, mzmlFileName);
             Assert.That(File.Exists(pathOfIdentificationFile));
             Assert.That(File.Exists(pathOfMzml));
+
+            var myDirectory = Path.GetDirectoryName(pathOfMzml);
 
             string[] myargs = new string[]
             {
@@ -46,15 +48,15 @@ namespace Test
 
             CMD.FlashLfqExecutable.Main(myargs);
 
-            string peaksPath = Path.Combine(myDirectory, search, "QuantifiedPeaks.tsv");
+            string peaksPath = Path.Combine(defaultDirectory, search, "QuantifiedPeaks.tsv");
             Assert.That(File.Exists(peaksPath));
             File.Delete(peaksPath);
 
-            string peptidesPath = Path.Combine(myDirectory, search, "QuantifiedPeptides.tsv");
+            string peptidesPath = Path.Combine(defaultDirectory, search, "QuantifiedPeptides.tsv");
             Assert.That(File.Exists(peptidesPath));
             File.Delete(peptidesPath);
 
-            string proteinsPath = Path.Combine(myDirectory, search, "QuantifiedProteins.tsv");
+            string proteinsPath = Path.Combine(defaultDirectory, search, "QuantifiedProteins.tsv");
             Assert.That(File.Exists(proteinsPath));
             File.Delete(proteinsPath);
         }
