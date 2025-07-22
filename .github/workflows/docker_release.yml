@@ -1,0 +1,35 @@
+name: Docker Upload (latest release)
+
+on:
+  deployment
+# Runs when a new release is published
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+        DOCKER_USER: ${{ vars.DOCKER_USERNAME }}
+        DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Restore dependencies
+      run: dotnet restore ./FlashLFQ.sln
+    - name: Build (CMD)
+      run: dotnet publish /p:Configuration=Release ./CMD/CMD.csproj  -f net8.0
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ vars.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        context: "/home/runner/work/FlashLFQ/FlashLFQ"
+        push: true
+        tags: smithchemwisc/flashlfq:dev , smithchemwisc/flashlfq:${{ github.event.release.tag_name }}
