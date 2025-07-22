@@ -1,7 +1,8 @@
 name: Docker Upload (latest release)
 
 on:
-  deployment
+  release:
+    types: [released]
 # Runs when a new release is published
 
 jobs:
