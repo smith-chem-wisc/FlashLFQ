@@ -192,9 +192,10 @@ namespace CMD
 
             // set up IDs
             List<Identification> ids;
+            PsmReader psmReader = new();
             try
             {
-                ids = PsmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos, usePepQValue: settings.UsePepQValue).ToList();
+                ids = psmReader.ReadPsms(settings.PsmIdentificationPath, settings.Silent, spectraFileInfos, usePepQValue: settings.UsePepQValue).ToList();
             }
             catch (Exception e)
             {
@@ -203,16 +204,19 @@ namespace CMD
             }
 
             // determine which peptides should be quantified and used as donors for MBR
-            List<string> peptidesToQuantify;
-            try
+            List<string> peptidesToQuantify = null;
+            if (!settings.PeptideIdentificationPath.IsNullOrEmptyOrWhiteSpace())
             {
-                peptidesToQuantify = PsmReader.ReadPsms(settings.PeptideIdentificationPath, settings.Silent, spectraFileInfos, usePepQValue: settings.UsePepQValue)
-                    .Select(id => id.ModifiedSequence).ToList();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Problem reading Peptidess: " + e.Message);
-                return;
+                try
+                {
+                    peptidesToQuantify = psmReader.ReadPsms(settings.PeptideIdentificationPath, settings.Silent, spectraFileInfos, usePepQValue: settings.UsePepQValue)
+                        .Select(id => id.ModifiedSequence).ToList();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Problem reading Peptides: " + e.Message);
+                    return;
+                }
             }
 
             if (ids.Any())

@@ -93,7 +93,7 @@ namespace GUI
             precursorIdOnlyCheckbox.IsChecked = settings.IdSpecificChargeState;
             isotopePpmToleranceTextBox.Text = settings.IsotopePpmTolerance.ToString("F1");
             numIsotopesRequiredTextBox.Text = settings.NumIsotopesRequired.ToString();
-            mbrRtWindowTextBox.Text = settings.MbrRtWindow.ToString("F1");
+            mbrRtWindowTextBox.Text = settings.MaxMbrRtWindow.ToString("F1");
             mcmcIterationsTextBox.Text = settings.McmcSteps.ToString();
             mcmcRandomSeedTextBox.Text = settings.RandomSeed.ToString();
             requireMsmsIdInConditionCheckbox.IsChecked = settings.RequireMsmsIdInCondition;
@@ -132,7 +132,7 @@ namespace GUI
             // MBR FDR
             if (double.TryParse(mbrFDRTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out double mbrFdr))
             {
-                settings.MbrDetectionQValueThreshold = mbrFdr;
+                settings.MbrQValueThreshold = mbrFdr;
             }
             else
             {
@@ -193,7 +193,7 @@ namespace GUI
             // MBR time tolerance
             if (double.TryParse(mbrRtWindowTextBox.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out double MbrRtWindow))
             {
-                settings.MbrRtWindow = MbrRtWindow;
+                settings.MaxMbrRtWindow = MbrRtWindow;
             }
             else
             {
@@ -515,6 +515,7 @@ namespace GUI
             // read IDs
             var ids = new List<Identification>();
             List<string> peptidesToQuantify = null;
+            PsmReader psmReader = new();
 
             try
             {
@@ -522,14 +523,14 @@ namespace GUI
                 if(allPepFile!=null)
                 {
                     // Read in the peptide file, select only the peptdies that pass the q-value threshold
-                    peptidesToQuantify = PsmReader.ReadPsms(allPepFile.FilePath, false,
+                    peptidesToQuantify = psmReader.ReadPsms(allPepFile.FilePath, false,
                             spectraFiles.Select(p => p.SpectraFileInfo).ToList(), 
                             usePepQValue: settings.UsePepQValue)
                         .Select(id => id.ModifiedSequence).ToList();
                 }
                 foreach (var identFile in idFiles.Where(idFile => idFile != allPepFile))
                 {
-                    ids = ids.Concat(PsmReader.ReadPsms(identFile.FilePath, false,
+                    ids = ids.Concat(psmReader.ReadPsms(identFile.FilePath, false,
                         spectraFiles.Select(p => p.SpectraFileInfo).ToList(), 
                         usePepQValue: settings.UsePepQValue)).ToList();
                 }
@@ -622,7 +623,7 @@ namespace GUI
             {
                 try
                 {
-                    OutputWriter.WriteOutput(Directory.GetParent(spectraFiles.First().FilePath).FullName, results, flashLfqEngine.Silent,
+                    OutputWriter.WriteOutput(Directory.GetParent(spectraFiles.First().FilePath).FullName, results, flashLfqEngine.FlashParams.Silent,
                         outputFolderPath);
 
                     MessageBox.Show("Run complete");

@@ -11,8 +11,16 @@
     <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="SampleFiles\FraggerPsm_FragPipev21.1_psm.tsv" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="SampleFiles\FraggerPsm_FragPipev21.1_psm.tsv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    <PackageReference Include="mzLib" Version="1.0.553" />
+    <PackageReference Include="mzLib" Version="1.0.565" />
     <PackageReference Include="NetSerializer" Version="4.1.2" />
     <PackageReference Include="nunit" Version="4.2.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
@@ -23,14 +31,26 @@
     <ProjectReference Include="..\Util\Util.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Update="SampleFiles\ExperimentalDesign.tsv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleFiles\Generic\NewGenericInput.tsv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleFiles\MetaMorpheus\AllPeptides_NewHeader.psmtsv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleFiles\MsFragger\Fragger_v4p3_psm.tsv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="SampleFiles\Parallel\20100614_Velos1_TaGe_SA_Jurkat_3.mzML">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="SampleFiles\Parallel\20100614_Velos1_TaGe_SA_Jurkat_4.mzML">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="SampleFiles\ExperimentalDesign.tsv">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <None Update="SampleFiles\MetaMorpheus\ExperimentalDesign.tsv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="SampleFiles\Generic\AllPSMs.tsv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -61,6 +81,9 @@
     </None>
     <None Update="SampleFiles\PeptideShaker\Default PSM Report.tabular">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleFiles\percolatorMzml.mzML">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="SampleFiles\Percolator\percolatorMzml.mzML">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

@@ -1,9 +1,9 @@
-name: Docker Upload (dev)
+name: Docker Upload (latest release)
 
 on:
-  push:
-    branches: [ master ]
-# Only run when PR is merged to master
+  release:
+    types: [released, edited]
+# Runs when a new release is published
 
 jobs:
   build:
@@ -33,4 +33,4 @@ jobs:
       with:
         context: "/home/runner/work/FlashLFQ/FlashLFQ"
         push: true
-        tags: smithchemwisc/flashlfq:dev
+        tags: smithchemwisc/flashlfq:${{ github.event.release.tag_name }}, smithchemwisc/flashlfq:latest
