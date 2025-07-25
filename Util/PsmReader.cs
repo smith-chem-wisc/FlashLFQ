@@ -60,18 +60,12 @@ namespace Util
             { PsmFileType.PeptideShaker, new string[] { ", " } },
         };
 
-        // TODO: 
-        // try to cast filetype as IQuantifiableResultFile
-        // var readResult as IQuantifiableResultFile
-        // 1. use Parsefiletype extension  to get supported filetype enum
-        // 2. get ResultFile by passing in filePath and enum
-        // try cast resultFile to IQuantResultFile
-        private static List<Identification> TryReadQuantifiableResultFile(string filepath, bool silent, List<SpectraFileInfo> rawfiles)
+        private static List<Identification> TryReadQuantifiableResultFile(string filepath, bool silent, List<SpectraFileInfo> rawfiles, bool usePepQValue)
         {
             try
             {
                 IQuantifiableResultFile quantifiable = FileReader.ReadQuantifiableResultFile(filepath);
-                List<Identification> identifications = quantifiable.MakeIdentifications(rawfiles);
+                List<Identification> identifications = quantifiable.MakeIdentifications(rawfiles, usePepQValue);
                 if (!silent)
                 {
                     Console.WriteLine("Done reading PSMs; found " + identifications.Count);
@@ -89,10 +83,11 @@ namespace Util
         public List<Identification> ReadPsms(string filepath, bool silent, List<SpectraFileInfo> rawfiles, double qValueThreshold = 0.01, bool usePepQValue = false)
         {
             // check if file path can be read in using readers as QuantifiableResultFile
-            List<Identification> quantifiableIdentifications = TryReadQuantifiableResultFile(filepath, silent, rawfiles);
+            List<Identification> quantifiableIdentifications = TryReadQuantifiableResultFile(filepath, silent, rawfiles, usePepQValue);
             if (quantifiableIdentifications != null)
             {
-                return quantifiableIdentifications;
+                qValueThreshold = Math.Max(qValueThreshold, 0.01);
+                return quantifiableIdentifications.Where(id => id.QValue < qValueThreshold).ToList();
             }
 
             if (_modSequenceToMonoMass == null)
