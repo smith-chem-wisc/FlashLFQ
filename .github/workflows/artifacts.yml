@@ -1,0 +1,97 @@
+name: Artifacts (dev)
+
+# Builds the two zips that users download -- FlashLFQ.zip (command line) and FlashLFQ_GUI.zip --
+# on every push and pull request, and attaches them to the run.
+#
+# This is the job AppVeyor was still doing for this repository. It ran the same publish and the
+# same 7z command; the zip downloaded from a run here is the zip that was downloaded from an
+# AppVeyor build. Nothing else in .github/workflows produced these, which is why AppVeyor could not
+# simply be switched off.
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+# The SDK band is declared once. Nothing below names a target framework, so this is the only line
+# in this file that a framework move has to touch.
+env:
+  DOTNET_VERSION: 8.0.x
+
+jobs:
+  build:
+    name: Build zips
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore ./FlashLFQ.sln
+
+    # Published to an explicit output directory rather than read out of bin/Release/<tfm>/publish,
+    # so the zip step does not have to name the target framework. CMD and GUI target different ones
+    # (net8.0 and net8.0-windows), and both change under a framework move.
+    - name: Publish (CMD)
+      run: dotnet publish ./CMD/CMD.csproj -c Release -o publish/cmd
+
+    - name: Publish (GUI)
+      run: dotnet publish ./GUI/GUI.csproj -c Release -o publish/gui
+
+    # -x!*.xml matches what AppVeyor excluded: the XML doc files, which no user of the zip reads.
+    - name: Zip
+      run: |
+        7z a FlashLFQ.zip .\publish\cmd\* "-x!*.xml"
+        7z a FlashLFQ_GUI.zip .\publish\gui\* "-x!*.xml"
+
+    # A publish that silently produced nothing still zips and still uploads. Both zips have been
+    # ~23 MB for every release; 1 MB is far enough below that to never fire on a real build and far
+    # enough above an empty archive to catch one.
+    - name: Validate zips
+      shell: pwsh
+      run: |
+        $failed = $false
+        foreach ($zip in 'FlashLFQ.zip', 'FlashLFQ_GUI.zip') {
+          if (-not (Test-Path $zip)) {
+            Write-Host "::error::$zip was not produced"
+            $failed = $true
+            continue
+          }
+          $mb = [math]::Round((Get-Item $zip).Length / 1MB, 1)
+          if ($mb -lt 1) {
+            Write-Host "::error::$zip is $mb MB -- the publish it was built from is empty"
+            $failed = $true
+          } else {
+            Write-Host "ok: $zip ($mb MB)"
+          }
+        }
+        # The Docker image runs `dotnet /flashlfq/CMD.dll`, so a rename of the CMD assembly breaks
+        # the container and the command-line zip together, without failing any build.
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $entries = [IO.Compression.ZipFile]::OpenRead((Resolve-Path FlashLFQ.zip)).Entries.Name
+        if ($entries -notcontains 'CMD.dll') {
+          Write-Host "::error::FlashLFQ.zip does not contain CMD.dll, which is its entry point"
+          $failed = $true
+        }
+        if ($failed) { exit 1 }
+
+    - name: Upload FlashLFQ.zip
+      uses: actions/upload-artifact@v4
+      with:
+        name: FlashLFQ
+        path: FlashLFQ.zip
+        compression-level: 0
+
+    - name: Upload FlashLFQ_GUI.zip
+      uses: actions/upload-artifact@v4
+      with:
+        name: FlashLFQ_GUI
+        path: FlashLFQ_GUI.zip
+        compression-level: 0

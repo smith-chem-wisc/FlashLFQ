@@ -1,0 +1,165 @@
+name: Artifacts (latest release)
+
+# Builds FlashLFQ.zip and FlashLFQ_GUI.zip from the release tag and attaches them to the release.
+#
+# AppVeyor was configured to do this through its GitHub deployment provider, and it has failed on
+# every tag since 2.1.0 with `Error creating GitHub release: 401 - Unauthorized` -- an expired
+# token nobody sees, because the deploy runs after the artifacts have already been uploaded to
+# AppVeyor and the failure only shows up in a build log. Every release since then has been filled
+# in by hand.
+
+on:
+  release:
+    # `released` only, deliberately. `edited` would rebuild and re-upload the zips whenever anyone
+    # fixes a typo in the release notes, and bioconda's recipe pins the SHA256 of FlashLFQ.zip --
+    # a re-upload under the same tag invalidates a hash that has already been published.
+    types: [ released ]
+  # Lets a failed or superseded run be repeated against an existing tag without editing the release.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to build and upload (e.g. 2.1.5)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_VERSION: 8.0.x
+
+jobs:
+  build:
+    name: Build and attach zips
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+    - name: Resolve tag
+      id: tag
+      shell: pwsh
+      run: |
+        $tag = if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+          '${{ inputs.tag }}'
+        } else {
+          '${{ github.event.release.tag_name }}'
+        }
+        $tag = $tag.Trim()
+        if (-not $tag) { Write-Host '::error::no tag on this event'; exit 1 }
+        "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        Write-Host "building $tag"
+
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.tag.outputs.tag }}
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    # Nothing in the repository carries the release version -- the csproj files sit at 1.0.0.0 and
+    # stay there. AppVeyor patched the version in from the tag at build time and this does the same,
+    # in the working copy only. It is not cosmetic: Util writes
+    # `FlashLFQ version: <assembly version>` into the log file of every run, so without this every
+    # released copy tells its user it is version 1.0.0.0.
+    - name: Patch version from tag
+      shell: pwsh
+      run: |
+        $version = '${{ steps.tag.outputs.tag }}' -replace '^v', ''
+        # AssemblyVersion has to be numeric and four-part, so a pre-release label is dropped there
+        # and kept in <Version>.
+        $core = ($version -split '[-+]')[0]
+        $parts = $core.Split('.')
+        if ($parts.Count -lt 3) {
+          Write-Host "::error::tag must be at least Major.Minor.Patch, got '$version'"
+          exit 1
+        }
+        $fileVersion = if ($parts.Count -eq 3) { "$core.0" } else { $core }
+
+        # Read and write through the .NET file APIs with an explicit UTF-8-with-BOM encoding, which
+        # is how every one of these files is stored. Set-Content would rewrite them in whatever its
+        # default encoding is -- that differs between Windows PowerShell and pwsh, and under the
+        # former it turns the © in the copyright line into a replacement byte.
+        $utf8Bom = New-Object System.Text.UTF8Encoding($true)
+
+        foreach ($info in Get-ChildItem -Recurse -Filter AssemblyInfo.cs) {
+          $text = [IO.File]::ReadAllText($info.FullName)
+          # Anchored to the start of a line so the commented-out `// [assembly: AssemblyVersion("1.0.*")]`
+          # example just above the real attributes is left alone.
+          $text = $text -replace '(?m)^\[assembly: AssemblyVersion\("[^"]*"\)\]',     "[assembly: AssemblyVersion(""$fileVersion"")]"
+          $text = $text -replace '(?m)^\[assembly: AssemblyFileVersion\("[^"]*"\)\]', "[assembly: AssemblyFileVersion(""$fileVersion"")]"
+          [IO.File]::WriteAllText($info.FullName, $text, $utf8Bom)
+          Write-Host "patched $($info.FullName) -> $fileVersion"
+        }
+
+        foreach ($csproj in Get-ChildItem -Recurse -Filter *.csproj) {
+          $text = [IO.File]::ReadAllText($csproj.FullName)
+          if ($text -notmatch '<Version>') { continue }
+          $text = $text -replace '<Version>[^<]*</Version>', "<Version>$version</Version>"
+          [IO.File]::WriteAllText($csproj.FullName, $text, $utf8Bom)
+          Write-Host "patched $($csproj.FullName) -> $version"
+        }
+
+    - name: Restore dependencies
+      run: dotnet restore ./FlashLFQ.sln
+
+    - name: Publish (CMD)
+      run: dotnet publish ./CMD/CMD.csproj -c Release -o publish/cmd
+
+    - name: Publish (GUI)
+      run: dotnet publish ./GUI/GUI.csproj -c Release -o publish/gui
+
+    - name: Zip
+      run: |
+        7z a FlashLFQ.zip .\publish\cmd\* "-x!*.xml"
+        7z a FlashLFQ_GUI.zip .\publish\gui\* "-x!*.xml"
+
+    # Same check as artifacts.yml. An empty zip attached to a release is worse than a failed run:
+    # it is what users and the bioconda recipe download.
+    - name: Validate zips
+      shell: pwsh
+      run: |
+        $failed = $false
+        foreach ($zip in 'FlashLFQ.zip', 'FlashLFQ_GUI.zip') {
+          if (-not (Test-Path $zip)) {
+            Write-Host "::error::$zip was not produced"
+            $failed = $true
+            continue
+          }
+          $mb = [math]::Round((Get-Item $zip).Length / 1MB, 1)
+          if ($mb -lt 1) {
+            Write-Host "::error::$zip is $mb MB -- the publish it was built from is empty"
+            $failed = $true
+          } else {
+            Write-Host "ok: $zip ($mb MB)"
+          }
+        }
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $entries = [IO.Compression.ZipFile]::OpenRead((Resolve-Path FlashLFQ.zip)).Entries.Name
+        if ($entries -notcontains 'CMD.dll') {
+          Write-Host "::error::FlashLFQ.zip does not contain CMD.dll, which is its entry point"
+          $failed = $true
+        }
+        if ($failed) { exit 1 }
+
+    - name: Attach to release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: gh release upload ${{ steps.tag.outputs.tag }} FlashLFQ.zip FlashLFQ_GUI.zip --clobber -R ${{ github.repository }}
+
+    # Also kept as run artifacts, so a release whose upload step fails still has something to
+    # attach by hand rather than needing a local build.
+    - name: Upload FlashLFQ.zip
+      uses: actions/upload-artifact@v4
+      with:
+        name: FlashLFQ
+        path: FlashLFQ.zip
+        compression-level: 0
+
+    - name: Upload FlashLFQ_GUI.zip
+      uses: actions/upload-artifact@v4
+      with:
+        name: FlashLFQ_GUI
+        path: FlashLFQ_GUI.zip
+        compression-level: 0
