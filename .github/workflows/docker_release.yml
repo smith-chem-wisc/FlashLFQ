@@ -5,6 +5,14 @@ on:
     types: [released, edited]
 # Runs when a new release is published
 
+# The .NET version is declared once rather than repeated at each use. It appears in three places
+# across this repository's workflows plus the Dockerfile, and a migration that updates only some
+# of them still builds and pushes cleanly -- while shipping an image whose runtime cannot load the
+# assemblies inside it.
+env:
+  DOTNET_VERSION: 10.0.x
+  DOTNET_FRAMEWORK: net10.0
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,11 +26,11 @@ jobs:
     - name: Set up .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: ${{ env.DOTNET_VERSION }}
     - name: Restore dependencies
       run: dotnet restore ./FlashLFQ.sln
     - name: Build (CMD)
-      run: dotnet publish /p:Configuration=Release ./CMD/CMD.csproj  -f net8.0
+      run: dotnet publish /p:Configuration=Release ./CMD/CMD.csproj  -f ${{ env.DOTNET_FRAMEWORK }}
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
