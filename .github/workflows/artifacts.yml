@@ -17,7 +17,7 @@ on:
 # The SDK band is declared once. Nothing below names a target framework, so this is the only line
 # in this file that a framework move has to touch.
 env:
-  DOTNET_VERSION: 8.0.x
+  DOTNET_VERSION: 10.0.x
 
 jobs:
   build:
