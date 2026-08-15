@@ -3,6 +3,7 @@ using CommandLine.Text;
 using Easy.Common.Extensions;
 using FlashLFQ;
 using IO.ThermoRawFileReader;
+using MassSpectrometry;
 using MzLibUtil;
 using System;
 using System.Collections.Generic;

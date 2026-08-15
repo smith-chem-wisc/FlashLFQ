@@ -20,7 +20,7 @@ This repository is for the stand-alone application of FlashLFQ. FlashLFQ is also
 
 The command-line version of FlashLFQ is cross-platform (Windows, macOS, or Linux). The GUI is Windows-only.
 
-.NET 8 is required for both the command-line and GUI version: https://dotnet.microsoft.com/en-us/download/dotnet/8.0
+.NET 10 is required for both the command-line and GUI version: https://dotnet.microsoft.com/en-us/download/dotnet/10.0
 
 ## Download
 To download FlashLFQ, go [here](https://github.com/smith-chem-wisc/FlashLFQ/releases/latest). Click the FlashLFQ.zip file and extract the contents to a desired location on your computer.
