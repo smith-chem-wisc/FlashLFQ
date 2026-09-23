@@ -3,6 +3,8 @@ using MassSpectrometry;
 using NUnit.Framework;
 using Assert = NUnit.Framework.Legacy.ClassicAssert;
 using CollectionAssert = NUnit.Framework.Legacy.CollectionAssert;
+using Readers;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -125,6 +127,78 @@ namespace Test
             Assert.IsNotNull(results);
             Assert.IsTrue(results.Peaks.Values.Any(peakList => peakList.Any()),
                 "RNA quantification produced no chromatographic peaks.");
+        }
+
+        /// <summary>
+        /// Directory holding a full, real RNA dataset (six .raw files + one AllOSMs.osmtsv). It is far too
+        /// large to commit or upload, so these tests are skipped unless the dataset is present locally. The
+        /// dataset reproduces a bug reported when running FlashLFQ over it: reading the .osmtsv failed with
+        /// the misleading message "Could not interpret the PSM file header; the format was not recognized".
+        /// </summary>
+        private const string RnaDatasetDirectory = @"D:\RNA";
+
+        /// <summary>
+        /// Regression test for a bug seen when running FlashLFQ over the D:\RNA dataset. The OSM file
+        /// references EIGHT spectra files, but only SIX .raw files are supplied for quantification. The two
+        /// unmatched files (2026_09_16_*) used to make <see cref="MzLibExtensions.MakeIdentifications"/> throw
+        /// "Spectra file not found for file name...". FlashLFQ's <see cref="PsmReader.ReadPsms"/> swallowed
+        /// that exception (TryReadQuantifiableResultFile) and fell through to the legacy header parser, which
+        /// does not recognize an .osmtsv header and reported the misleading "Could not interpret the PSM file
+        /// header; the format was not recognized" - hiding the real cause.
+        ///
+        /// The fix has two parts, both exercised here:
+        ///  1. MakeIdentifications now SKIPS identifications whose spectra file was not supplied, matching the
+        ///     legacy PSM path (which returns null for PSMs with no spectrum data), so a partial file set
+        ///     reads successfully.
+        ///  2. PsmReader no longer masks errors from a recognized quantifiable file type behind the header
+        ///     message, so any genuine failure surfaces accurately.
+        /// </summary>
+        [Test]
+        public static void TestRnaDatasetOsmtsvReadSkipsUnsuppliedSpectraFiles()
+        {
+            if (!Directory.Exists(RnaDatasetDirectory))
+            {
+                Assert.Ignore($"Full RNA dataset not present at {RnaDatasetDirectory}; skipping.");
+            }
+
+            string osmPath = Path.Combine(RnaDatasetDirectory, "AllOSMs.osmtsv");
+            Assert.IsTrue(File.Exists(osmPath), $"OSM file not found at {osmPath}");
+
+            // Load the six .raw spectra files exactly as the GUI/CMD would present them to the reader.
+            var spectraFiles = Directory.GetFiles(RnaDatasetDirectory, "*.raw")
+                .OrderBy(f => f)
+                .Select((path, i) => new SpectraFileInfo(path, "RNA", i, 0, 0))
+                .ToList();
+            Assert.AreEqual(6, spectraFiles.Count, "Expected six .raw files in the dataset.");
+            var suppliedNames = spectraFiles.Select(f => f.FilenameWithoutExtension).ToHashSet();
+
+            // The dataset must actually exercise the bug: the OSM references files that are not supplied.
+            var osmFileNames = File.ReadAllLines(osmPath).Skip(1)
+                .Where(l => l.Length > 0)
+                .Select(l => l.Split('\t')[0])
+                .Distinct()
+                .ToList();
+            var unmatched = osmFileNames.Where(n => !suppliedNames.Contains(n)).ToList();
+            CollectionAssert.IsNotEmpty(unmatched,
+                "The dataset is expected to contain OSM records for files that are not supplied as spectra.");
+            TestContext.WriteLine("OSM references " + osmFileNames.Count + " files; " + unmatched.Count +
+                " have no supplied spectra and should be skipped: " + string.Join(", ", unmatched));
+
+            // 1. MakeIdentifications now skips records for the unsupplied files instead of throwing.
+            IQuantifiableResultFile quantifiable = FileReader.ReadQuantifiableResultFile(osmPath);
+            List<Identification> allIds = quantifiable.MakeIdentifications(spectraFiles);
+            CollectionAssert.IsNotEmpty(allIds, "Expected identifications for the six supplied files.");
+            Assert.IsTrue(allIds.All(id => suppliedNames.Contains(id.FileInfo.FilenameWithoutExtension)),
+                "No identification should reference a spectra file that was not supplied.");
+
+            // 2. PsmReader reads the .osmtsv without throwing and returns RNA identifications.
+            List<Identification> ids = new PsmReader().ReadPsms(osmPath, silent: true, spectraFiles);
+            CollectionAssert.IsNotEmpty(ids, "PsmReader should return identifications after the fix.");
+            Assert.IsTrue(ids.All(id => suppliedNames.Contains(id.FileInfo.FilenameWithoutExtension)),
+                "No identification should reference a spectra file that was not supplied.");
+            // RNA is ionized in negative mode; every identification should carry a negative charge state.
+            Assert.IsTrue(ids.All(id => id.PrecursorChargeState < 0),
+                "RNA identifications are expected to have negative precursor charge states.");
         }
 
         /// <summary>
