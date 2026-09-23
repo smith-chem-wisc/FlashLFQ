@@ -97,5 +97,11 @@
     <None Update="SampleFiles\SmallCalibratible_Yeast.mzML">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="SampleFiles\RNA\OsmFileForTesting.osmtsv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleFiles\RNA\OsmWithCustomMIons.osmtsv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
