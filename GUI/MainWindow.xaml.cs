@@ -556,7 +556,21 @@ namespace GUI
         }
 
         /// <summary>
-        /// Runs the FlashLFQ engine with the user's defined spectra files, ID files, and FlashLFQ 
+        /// Shows a message box on the UI thread and returns the user's response.
+        /// RunFlashLfq executes on the BackgroundWorker thread; calling MessageBox.Show directly from
+        /// that thread pops a modal dialog owned by the worker thread, which appears behind the main
+        /// window and hangs the app -- the worker blocks in the dialog's modal loop, so the run never
+        /// completes and the window can't even be closed. Marshaling to the dispatcher shows the dialog
+        /// on the UI thread, correctly owned by and modal to the main window.
+        /// </summary>
+        private MessageBoxResult ShowMessageBoxOnUiThread(string message, string caption = "Error",
+            MessageBoxButton button = MessageBoxButton.OK, MessageBoxImage image = MessageBoxImage.Hand)
+        {
+            return Dispatcher.Invoke(() => MessageBox.Show(this, message, caption, button, image));
+        }
+
+        /// <summary>
+        /// Runs the FlashLFQ engine with the user's defined spectra files, ID files, and FlashLFQ
         /// settings.
         /// </summary>
         private void RunFlashLfq()
@@ -599,30 +613,29 @@ namespace GUI
                 }
                 catch (Exception ex2)
                 {
-                    MessageBox.Show("FlashLFQ has crashed with the following error: " + e.Message +
-                    ".\nThe error report could not be written: " + ex2.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                    ShowMessageBoxOnUiThread("FlashLFQ has crashed with the following error: " + e.Message +
+                    ".\nThe error report could not be written: " + ex2.Message);
 
                     return;
                 }
 
-                MessageBox.Show("FlashLFQ could not read the PSM file: " + e.Message +
-                    ".\nError report written to " + errorReportPath, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                ShowMessageBoxOnUiThread("FlashLFQ could not read the PSM file: " + e.Message +
+                    ".\nError report written to " + errorReportPath);
 
                 return;
             }
 
             if (!ids.Any())
             {
-                MessageBox.Show("No peptide IDs for the specified spectra files were found! " +
-                    "Check to make sure the spectra file names match between the ID file and the spectra files",
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                ShowMessageBoxOnUiThread("No peptide IDs for the specified spectra files were found! " +
+                    "Check to make sure the spectra file names match between the ID file and the spectra files");
 
                 return;
             }
 
             if (ids.Any(p => p.Ms2RetentionTimeInMinutes > 500))
             {
-                var res = MessageBox.Show("It seems that some of the retention times in the PSM file(s) are in seconds and not minutes; FlashLFQ requires the RT to be in minutes. " +
+                var res = ShowMessageBoxOnUiThread("It seems that some of the retention times in the PSM file(s) are in seconds and not minutes; FlashLFQ requires the RT to be in minutes. " +
                     "Continue with the FlashLFQ run? (only click yes if the RTs are actually in minutes)",
                     "Error", MessageBoxButton.YesNo, MessageBoxImage.Hand);
 
@@ -655,14 +668,14 @@ namespace GUI
                 }
                 catch (Exception ex2)
                 {
-                    MessageBox.Show("FlashLFQ has crashed with the following error: " + ex.Message +
-                    ".\nThe error report could not be written: " + ex2.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                    ShowMessageBoxOnUiThread("FlashLFQ has crashed with the following error: " + ex.Message +
+                    ".\nThe error report could not be written: " + ex2.Message);
 
                     return;
                 }
 
-                MessageBox.Show("FlashLFQ has crashed with the following error: " + ex.Message +
-                    ".\nError report written to " + errorReportPath, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                ShowMessageBoxOnUiThread("FlashLFQ has crashed with the following error: " + ex.Message +
+                    ".\nError report written to " + errorReportPath);
 
                 return;
             }
@@ -675,11 +688,11 @@ namespace GUI
                     OutputWriter.WriteOutput(Directory.GetParent(spectraFiles.First().FilePath).FullName, results, flashLfqEngine.FlashParams.Silent,
                         outputFolderPath);
 
-                    MessageBox.Show("Run complete");
+                    ShowMessageBoxOnUiThread("Run complete", "FlashLFQ", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Could not write FlashLFQ output: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                    ShowMessageBoxOnUiThread("Could not write FlashLFQ output: " + ex.Message);
 
                     return;
                 }
