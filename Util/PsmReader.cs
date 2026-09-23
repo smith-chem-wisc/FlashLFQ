@@ -138,7 +138,22 @@ namespace Util
                 throw new Exception("Could not interpret PSM header labels from file: " + filepath);
             }
 
+            // GetFileTypeFromHeader returns Unknown (rather than throwing) when the header matches no
+            // supported format. Fail fast here: otherwise every row is parsed with Unknown column indices
+            // and throws a KeyNotFoundException on the delimiter lookup, logging two console lines per row.
+            // For a large file that exception storm floods the console/UI thread and hangs the GUI.
+            if (fileType == PsmFileType.Unknown)
+            {
+                throw new Exception("Could not interpret the PSM file header; the format was not recognized: " + filepath);
+            }
+
             var psmsGroupedByFile = inputPsms.GroupBy(p => PeriodTolerantFilenameWithoutExtension.GetPeriodTolerantFilenameWithoutExtension(p.Split('\t')[FileNameColumn])).ToList();
+
+            // Cap how many per-line read errors we log. A malformed file can fail on every row; logging two
+            // lines per failure produced hundreds of thousands of console writes that overwhelmed the GUI's
+            // output box and hung the app. After the cap we log a single summary of the remaining errors.
+            const int maxLineErrorsToLog = 50;
+            int lineErrorsEncountered = 0;
 
             foreach (var fileSpecificPsms in psmsGroupedByFile)
             {
@@ -161,12 +176,7 @@ namespace Util
                         }
                         catch (Exception e)
                         {
-                            if (!silent)
-                            {
-                                Console.WriteLine("Problem reading line in the identification file" + "; " + e.Message);
-                                Console.WriteLine("Decoy column set to: " + DecoyColumn);
-
-                            }
+                            LogLineReadError(silent, e, ref lineErrorsEncountered, maxLineErrorsToLog);
                         }
                     }
                 }
@@ -184,11 +194,7 @@ namespace Util
                         }
                         catch (Exception e)
                         {
-                            if (!silent)
-                            {
-                                Console.WriteLine("Problem reading line in the identification file" + "; " + e.Message);
-                                Console.WriteLine("Decoy column set to: " + DecoyColumn);
-                            }
+                            LogLineReadError(silent, e, ref lineErrorsEncountered, maxLineErrorsToLog);
                         }
                     }
                 }
@@ -220,22 +226,42 @@ namespace Util
             double qValue= 0;
             qValueThreshold = Math.Max(qValueThreshold, 0.01);
 
-            // only quantify PSMs below the qValueThreshold with MetaMorpheus/Morpheus/Generic results
+            // only quantify PSMs below the qValueThreshold with MetaMorpheus/Morpheus/Generic results.
+            // These use TryParse rather than Parse: throwing on every malformed q-value is very expensive
+            // under an attached debugger (first-chance exceptions) when reading large PSM files. On failure
+            // we skip the line, matching how the rest of this method handles uninterpretable fields.
+            const NumberStyles qValueStyle = NumberStyles.Float | NumberStyles.AllowThousands;
             switch (fileType)
             {
                 case (PsmFileType.MetaMorpheus):
-                    qValue = double.Parse(param[QValueNotchColumn], CultureInfo.InvariantCulture);
+                    if (!double.TryParse(param[QValueNotchColumn], qValueStyle, CultureInfo.InvariantCulture, out qValue))
+                    {
+                        if (!silent)
+                            Console.WriteLine("PSM QValue Notch was not interpretable." + "\n" + line);
+                        return null;
+                    }
                     if (qValue > qValueThreshold)
                         return null;
                     break;
                 case (PsmFileType.Morpheus): // This is legacy code, I have no idea how Morpheus files work or why Q values would be greater than 1
-                    if (double.Parse(param[QValueColumn], CultureInfo.InvariantCulture) > 1.00)
+                    if (!double.TryParse(param[QValueColumn], qValueStyle, CultureInfo.InvariantCulture, out double morpheusQValue))
+                    {
+                        if (!silent)
+                            Console.WriteLine("PSM QValue was not interpretable." + "\n" + line);
+                        return null;
+                    }
+                    if (morpheusQValue > 1.00)
                         return null;
                     break;
                 default:
                     if (QValueColumn < 0)
                         break;
-                    qValue = double.Parse(param[QValueColumn], CultureInfo.InvariantCulture);
+                    if (!double.TryParse(param[QValueColumn], qValueStyle, CultureInfo.InvariantCulture, out qValue))
+                    {
+                        if (!silent)
+                            Console.WriteLine("PSM QValue was not interpretable." + "\n" + line);
+                        return null;
+                    }
                     if (qValue > qValueThreshold)
                         return null;
                     break;
@@ -783,6 +809,31 @@ namespace Util
             }
 
             return type;
+        }
+
+        /// <summary>
+        /// Logs a per-line read error, but only up to <paramref name="maxToLog"/> of them, then emits a
+        /// single summary line. This prevents a malformed file (which can fail on every row) from flooding
+        /// the console/GUI output with hundreds of thousands of messages and hanging the application.
+        /// </summary>
+        private void LogLineReadError(bool silent, Exception e, ref int errorsEncountered, int maxToLog)
+        {
+            errorsEncountered++;
+
+            if (silent)
+            {
+                return;
+            }
+
+            if (errorsEncountered <= maxToLog)
+            {
+                Console.WriteLine("Problem reading line in the identification file" + "; " + e.Message);
+                Console.WriteLine("Decoy column set to: " + DecoyColumn);
+            }
+            else if (errorsEncountered == maxToLog + 1)
+            {
+                Console.WriteLine("Additional line-reading errors were encountered; further messages are suppressed.");
+            }
         }
 
         private static string ApplyRegex(FastaHeaderFieldRegex regex, string line)
