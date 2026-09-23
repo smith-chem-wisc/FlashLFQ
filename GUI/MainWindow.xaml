@@ -513,9 +513,16 @@
                             <TextBox x:Name="OutputFolderTextBox" ToolTip="$DATETIME is automatically replaced by the current date and time" Background="Transparent" Foreground="DarkGray" BorderBrush="DarkGray" BorderThickness="1" FontSize="13" />
                         </DockPanel>
 
-                        <!--Run button-->
-                        <Button x:Name="Run" Content="RUN FLASHLFQ" Click="Run_Click" FontSize="14" Grid.Row="2" Margin="10" Height="30"
-                                Width="200" Background="#2ecc71" Foreground="White" BorderThickness="0" />
+                        <!--Run and Reset buttons-->
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left">
+                            <Button x:Name="Run" Content="RUN FLASHLFQ" Click="Run_Click" FontSize="14" Margin="10" Height="30"
+                                    Width="200" Background="#2ecc71" Foreground="White" BorderThickness="0" />
+
+                            <!--Reset button: re-enables the settings after a run so the user can change parameters and requantify-->
+                            <Button x:Name="ResetButton" Content="RESET" Click="Reset_Click" FontSize="14" Margin="10" Height="30"
+                                    Width="200" Background="#2ecc71" Foreground="White" BorderThickness="0" IsEnabled="False"
+                                    ToolTip="Re-enable the settings after a run so you can change parameters and quantify again" />
+                        </StackPanel>
 
                         <!--Notifications-->
                         <GroupBox Header="Notifications" Grid.Row="3" Foreground="DarkGray" BorderThickness="0">

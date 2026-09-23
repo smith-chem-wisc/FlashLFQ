@@ -60,6 +60,7 @@ namespace GUI
             idFiles = new ObservableCollection<IdentificationFileForDataGrid>();
             worker = new BackgroundWorker();
             worker.DoWork += new DoWorkEventHandler(RunProgram);
+            worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(FinishedRun);
 
             flashLfqEngine = new FlashLfqEngine(new List<Identification>());
 
@@ -210,6 +211,72 @@ namespace GUI
         private void RunProgram(object sender, DoWorkEventArgs e)
         {
             RunFlashLfq();
+        }
+
+        /// <summary>
+        /// Enables or disables all of the input controls (file grids, add buttons, and settings).
+        /// The controls are disabled while a run is in progress and re-enabled when the user resets.
+        /// This mirrors MetaMorpheus's ToggleEnabledButtonsOnStartOrFinishRun.
+        /// </summary>
+        private void ToggleEnabledControlsOnStartOrFinishRun(bool enable)
+        {
+            Run.IsEnabled = enable;
+            AddIdsButton.IsEnabled = enable;
+            AddSpectraButton.IsEnabled = enable;
+            spectraFilesDataGrid.IsReadOnly = !enable;
+            identFilesDataGrid.IsReadOnly = !enable;
+            ppmToleranceTextBox.IsEnabled = enable;
+            normalizeCheckbox.IsEnabled = enable;
+            mbrCheckbox.IsEnabled = enable;
+            MbrFdrPanel.IsEnabled = enable;
+            sharedPeptideCheckbox.IsEnabled = enable;
+            pepQValueCheckbox.IsEnabled = enable;
+            bayesianCheckbox.IsEnabled = enable;
+            BayesianSettings1.IsEnabled = enable;
+            BayesianSettings2.IsEnabled = enable;
+            integrateCheckBox.IsEnabled = enable;
+            precursorIdOnlyCheckbox.IsEnabled = enable;
+            isotopePpmToleranceTextBox.IsEnabled = enable;
+            numIsotopesRequiredTextBox.IsEnabled = enable;
+            requireMsmsIdInConditionCheckbox.IsEnabled = enable;
+            mbrRtWindowTextBox.IsEnabled = enable;
+            mcmcIterationsTextBox.IsEnabled = enable;
+            mcmcRandomSeedTextBox.IsEnabled = enable;
+        }
+
+        /// <summary>
+        /// Fires when the BackgroundWorker finishes a run (whether it succeeded or returned early on an
+        /// error). The input controls stay disabled so the completed run's settings are preserved, but
+        /// the reset button is enabled so the user can change parameters and quantify again.
+        /// </summary>
+        private void FinishedRun(object sender, RunWorkerCompletedEventArgs e)
+        {
+            ResetButton.IsEnabled = true;
+        }
+
+        /// <summary>
+        /// This event fires when the user clicks the "Reset" button after a run. It re-enables the input
+        /// controls so the user can change parameters and requantify, without having to restart the program.
+        /// The output folder is restored to the auto-dated template so a re-run writes to a fresh folder.
+        /// </summary>
+        private void Reset_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleEnabledControlsOnStartOrFinishRun(true);
+            ResetButton.IsEnabled = false;
+
+            // restore the output folder to the auto-dated template so the next run doesn't overwrite the previous one
+            if (spectraFiles.Any())
+            {
+                var pathOfFirstSpectraFile = Path.GetDirectoryName(spectraFiles.First().FilePath);
+                OutputFolderTextBox.Text = Path.Combine(pathOfFirstSpectraFile, @"FlashLFQ_$DATETIME");
+            }
+            else
+            {
+                OutputFolderTextBox.Text = "";
+            }
+
+            // restore the "open output folder" button to its default (non-highlighted) color
+            OpenOutputFolderButton.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3f3c4d"));
         }
 
         /// <summary>
@@ -435,28 +502,9 @@ namespace GUI
 
                 WriteExperimentalDesignToFile();
 
-                // disable everything except opening output folder
-                Run.IsEnabled = false;
-                AddIdsButton.IsEnabled = false;
-                AddSpectraButton.IsEnabled = false;
-                spectraFilesDataGrid.IsReadOnly = true;
-                identFilesDataGrid.IsReadOnly = true;
-                ppmToleranceTextBox.IsEnabled = false;
-                normalizeCheckbox.IsEnabled = false;
-                mbrCheckbox.IsEnabled = false;
-                MbrFdrPanel.IsEnabled = false;
-                sharedPeptideCheckbox.IsEnabled = false;
-                bayesianCheckbox.IsEnabled = false;
-                BayesianSettings1.IsEnabled = false;
-                BayesianSettings2.IsEnabled = false;
-                integrateCheckBox.IsEnabled = false;
-                precursorIdOnlyCheckbox.IsEnabled = false;
-                isotopePpmToleranceTextBox.IsEnabled = false;
-                numIsotopesRequiredTextBox.IsEnabled = false;
-                requireMsmsIdInConditionCheckbox.IsEnabled = false;
-                mbrRtWindowTextBox.IsEnabled = false;
-                mcmcIterationsTextBox.IsEnabled = false;
-                mcmcRandomSeedTextBox.IsEnabled = false;
+                // disable everything except opening output folder; the run can't be reset while it's in progress
+                ToggleEnabledControlsOnStartOrFinishRun(false);
+                ResetButton.IsEnabled = false;
 
                 OpenOutputFolderButton.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2ecc71"));
 
@@ -508,7 +556,21 @@ namespace GUI
         }
 
         /// <summary>
-        /// Runs the FlashLFQ engine with the user's defined spectra files, ID files, and FlashLFQ 
+        /// Shows a message box on the UI thread and returns the user's response.
+        /// RunFlashLfq executes on the BackgroundWorker thread; calling MessageBox.Show directly from
+        /// that thread pops a modal dialog owned by the worker thread, which appears behind the main
+        /// window and hangs the app -- the worker blocks in the dialog's modal loop, so the run never
+        /// completes, FinishedRun never fires, and the window can't even be closed. Marshaling to the
+        /// dispatcher shows the dialog on the UI thread, correctly owned by and modal to the main window.
+        /// </summary>
+        private MessageBoxResult ShowMessageBoxOnUiThread(string message, string caption = "Error",
+            MessageBoxButton button = MessageBoxButton.OK, MessageBoxImage image = MessageBoxImage.Hand)
+        {
+            return Dispatcher.Invoke(() => MessageBox.Show(this, message, caption, button, image));
+        }
+
+        /// <summary>
+        /// Runs the FlashLFQ engine with the user's defined spectra files, ID files, and FlashLFQ
         /// settings.
         /// </summary>
         private void RunFlashLfq()
@@ -551,30 +613,29 @@ namespace GUI
                 }
                 catch (Exception ex2)
                 {
-                    MessageBox.Show("FlashLFQ has crashed with the following error: " + e.Message +
-                    ".\nThe error report could not be written: " + ex2.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                    ShowMessageBoxOnUiThread("FlashLFQ has crashed with the following error: " + e.Message +
+                    ".\nThe error report could not be written: " + ex2.Message);
 
                     return;
                 }
 
-                MessageBox.Show("FlashLFQ could not read the PSM file: " + e.Message +
-                    ".\nError report written to " + errorReportPath, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                ShowMessageBoxOnUiThread("FlashLFQ could not read the PSM file: " + e.Message +
+                    ".\nError report written to " + errorReportPath);
 
                 return;
             }
 
             if (!ids.Any())
             {
-                MessageBox.Show("No peptide IDs for the specified spectra files were found! " +
-                    "Check to make sure the spectra file names match between the ID file and the spectra files",
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                ShowMessageBoxOnUiThread("No peptide IDs for the specified spectra files were found! " +
+                    "Check to make sure the spectra file names match between the ID file and the spectra files");
 
                 return;
             }
 
             if (ids.Any(p => p.Ms2RetentionTimeInMinutes > 500))
             {
-                var res = MessageBox.Show("It seems that some of the retention times in the PSM file(s) are in seconds and not minutes; FlashLFQ requires the RT to be in minutes. " +
+                var res = ShowMessageBoxOnUiThread("It seems that some of the retention times in the PSM file(s) are in seconds and not minutes; FlashLFQ requires the RT to be in minutes. " +
                     "Continue with the FlashLFQ run? (only click yes if the RTs are actually in minutes)",
                     "Error", MessageBoxButton.YesNo, MessageBoxImage.Hand);
 
@@ -607,14 +668,14 @@ namespace GUI
                 }
                 catch (Exception ex2)
                 {
-                    MessageBox.Show("FlashLFQ has crashed with the following error: " + ex.Message +
-                    ".\nThe error report could not be written: " + ex2.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                    ShowMessageBoxOnUiThread("FlashLFQ has crashed with the following error: " + ex.Message +
+                    ".\nThe error report could not be written: " + ex2.Message);
 
                     return;
                 }
 
-                MessageBox.Show("FlashLFQ has crashed with the following error: " + ex.Message +
-                    ".\nError report written to " + errorReportPath, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                ShowMessageBoxOnUiThread("FlashLFQ has crashed with the following error: " + ex.Message +
+                    ".\nError report written to " + errorReportPath);
 
                 return;
             }
@@ -627,11 +688,11 @@ namespace GUI
                     OutputWriter.WriteOutput(Directory.GetParent(spectraFiles.First().FilePath).FullName, results, flashLfqEngine.FlashParams.Silent,
                         outputFolderPath);
 
-                    MessageBox.Show("Run complete");
+                    ShowMessageBoxOnUiThread("Run complete", "FlashLFQ", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Could not write FlashLFQ output: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+                    ShowMessageBoxOnUiThread("Could not write FlashLFQ output: " + ex.Message);
 
                     return;
                 }
