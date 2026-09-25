@@ -1,0 +1,321 @@
+using FlashLFQ;
+using MassSpectrometry;
+using NUnit.Framework;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
+using CollectionAssert = NUnit.Framework.Legacy.CollectionAssert;
+using Readers;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Util;
+
+namespace Test
+{
+    /// <summary>
+    /// Tests for FlashLFQ's RNA/oligonucleotide support, which is driven by the "RNA Mode" option and
+    /// by supplying an .osmtsv (oligo spectrum match) identification file. RNA is quantified in negative
+    /// mode, so identifications carry negative charge states, and the engine builds theoretical isotope
+    /// distributions from the ribonucleotide model rather than the amino-acid one.
+    /// </summary>
+    [TestFixture]
+    internal class TestRna
+    {
+        private static string RnaDirectory =>
+            Path.Combine(TestContext.CurrentContext.TestDirectory, "SampleFiles", "RNA");
+
+        /// <summary>
+        /// The .osmtsv file is read through the same IQuantifiableResultFile path the app uses. Every
+        /// identification it produces should be an RNA oligo: a ribonucleotide base sequence carrying a
+        /// negative precursor charge.
+        /// </summary>
+        [Test]
+        public static void TestReadRnaOsmtsvIdentifications()
+        {
+            string osmPath = Path.Combine(RnaDirectory, "OsmFileForTesting.osmtsv");
+            Assert.That(File.Exists(osmPath));
+
+            // The OSM file references two spectra files. Their contents are irrelevant to reading the
+            // identifications - only the file names have to match - so placeholder SpectraFileInfos suffice.
+            var spectraFiles = new List<SpectraFileInfo>
+            {
+                new SpectraFileInfo(Path.Combine(RnaDirectory, "20250612_RNA-Mix_10V.mzML"), "RNA", 0, 0, 0),
+                new SpectraFileInfo(Path.Combine(RnaDirectory, "20250612_RNA-Mix_30V.mzML"), "RNA", 1, 0, 0),
+            };
+
+            List<Identification> ids = new PsmReader().ReadPsms(osmPath, silent: true, spectraFiles);
+
+            Assert.AreEqual(6, ids.Count);
+            // RNA is ionized in negative mode; these identifications are all 5- precursors.
+            Assert.IsTrue(ids.All(id => id.PrecursorChargeState < 0));
+            CollectionAssert.AreEquivalent(new[] { -5 }, ids.Select(id => id.PrecursorChargeState).Distinct().ToArray());
+            // Base sequences are ribonucleotides (A/C/G/U only), not amino acids.
+            Assert.IsTrue(ids.All(id => id.BaseSequence.All(c => "ACGU".Contains(c))));
+            Assert.IsTrue(ids.All(id => id.BaseSequence == "UUCAAGUAAUCCAGGAUAGGCU"));
+            // Monoisotopic masses for a 22mer oligo land in the ~7000 Da range.
+            Assert.IsTrue(ids.All(id => id.MonoisotopicMass > 6900 && id.MonoisotopicMass < 7100));
+        }
+
+        /// <summary>
+        /// Verifies the RNA Mode setting flows from FlashLfqSettings into the engine parameters. This is
+        /// the switch the GUI checkbox and the CMD --rna/.osmtsv detection both toggle.
+        /// </summary>
+        [Test]
+        public static void TestRnaModeSettingReachesEngine()
+        {
+            var id = MakeRnaIdentification();
+
+            var rnaSettings = new FlashLfqSettings { RnaMode = true, MaxThreads = 1 };
+            FlashLfqEngine rnaEngine = FlashLfqSettings.CreateEngineWithSettings(rnaSettings, new List<Identification> { id });
+            Assert.IsTrue(rnaEngine.FlashParams.RnaMode);
+
+            var peptideSettings = new FlashLfqSettings { RnaMode = false, MaxThreads = 1 };
+            FlashLfqEngine peptideEngine = FlashLfqSettings.CreateEngineWithSettings(peptideSettings, new List<Identification> { id });
+            Assert.IsFalse(peptideEngine.FlashParams.RnaMode);
+        }
+
+        /// <summary>
+        /// RNA Mode defaults to off, matching the historical peptide-only behavior.
+        /// </summary>
+        [Test]
+        public static void TestRnaModeDefaultsOff()
+        {
+            Assert.IsFalse(new FlashLfqSettings().RnaMode);
+            Assert.IsFalse(new FlashLfqParameters().RnaMode);
+        }
+
+        /// <summary>
+        /// Full RNA quantification, exercised only when RNA spectra matching the OSM's file names are
+        /// present in SampleFiles/RNA. Any .raw or .mzML dropped there whose name matches a "File Name"
+        /// in the OSM file makes this run a real end-to-end RNA quantification; otherwise it is ignored.
+        /// </summary>
+        [Test]
+        public static void TestRnaEndToEndQuantification()
+        {
+            string osmPath = Path.Combine(RnaDirectory, "OsmFileForTesting.osmtsv");
+            Assert.That(File.Exists(osmPath));
+
+            var osmFileNames = File.ReadAllLines(osmPath).Skip(1)
+                .Where(line => line.Length > 0)
+                .Select(line => line.Split('\t')[0])
+                .Distinct()
+                .ToHashSet();
+
+            var spectraPaths = Directory.GetFiles(RnaDirectory)
+                .Where(f => new[] { ".raw", ".mzml" }.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                .Where(f => osmFileNames.Contains(Path.GetFileNameWithoutExtension(f)))
+                .OrderBy(f => f)
+                .ToList();
+
+            if (!spectraPaths.Any())
+            {
+                Assert.Ignore("No RNA spectra (.raw/.mzML) matching the OSM file names were found in " +
+                    "SampleFiles/RNA. Drop matching spectra there to run a full RNA quantification.");
+            }
+
+            var spectraFiles = spectraPaths
+                .Select((path, i) => new SpectraFileInfo(path, "RNA", i, 0, 0))
+                .ToList();
+
+            List<Identification> ids = new PsmReader().ReadPsms(osmPath, silent: true, spectraFiles);
+            Assert.IsNotEmpty(ids);
+
+            var settings = new FlashLfqSettings { RnaMode = true, MaxThreads = 1 };
+            FlashLfqEngine engine = FlashLfqSettings.CreateEngineWithSettings(settings, ids);
+            FlashLfqResults results = engine.Run();
+
+            Assert.IsNotNull(results);
+            Assert.IsTrue(results.Peaks.Values.Any(peakList => peakList.Any()),
+                "RNA quantification produced no chromatographic peaks.");
+        }
+
+        /// <summary>
+        /// Concrete end-to-end RNA quantification over the committed RnaStandard negative-mode dataset:
+        /// AllOSMs.osmtsv (54 oligo spectrum matches, all of the 16mer AUCCAGUGCAGUACUG across charge
+        /// states 4- to 8-) paired with RnaStandard_Subset.mzML. The spectra file is a size-reduced slice
+        /// of the original acquisition, retaining only the MS1 scans over the oligo's elution (RT ~67.3 to
+        /// ~69.0 min) so that it commits small while still containing one clean chromatographic peak.
+        ///
+        /// Unlike <see cref="TestRnaEndToEndQuantification"/>, both inputs are committed, so this always
+        /// runs the full path the GUI/CMD take in RNA Mode: read the .osmtsv identifications, build the RNA
+        /// engine, run it, and integrate an MS1 chromatographic peak for the oligo.
+        /// </summary>
+        [Test]
+        public static void TestRnaEndToEndQuantificationRnaStandard()
+        {
+            const string oligo = "AUCCAGUGCAGUACUG";
+            string osmPath = Path.Combine(RnaDirectory, "AllOSMs.osmtsv");
+            string mzmlPath = Path.Combine(RnaDirectory, "RnaStandard_Subset.mzML");
+            Assert.That(File.Exists(osmPath), $"OSM file not found at {osmPath}");
+            Assert.That(File.Exists(mzmlPath), $"Spectra file not found at {mzmlPath}");
+
+            var spectraFile = new SpectraFileInfo(mzmlPath, "RNA", 0, 0, 0);
+
+            // Read the identifications through the same reader the app uses.
+            List<Identification> ids = new PsmReader()
+                .ReadPsms(osmPath, silent: true, new List<SpectraFileInfo> { spectraFile });
+            Assert.IsNotEmpty(ids);
+            // Every identification is the same RNA oligo (A/C/G/U bases) ionized in negative mode.
+            Assert.IsTrue(ids.All(id => id.BaseSequence == oligo));
+            Assert.IsTrue(ids.All(id => id.PrecursorChargeState < 0),
+                "RNA identifications are expected to have negative precursor charge states.");
+
+            // Run a full RNA-mode quantification.
+            var settings = new FlashLfqSettings { RnaMode = true, MaxThreads = 1 };
+            FlashLfqEngine engine = FlashLfqSettings.CreateEngineWithSettings(settings, ids);
+            FlashLfqResults results = engine.Run();
+
+            Assert.IsNotNull(results);
+            Assert.IsTrue(results.Peaks.ContainsKey(spectraFile),
+                "No results were produced for the supplied spectra file.");
+
+            List<ChromatographicPeak> peaks = results.Peaks[spectraFile];
+            Assert.IsNotEmpty(peaks);
+
+            // The slice was chosen to contain exactly one clean peak: the oligo should be quantified with a
+            // positive MS1 intensity, and it should be the only detected (positive-intensity) peak.
+            var quantified = peaks.Where(p => p.Intensity > 0).ToList();
+            Assert.AreEqual(1, quantified.Count,
+                "Expected exactly one quantified peak in the single-peak RNA slice.");
+
+            ChromatographicPeak oligoPeak = quantified.Single();
+            Assert.IsTrue(oligoPeak.Identifications.All(id => id.BaseSequence == oligo));
+            Assert.IsTrue(oligoPeak.Intensity > 0,
+                "The oligo was identified but not quantified: no MS1 chromatographic peak was found.");
+            // The peak apex should fall within the retained elution window.
+            Assert.IsNotNull(oligoPeak.Apex);
+            double apexRt = oligoPeak.Apex.IndexedPeak.RetentionTime;
+            Assert.IsTrue(apexRt > 67.0 && apexRt < 69.0,
+                $"Peak apex retention time {apexRt} is outside the retained slice window.");
+        }
+
+        /// <summary>
+        /// Directory holding a full, real RNA dataset (six .raw files + one AllOSMs.osmtsv). It is far too
+        /// large to commit or upload, so these tests are skipped unless the dataset is present locally. The
+        /// dataset reproduces a bug reported when running FlashLFQ over it: reading the .osmtsv failed with
+        /// the misleading message "Could not interpret the PSM file header; the format was not recognized".
+        /// </summary>
+        private const string RnaDatasetDirectory = @"D:\RNA";
+
+        /// <summary>
+        /// Regression test for a bug seen when running FlashLFQ over the D:\RNA dataset. The OSM file
+        /// references EIGHT spectra files, but only SIX .raw files are supplied for quantification. The two
+        /// unmatched files (2026_09_16_*) used to make <see cref="MzLibExtensions.MakeIdentifications"/> throw
+        /// "Spectra file not found for file name...". FlashLFQ's <see cref="PsmReader.ReadPsms"/> swallowed
+        /// that exception (TryReadQuantifiableResultFile) and fell through to the legacy header parser, which
+        /// does not recognize an .osmtsv header and reported the misleading "Could not interpret the PSM file
+        /// header; the format was not recognized" - hiding the real cause.
+        ///
+        /// The fix has two parts, both exercised here:
+        ///  1. MakeIdentifications now SKIPS identifications whose spectra file was not supplied, matching the
+        ///     legacy PSM path (which returns null for PSMs with no spectrum data), so a partial file set
+        ///     reads successfully.
+        ///  2. PsmReader no longer masks errors from a recognized quantifiable file type behind the header
+        ///     message, so any genuine failure surfaces accurately.
+        /// </summary>
+        [Test]
+        public static void TestRnaDatasetOsmtsvReadSkipsUnsuppliedSpectraFiles()
+        {
+            if (!Directory.Exists(RnaDatasetDirectory))
+            {
+                Assert.Ignore($"Full RNA dataset not present at {RnaDatasetDirectory}; skipping.");
+            }
+
+            string osmPath = Path.Combine(RnaDatasetDirectory, "AllOSMs.osmtsv");
+            Assert.IsTrue(File.Exists(osmPath), $"OSM file not found at {osmPath}");
+
+            // Load the six .raw spectra files exactly as the GUI/CMD would present them to the reader.
+            var spectraFiles = Directory.GetFiles(RnaDatasetDirectory, "*.raw")
+                .OrderBy(f => f)
+                .Select((path, i) => new SpectraFileInfo(path, "RNA", i, 0, 0))
+                .ToList();
+            Assert.AreEqual(6, spectraFiles.Count, "Expected six .raw files in the dataset.");
+            var suppliedNames = spectraFiles.Select(f => f.FilenameWithoutExtension).ToHashSet();
+
+            // The dataset must actually exercise the bug: the OSM references files that are not supplied.
+            var osmFileNames = File.ReadAllLines(osmPath).Skip(1)
+                .Where(l => l.Length > 0)
+                .Select(l => l.Split('\t')[0])
+                .Distinct()
+                .ToList();
+            var unmatched = osmFileNames.Where(n => !suppliedNames.Contains(n)).ToList();
+            CollectionAssert.IsNotEmpty(unmatched,
+                "The dataset is expected to contain OSM records for files that are not supplied as spectra.");
+            TestContext.WriteLine("OSM references " + osmFileNames.Count + " files; " + unmatched.Count +
+                " have no supplied spectra and should be skipped: " + string.Join(", ", unmatched));
+
+            // 1. MakeIdentifications now skips records for the unsupplied files instead of throwing.
+            IQuantifiableResultFile quantifiable = FileReader.ReadQuantifiableResultFile(osmPath);
+            List<Identification> allIds = quantifiable.MakeIdentifications(spectraFiles);
+            CollectionAssert.IsNotEmpty(allIds, "Expected identifications for the six supplied files.");
+            Assert.IsTrue(allIds.All(id => suppliedNames.Contains(id.FileInfo.FilenameWithoutExtension)),
+                "No identification should reference a spectra file that was not supplied.");
+
+            // 2. PsmReader reads the .osmtsv without throwing and returns RNA identifications.
+            List<Identification> ids = new PsmReader().ReadPsms(osmPath, silent: true, spectraFiles);
+            CollectionAssert.IsNotEmpty(ids, "PsmReader should return identifications after the fix.");
+            Assert.IsTrue(ids.All(id => suppliedNames.Contains(id.FileInfo.FilenameWithoutExtension)),
+                "No identification should reference a spectra file that was not supplied.");
+            // RNA is ionized in negative mode; every identification should carry a negative charge state.
+            Assert.IsTrue(ids.All(id => id.PrecursorChargeState < 0),
+                "RNA identifications are expected to have negative precursor charge states.");
+        }
+
+        /// <summary>
+        /// CI-runnable version of <see cref="TestRnaDatasetOsmtsvReadSkipsUnsuppliedSpectraFiles"/> that uses
+        /// committed data instead of the local D:\RNA dataset. AllOSMs_PlusUnloadedFile.osmtsv references two
+        /// spectra files - the committed RnaStandard_Subset and a fabricated "UnloadedRnaFile_NotSupplied" that
+        /// is never supplied - so it exercises the partial-file-set fix: MakeIdentifications must skip the
+        /// records for the unsupplied file (rather than throwing "Spectra file not found"), and PsmReader must
+        /// read the .osmtsv without falling through to the legacy header parser.
+        /// </summary>
+        [Test]
+        public static void TestOsmtsvReadSkipsUnsuppliedSpectraFilesCommittedData()
+        {
+            string osmPath = Path.Combine(RnaDirectory, "AllOSMs_PlusUnloadedFile.osmtsv");
+            Assert.IsTrue(File.Exists(osmPath), $"OSM file not found at {osmPath}");
+
+            // Supply only the committed spectra file; the OSM also references an unloaded one.
+            var spectraFile = new SpectraFileInfo(
+                Path.Combine(RnaDirectory, "RnaStandard_Subset.mzML"), "RNA", 0, 0, 0);
+            var spectraFiles = new List<SpectraFileInfo> { spectraFile };
+            var suppliedNames = spectraFiles.Select(f => f.FilenameWithoutExtension).ToHashSet();
+
+            // The OSM must actually reference a file that is not supplied, or the test proves nothing.
+            var osmFileNames = File.ReadAllLines(osmPath).Skip(1)
+                .Where(l => l.Length > 0)
+                .Select(l => l.Split('\t')[0])
+                .Distinct()
+                .ToList();
+            CollectionAssert.Contains(osmFileNames, "UnloadedRnaFile_NotSupplied",
+                "The committed OSM is expected to reference an unsupplied spectra file.");
+
+            // 1. MakeIdentifications skips records for the unsupplied file instead of throwing.
+            IQuantifiableResultFile quantifiable = FileReader.ReadQuantifiableResultFile(osmPath);
+            List<Identification> allIds = quantifiable.MakeIdentifications(spectraFiles);
+            CollectionAssert.IsNotEmpty(allIds, "Expected identifications for the supplied file.");
+            Assert.IsTrue(allIds.All(id => suppliedNames.Contains(id.FileInfo.FilenameWithoutExtension)),
+                "No identification should reference the unsupplied spectra file.");
+
+            // 2. PsmReader reads the .osmtsv without throwing and returns only supplied-file identifications.
+            List<Identification> ids = new PsmReader().ReadPsms(osmPath, silent: true, spectraFiles);
+            CollectionAssert.IsNotEmpty(ids, "PsmReader should return identifications after the fix.");
+            Assert.IsTrue(ids.All(id => suppliedNames.Contains(id.FileInfo.FilenameWithoutExtension)),
+                "No identification should reference the unsupplied spectra file.");
+            Assert.IsTrue(ids.All(id => id.PrecursorChargeState < 0),
+                "RNA identifications are expected to have negative precursor charge states.");
+        }
+
+        /// <summary>
+        /// A real RNA oligonucleotide identification (a 12mer) with a negative charge state, used to build
+        /// an engine without needing spectra on disk.
+        /// </summary>
+        private static Identification MakeRnaIdentification()
+        {
+            var rna = new global::Transcriptomics.RNA("GUACGUACGUAC");
+            var file = new SpectraFileInfo(Path.Combine(RnaDirectory, "rna.mzML"), "RNA", 0, 0, 0);
+            return new Identification(file, "GUACGUACGUAC", "GUACGUACGUAC",
+                rna.MonoisotopicMass, 5.0, -3, new List<ProteinGroup>());
+        }
+    }
+}

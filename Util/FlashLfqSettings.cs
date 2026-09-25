@@ -95,6 +95,9 @@ namespace Util
         [Option("usepepq", Default = false, HelpText = "bool; determines whether PEP Q Value should be used to determine which peptides to quantify")]
         public bool UsePepQValue { get; set; }
 
+        [Option("rna", Default = false, HelpText = "bool; RNA mode - quantifies oligonucleotides instead of peptides. Automatically enabled when an .osmtsv identification file is provided")]
+        public bool RnaMode { get; set; }
+
         //TODO: paired samples
 
 
@@ -112,6 +115,7 @@ namespace Util
             NumIsotopesRequired = f.NumIsotopesRequired;
             IdSpecificChargeState = f.IdSpecificChargeState;
             MaxThreads = f.MaxThreads;
+            RnaMode = f.RnaMode;
 
             MatchBetweenRuns = f.MatchBetweenRuns;
             MaxMbrRtWindow = f.MaxMbrRtWindow; 
@@ -158,7 +162,9 @@ namespace Util
                 mcmcBurninSteps: settings.McmcBurninSteps,
                 useSharedPeptidesForProteinQuant: settings.UseSharedPeptidesForProteinQuant,
                 randomSeed: settings.RandomSeed,
-                peptideSequencesToQuantify: peptidesForMbr
+                peptideSequencesToQuantify: peptidesForMbr,
+
+                rnaMode: settings.RnaMode
                 );
         }
 

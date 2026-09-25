@@ -55,6 +55,18 @@ namespace CMD
                 return;
             }
 
+            // .osmtsv identification files contain oligonucleotide (RNA) spectrum matches, so their
+            // presence switches FlashLFQ into RNA mode. An explicit --rna flag also enables it.
+            if (Path.GetExtension(settings.PsmIdentificationPath).Equals(".osmtsv", StringComparison.OrdinalIgnoreCase))
+            {
+                settings.RnaMode = true;
+            }
+
+            if (settings.RnaMode && !settings.Silent)
+            {
+                Console.WriteLine("RNA mode enabled: quantifying oligonucleotides.");
+            }
+
             // check to see if experimental design file exists
             string assumedPathToExpDesign = Path.Combine(settings.SpectraFileRepository, "ExperimentalDesign.tsv");
             if ((settings.Normalize || settings.BayesianProteinQuant) && !File.Exists(assumedPathToExpDesign))

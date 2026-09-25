@@ -63,21 +63,29 @@ namespace Util
 
         private static List<Identification> TryReadQuantifiableResultFile(string filepath, bool silent, List<SpectraFileInfo> rawfiles, bool usePepQValue)
         {
+            IQuantifiableResultFile quantifiable;
             try
             {
-                IQuantifiableResultFile quantifiable = FileReader.ReadQuantifiableResultFile(filepath);
-                List<Identification> identifications = quantifiable.MakeIdentifications(rawfiles, usePepQValue);
-                if (!silent)
-                {
-                    Console.WriteLine("Done reading PSMs; found " + identifications.Count);
-                }
-                return identifications;
+                quantifiable = FileReader.ReadQuantifiableResultFile(filepath);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                // not every file read in will be a QuantifiableResultFile, support for this is still in development
+                // The file's type is not a recognized IQuantifiableResultFile (e.g. a MaxQuant, Morpheus,
+                // Percolator, or PeptideShaker format handled only by the legacy header-based reader below).
+                // Returning null lets ReadPsms fall back to that legacy path.
+                return null;
             }
-            return null;
+
+            // The file type IS a quantifiable result file, so any failure turning it into identifications is
+            // a real error (e.g. the file references a spectra file that was not supplied for the run). Let it
+            // propagate instead of falling through to the legacy header parser, which would otherwise mask the
+            // real cause behind a misleading "the format was not recognized" message.
+            List<Identification> identifications = quantifiable.MakeIdentifications(rawfiles, usePepQValue);
+            if (!silent)
+            {
+                Console.WriteLine("Done reading PSMs; found " + identifications.Count);
+            }
+            return identifications;
         }
 
 
