@@ -20,7 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    <PackageReference Include="mzLib" Version="1.0.593" />
+    <PackageReference Include="mzLib" Version="1.0.592" />
     <PackageReference Include="NetSerializer" Version="4.1.2" />
     <PackageReference Include="nunit" Version="4.2.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
@@ -104,6 +104,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="SampleFiles\RNA\AllOSMs.osmtsv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleFiles\RNA\AllOSMs_PlusUnloadedFile.osmtsv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="SampleFiles\RNA\RnaStandard_Subset.mzML">

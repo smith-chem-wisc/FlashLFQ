@@ -262,6 +262,51 @@ namespace Test
         }
 
         /// <summary>
+        /// CI-runnable version of <see cref="TestRnaDatasetOsmtsvReadSkipsUnsuppliedSpectraFiles"/> that uses
+        /// committed data instead of the local D:\RNA dataset. AllOSMs_PlusUnloadedFile.osmtsv references two
+        /// spectra files - the committed RnaStandard_Subset and a fabricated "UnloadedRnaFile_NotSupplied" that
+        /// is never supplied - so it exercises the partial-file-set fix: MakeIdentifications must skip the
+        /// records for the unsupplied file (rather than throwing "Spectra file not found"), and PsmReader must
+        /// read the .osmtsv without falling through to the legacy header parser.
+        /// </summary>
+        [Test]
+        public static void TestOsmtsvReadSkipsUnsuppliedSpectraFilesCommittedData()
+        {
+            string osmPath = Path.Combine(RnaDirectory, "AllOSMs_PlusUnloadedFile.osmtsv");
+            Assert.IsTrue(File.Exists(osmPath), $"OSM file not found at {osmPath}");
+
+            // Supply only the committed spectra file; the OSM also references an unloaded one.
+            var spectraFile = new SpectraFileInfo(
+                Path.Combine(RnaDirectory, "RnaStandard_Subset.mzML"), "RNA", 0, 0, 0);
+            var spectraFiles = new List<SpectraFileInfo> { spectraFile };
+            var suppliedNames = spectraFiles.Select(f => f.FilenameWithoutExtension).ToHashSet();
+
+            // The OSM must actually reference a file that is not supplied, or the test proves nothing.
+            var osmFileNames = File.ReadAllLines(osmPath).Skip(1)
+                .Where(l => l.Length > 0)
+                .Select(l => l.Split('\t')[0])
+                .Distinct()
+                .ToList();
+            CollectionAssert.Contains(osmFileNames, "UnloadedRnaFile_NotSupplied",
+                "The committed OSM is expected to reference an unsupplied spectra file.");
+
+            // 1. MakeIdentifications skips records for the unsupplied file instead of throwing.
+            IQuantifiableResultFile quantifiable = FileReader.ReadQuantifiableResultFile(osmPath);
+            List<Identification> allIds = quantifiable.MakeIdentifications(spectraFiles);
+            CollectionAssert.IsNotEmpty(allIds, "Expected identifications for the supplied file.");
+            Assert.IsTrue(allIds.All(id => suppliedNames.Contains(id.FileInfo.FilenameWithoutExtension)),
+                "No identification should reference the unsupplied spectra file.");
+
+            // 2. PsmReader reads the .osmtsv without throwing and returns only supplied-file identifications.
+            List<Identification> ids = new PsmReader().ReadPsms(osmPath, silent: true, spectraFiles);
+            CollectionAssert.IsNotEmpty(ids, "PsmReader should return identifications after the fix.");
+            Assert.IsTrue(ids.All(id => suppliedNames.Contains(id.FileInfo.FilenameWithoutExtension)),
+                "No identification should reference the unsupplied spectra file.");
+            Assert.IsTrue(ids.All(id => id.PrecursorChargeState < 0),
+                "RNA identifications are expected to have negative precursor charge states.");
+        }
+
+        /// <summary>
         /// A real RNA oligonucleotide identification (a 12mer) with a negative charge state, used to build
         /// an engine without needing spectra on disk.
         /// </summary>

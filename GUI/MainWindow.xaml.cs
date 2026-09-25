@@ -1,5 +1,4 @@
 ﻿using FlashLFQ;
-using MassSpectrometry;
 using GUI.DataGridObjects;
 using IO.ThermoRawFileReader;
 using MassSpectrometry;
@@ -245,6 +244,7 @@ namespace GUI
             mbrRtWindowTextBox.IsEnabled = enable;
             mcmcIterationsTextBox.IsEnabled = enable;
             mcmcRandomSeedTextBox.IsEnabled = enable;
+            rnaModeCheckbox.IsEnabled = enable;
         }
 
         /// <summary>
