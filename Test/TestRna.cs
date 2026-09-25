@@ -130,6 +130,66 @@ namespace Test
         }
 
         /// <summary>
+        /// Concrete end-to-end RNA quantification over the committed RnaStandard negative-mode dataset:
+        /// AllOSMs.osmtsv (54 oligo spectrum matches, all of the 16mer AUCCAGUGCAGUACUG across charge
+        /// states 4- to 8-) paired with RnaStandard_Subset.mzML. The spectra file is a size-reduced slice
+        /// of the original acquisition, retaining only the MS1 scans over the oligo's elution (RT ~67.3 to
+        /// ~69.0 min) so that it commits small while still containing one clean chromatographic peak.
+        ///
+        /// Unlike <see cref="TestRnaEndToEndQuantification"/>, both inputs are committed, so this always
+        /// runs the full path the GUI/CMD take in RNA Mode: read the .osmtsv identifications, build the RNA
+        /// engine, run it, and integrate an MS1 chromatographic peak for the oligo.
+        /// </summary>
+        [Test]
+        public static void TestRnaEndToEndQuantificationRnaStandard()
+        {
+            const string oligo = "AUCCAGUGCAGUACUG";
+            string osmPath = Path.Combine(RnaDirectory, "AllOSMs.osmtsv");
+            string mzmlPath = Path.Combine(RnaDirectory, "RnaStandard_Subset.mzML");
+            Assert.That(File.Exists(osmPath), $"OSM file not found at {osmPath}");
+            Assert.That(File.Exists(mzmlPath), $"Spectra file not found at {mzmlPath}");
+
+            var spectraFile = new SpectraFileInfo(mzmlPath, "RNA", 0, 0, 0);
+
+            // Read the identifications through the same reader the app uses.
+            List<Identification> ids = new PsmReader()
+                .ReadPsms(osmPath, silent: true, new List<SpectraFileInfo> { spectraFile });
+            Assert.IsNotEmpty(ids);
+            // Every identification is the same RNA oligo (A/C/G/U bases) ionized in negative mode.
+            Assert.IsTrue(ids.All(id => id.BaseSequence == oligo));
+            Assert.IsTrue(ids.All(id => id.PrecursorChargeState < 0),
+                "RNA identifications are expected to have negative precursor charge states.");
+
+            // Run a full RNA-mode quantification.
+            var settings = new FlashLfqSettings { RnaMode = true, MaxThreads = 1 };
+            FlashLfqEngine engine = FlashLfqSettings.CreateEngineWithSettings(settings, ids);
+            FlashLfqResults results = engine.Run();
+
+            Assert.IsNotNull(results);
+            Assert.IsTrue(results.Peaks.ContainsKey(spectraFile),
+                "No results were produced for the supplied spectra file.");
+
+            List<ChromatographicPeak> peaks = results.Peaks[spectraFile];
+            Assert.IsNotEmpty(peaks);
+
+            // The slice was chosen to contain exactly one clean peak: the oligo should be quantified with a
+            // positive MS1 intensity, and it should be the only detected (positive-intensity) peak.
+            var quantified = peaks.Where(p => p.Intensity > 0).ToList();
+            Assert.AreEqual(1, quantified.Count,
+                "Expected exactly one quantified peak in the single-peak RNA slice.");
+
+            ChromatographicPeak oligoPeak = quantified.Single();
+            Assert.IsTrue(oligoPeak.Identifications.All(id => id.BaseSequence == oligo));
+            Assert.IsTrue(oligoPeak.Intensity > 0,
+                "The oligo was identified but not quantified: no MS1 chromatographic peak was found.");
+            // The peak apex should fall within the retained elution window.
+            Assert.IsNotNull(oligoPeak.Apex);
+            double apexRt = oligoPeak.Apex.IndexedPeak.RetentionTime;
+            Assert.IsTrue(apexRt > 67.0 && apexRt < 69.0,
+                $"Peak apex retention time {apexRt} is outside the retained slice window.");
+        }
+
+        /// <summary>
         /// Directory holding a full, real RNA dataset (six .raw files + one AllOSMs.osmtsv). It is far too
         /// large to commit or upload, so these tests are skipped unless the dataset is present locally. The
         /// dataset reproduces a bug reported when running FlashLFQ over it: reading the .osmtsv failed with

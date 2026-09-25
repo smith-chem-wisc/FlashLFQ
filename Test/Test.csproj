@@ -103,5 +103,11 @@
     <None Update="SampleFiles\RNA\OsmWithCustomMIons.osmtsv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="SampleFiles\RNA\AllOSMs.osmtsv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleFiles\RNA\RnaStandard_Subset.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
