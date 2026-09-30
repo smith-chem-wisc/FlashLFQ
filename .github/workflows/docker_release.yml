@@ -17,9 +17,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-        DOCKER_USER: ${{ vars.DOCKER_USERNAME }}
-        DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
