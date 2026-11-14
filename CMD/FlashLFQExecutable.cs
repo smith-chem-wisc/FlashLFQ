@@ -203,6 +203,15 @@ namespace CMD
                 return;
             }
 
+            // a gap in the design's numbering is quantified as numbered; say where it is
+            if (!settings.Silent)
+            {
+                foreach (string warning in FlashLfqSettings.GetWarningsInExperimentalDesign(spectraFileInfos))
+                {
+                    Console.WriteLine(warning);
+                }
+            }
+
             // set up IDs
             List<Identification> ids;
             PsmReader psmReader = new();

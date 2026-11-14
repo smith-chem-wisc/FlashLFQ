@@ -307,58 +307,68 @@ namespace Util
                 }
             }
 
-            // check for correct iteration of integer values and duplicates
-            var conditions = files.GroupBy(p => p.Condition);
+            // only a duplicate is refused. A gap in the numbering is quantified as numbered and reported by
+            // GetWarningsInExperimentalDesign: a biorep number can name the same subject across conditions,
+            // and closing a gap up would hide a sample or file that was lost.
+            var duplicate = files
+                .GroupBy(p => (p.Condition, p.BiologicalReplicate, p.Fraction, p.TechnicalReplicate))
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .OrderBy(k => k.Condition, StringComparer.Ordinal).ThenBy(k => k.BiologicalReplicate).ThenBy(k => k.Fraction).ThenBy(k => k.TechnicalReplicate)
+                .FirstOrDefault();
 
-            foreach (var condition in conditions)
+            if (duplicate != default)
             {
-                var temp = condition.OrderBy(p => p.BiologicalReplicate).ThenBy(p => p.Fraction).ThenBy(p => p.TechnicalReplicate);
-                int numB = temp.Max(p => p.BiologicalReplicate) + 1;
+                throw new Exception("Duplicates are not allowed:\n" +
+                    "Condition \"" + duplicate.Condition + "\" biorep " + (duplicate.BiologicalReplicate + 1) +
+                    " fraction " + (duplicate.Fraction + 1) + " techrep " + (duplicate.TechnicalReplicate + 1));
+            }
+        }
 
-                // check bioreps are in order
-                for (int b = 0; b < numB; b++)
+        /// <summary>
+        /// One warning for each place the numbering has a gap, naming the missing numbers: a condition's
+        /// bioreps, a biorep's fractions, and a fraction's techreps, each expected to run 1..N. Such a design
+        /// is quantified as numbered; the warning is there because a missing number may be a sample or
+        /// file that was lost or not searched. Empty when there is nothing to say. Worded as MetaMorpheus's
+        /// ExperimentalDesign.GetWarningsInExperimentalDesign, so the two programs say one thing.
+        /// </summary>
+        public static List<string> GetWarningsInExperimentalDesign(List<SpectraFileInfo> files)
+        {
+            var warnings = new List<string>();
+
+            foreach (var condition in files.GroupBy(p => p.Condition).OrderBy(c => c.Key, StringComparer.Ordinal))
+            {
+                string conditionLabel = "Condition \"" + condition.Key + "\"";
+                AddGapWarning(warnings, conditionLabel, "biological replicate", condition.Select(p => p.BiologicalReplicate));
+
+                foreach (var biorep in condition.GroupBy(p => p.BiologicalReplicate).OrderBy(b => b.Key))
                 {
-                    var biorepFiles = temp.Where(p => p.BiologicalReplicate == b);
+                    string biorepLabel = conditionLabel + " biorep " + (biorep.Key + 1);
+                    AddGapWarning(warnings, biorepLabel, "fraction", biorep.Select(p => p.Fraction));
 
-                    if (!biorepFiles.Any())
+                    foreach (var fraction in biorep.GroupBy(p => p.Fraction).OrderBy(f => f.Key))
                     {
-                        throw new Exception("Condition \"" + condition.Key + "\" sample " + (b + 1) + " is missing!");
-                    }
-
-                    // check fractions are in order
-                    int numF = biorepFiles.Max(p => p.Fraction) + 1;
-
-                    for (int f = 0; f < numF; f++)
-                    {
-                        var fractionFiles = biorepFiles.Where(p => p.Fraction == f);
-
-                        if (!fractionFiles.Any())
-                        {
-                            throw new Exception("Condition \"" + condition.Key + "\" sample " + (b + 1) + " fraction " + (f + 1) + " is missing!");
-                        }
-
-                        // check techreps are in order
-                        int numT = fractionFiles.Max(p => p.TechnicalReplicate) + 1;
-
-                        for (int t = 0; t < numT; t++)
-                        {
-                            var techrepFiles = fractionFiles.Where(p => p.TechnicalReplicate == t);
-
-                            if (!techrepFiles.Any())
-                            {
-                                throw new Exception("Condition \"" + condition.Key + "\" sample " + (b + 1) +
-                                    " fraction " + (f + 1) + " replicate " + (t + 1) + " is missing!");
-                            }
-
-                            if (techrepFiles.Count() > 1)
-                            {
-                                throw new Exception("Duplicates are not allowed:\n" +
-                                    "Condition \"" + condition.Key + "\" sample " + (b + 1) +
-                                    " fraction " + (f + 1) + " replicate " + (t + 1));
-                            }
-                        }
+                        AddGapWarning(warnings, biorepLabel + " fraction " + (fraction.Key + 1), "technical replicate", fraction.Select(p => p.TechnicalReplicate));
                     }
                 }
+            }
+
+            return warnings;
+        }
+
+        /// <summary>
+        /// Adds a warning when the given zero-based numbers, read one-based, are not 1..N.
+        /// </summary>
+        private static void AddGapWarning(List<string> warnings, string owner, string level, IEnumerable<int> zeroBasedNumbers)
+        {
+            var present = zeroBasedNumbers.Select(n => n + 1).Distinct().OrderBy(n => n).ToList();
+            var missing = Enumerable.Range(1, Math.Max(0, present.Max())).Except(present).ToList();
+
+            if (missing.Any())
+            {
+                warnings.Add(owner + ": " + level + "s " + string.Join(", ", present) + ", quantified as numbered; " +
+                    level + (missing.Count == 1 ? " " : "s ") + string.Join(", ", missing) + (missing.Count == 1 ? " is" : " are") + " not in the design. " +
+                    "A missing number may be a sample or file that was lost or not searched.");
             }
         }
 

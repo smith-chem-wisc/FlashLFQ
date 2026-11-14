@@ -511,6 +511,12 @@ namespace GUI
                 }
                 Nett.Toml.WriteFile(settings, Path.Combine(settings.OutputPath, "FlashLfqSettings.toml"));
 
+                // a gap in the design's numbering is quantified as numbered; say where it is
+                foreach (string warning in FlashLfqSettings.GetWarningsInExperimentalDesign(spectraFiles.Select(p => p.SpectraFileInfo).ToList()))
+                {
+                    AddNotification(warning);
+                }
+
                 WriteExperimentalDesignToFile();
 
                 // disable everything except opening output folder; the run can't be reset while it's in progress
