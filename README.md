@@ -32,7 +32,7 @@ Alternatively, FlashLFQ is bundled into MetaMorpheus, which can be downloaded [h
 ## Input
 - Tab-separated text file of [MS/MS identifications](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Identification-Input-Formats) (.tsv, .psmtsv., .txt)
 - One or more bottom-up mass spectra files. Supported formats are .raw (Windows/Linux) or .mzML (Windows/Linux/macOS) file formats. You can convert other formats to .mzML using [MSConvert](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Converting-spectral-data-files-with-MSConvert).
-- Direct use of Thermo raw files requires acceptance of a [Thermo License](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Thermo-RawFileReader-Software-License-Ageement). If you would like to process Thermo .raw data files directly, you must agree to the Thermo license. This is accomplished by creating a text file with the name "LicenseAgreements.toml" with the text below. This file should be placed in the same directory as the executable program.
+- Direct use of Thermo raw files requires acceptance of a [Thermo License](https://github.com/smith-chem-wisc/FlashLFQ/wiki/Thermo-RawFileReader-Software-License-Ageement). If you would like to process Thermo .raw data files directly, you must agree to the Thermo license. This is accomplished by creating a text file with the name "LicenceAgreements.toml" with the text below. This file should be placed in the same directory as the executable program.
 
 HasAcceptedThermoLicence = true
 
