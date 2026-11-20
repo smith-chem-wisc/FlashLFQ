@@ -24,7 +24,7 @@ namespace Test
         [TestCase("Morpheus", "SmallCalibratible_Yeast.PSMs.tsv")]
         [TestCase("MaxQuant", "msms.txt")]
         [TestCase("PeptideShaker", "Default PSM Report.tabular")]
-        [TestCase("Percolator", "percolatorTestData.txt", "Percolator\\percolatorMzml.mzML")]
+        [TestCase("Percolator", "percolatorTestData.txt", "Percolator/percolatorMzml.mzML")]
         [TestCase("Generic", "AllPSMs.tsv")]
         [TestCase("MsFragger", "Fragger_v4p3_psm.tsv")]
         public static void TestOutputs(string search, string psmFilename, string mzmlFileName = "SmallCalibratible_Yeast.mzML")
