@@ -38,10 +38,6 @@ namespace Util
 
                 }
             }
-            else
-            {
-                Nett.Toml.WriteFile(licenceAgreementSettings, path);
-            }
 
             return licenceAgreementSettings;
         }
